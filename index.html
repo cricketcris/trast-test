@@ -123,8 +123,26 @@ textarea{font-family:var(--mono);font-size:.82rem;min-height:110px;resize:vertic
 .notes span.root{color:var(--fg);border-color:var(--fg)}
 .diag{width:min(240px,70%);}
 .diag svg,.diag-s svg,.tile svg{width:100%;height:auto;display:block}
-.matchbar{width:min(260px,80%);height:6px;border-radius:3px;background:color-mix(in oklab,var(--fg) 10%,transparent);overflow:hidden;margin-top:auto}
-.matchbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .08s linear}
+.editor{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:22px;margin-top:14px;align-items:start}
+@media (max-width:700px){.editor{grid-template-columns:minmax(0,1fr)}}
+.edboard{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.edpos{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.edpos .btn{min-width:44px;font-size:1.2rem}
+.board{touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;max-width:320px;width:100%;margin:0 auto;border-radius:12px;padding:6px 0;
+  background:linear-gradient(180deg,color-mix(in oklab,var(--wood) 30%,var(--surface-2)),color-mix(in oklab,var(--wood) 12%,var(--surface)))}
+.board svg{width:100%;height:auto;display:block}
+.newtile{justify-content:center;border-style:dashed}
+.newtile b{font-size:2rem;color:var(--accent)}
+.pct{width:min(280px,86%);display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 10px;margin-top:auto}
+.pct b{font-family:var(--mono);font-size:1.05rem;text-align:right;font-variant-numeric:tabular-nums}
+.matchbar{grid-column:1/-1;height:8px;border-radius:4px;background:color-mix(in oklab,var(--fg) 10%,transparent);overflow:hidden}
+.matchbar i{display:block;height:100%;width:0;background:var(--warn);transition:width .1s linear}
+.matchbar i.ok{background:var(--accent)}
+.notes span.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.flash{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:700;font-size:3.2rem;color:var(--accent);pointer-events:none;z-index:3;text-shadow:0 2px 18px var(--surface)}
+.flash.go{animation:flashUp .7s ease-out forwards}
+@keyframes flashUp{0%{opacity:0;transform:translate(-50%,-30%) scale(.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
+.brow.wide{grid-template-columns:110px minmax(0,1fr) 104px}
 .help{margin:0;font-size:.85rem;color:var(--muted);text-align:center}
 .next{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center}
 .next b{font-family:var(--display);font-weight:700;font-size:1.6rem;text-align:center;overflow-wrap:anywhere}
@@ -368,7 +386,8 @@ details summary{cursor:pointer;font-weight:600}
           <div id="cNotes" class="notes"></div>
           <div id="cDiag" class="diag"></div>
           <button id="cReveal" class="btn ghost" hidden>Ver diagrama</button>
-          <div class="matchbar"><i id="cMatch"></i></div>
+          <div id="cPct" class="pct" hidden><span class="k">Precisión</span><b id="cPctN">0%</b><div class="matchbar"><i id="cMatch"></i></div></div>
+          <div id="cFlash" class="flash" hidden></div>
           <p id="cHelp" class="help"></p>
         </article>
         <aside id="nextBox" class="next"><span class="k">Siguiente</span><b id="nName"></b><div id="nDiag" class="diag-s"></div></aside>
@@ -423,15 +442,20 @@ details summary{cursor:pointer;font-weight:600}
     <p class="sub">Toca uno para verlo grande, escucharlo o sumarlo a un mazo. Si te falta una forma, créala con su digitación.</p>
     <div class="panel" id="chordDetail" style="margin-top:18px" hidden></div>
     <details class="panel" style="margin-top:16px" id="customBox">
-      <summary>Crear acorde propio</summary>
-      <div class="detail" style="margin-top:14px">
-        <div class="diag" id="ccPrev"></div>
-        <div class="stack" style="gap:12px">
+      <summary id="ccSummary">Crear acorde</summary>
+      <div class="editor">
+        <div class="edboard">
+          <div class="edpos"><button class="btn ghost" id="ccBaseDn" aria-label="Traste anterior">−</button><span>Desde el traste <b id="ccBase">1</b></span><button class="btn ghost" id="ccBaseUp" aria-label="Traste siguiente">+</button></div>
+          <div id="ccBoard" class="board"></div>
+          <p class="hint">Toca un traste para poner el dedo y arrástralo para moverlo, incluso a otra cuerda. Tócalo de nuevo para quitarlo. Arriba del diapasón alternas entre cuerda al aire (○) y apagada (×).</p>
+        </div>
+        <div class="stack" style="gap:14px">
+          <div><span class="lab">Notas</span><div id="ccChips" class="notes" style="justify-content:flex-start;min-height:26px"></div><p id="ccGuess" class="hint"></p></div>
           <div><label class="lab" for="ccName">Nombre</label><input id="ccName" type="text" placeholder="Ej: Cadd9 (Mac)" autocomplete="off"></div>
-          <div><label class="lab" for="ccFrets">Trastes, de la 6.ª cuerda (E grave) a la 1.ª</label><input id="ccFrets" type="text" class="mono" placeholder="x 3 2 0 3 0" autocomplete="off">
-            <p class="hint">Usa x para cuerda apagada y 0 para al aire. Con trastes de dos cifras, sepáralos con espacios: 7 x 7 7 7 0.</p></div>
+          <div><label class="lab" for="ccFrets">Trastes, de la 6.ª cuerda a la 1.ª</label><input id="ccFrets" type="text" class="mono" placeholder="x 3 2 0 1 0" autocomplete="off">
+            <p class="hint">También puedes escribirlos: x apagada, 0 al aire.</p></div>
           <p class="err" id="ccErr" hidden></p>
-          <div class="row"><button class="btn primary" id="ccSave">Guardar acorde</button><span class="mono hint" id="ccNotes" style="margin:0"></span></div>
+          <div class="row"><button class="btn primary" id="ccSave">Guardar acorde</button><button class="btn" id="ccPlay">Escuchar</button><button class="btn ghost" id="ccClear">Empezar de cero</button><button class="btn ghost" id="ccCancel" hidden>Cancelar edición</button></div>
         </div>
       </div>
     </details>
@@ -505,6 +529,103 @@ details summary{cursor:pointer;font-weight:600}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
+/* EAR-START */
+/* Oído: FFT propia, picos interpolados, supresión de armónicos y juez de acordes con bloqueo tras cada carta. */
+const Ear=(()=>{
+  const NFFT=8192;
+  function makeFFT(n){
+    const cos=new Float32Array(n/2),sin=new Float32Array(n/2);
+    for(let i=0;i<n/2;i++){cos[i]=Math.cos(2*Math.PI*i/n);sin[i]=-Math.sin(2*Math.PI*i/n)}
+    const rev=new Uint32Array(n);for(let i=0,j=0;i<n;i++){rev[i]=j;let bit=n>>1;while(j&bit){j^=bit;bit>>=1}j|=bit}
+    return (re,im)=>{
+      for(let i=0;i<n;i++){const j=rev[i];if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
+      for(let len=2;len<=n;len<<=1){const half=len>>1,step=n/len;
+        for(let i=0;i<n;i+=len){for(let k=0;k<half;k++){const wr=cos[k*step],wi=sin[k*step],a=i+k,b=a+half;
+          const xr=re[b]*wr-im[b]*wi,xi=re[b]*wi+im[b]*wr;re[b]=re[a]-xr;im[b]=im[a]-xi;re[a]+=xr;im[a]+=xi}}}
+    };
+  }
+  function create(sr){
+    const fft=makeFFT(NFFT),win=new Float32Array(NFFT),re=new Float32Array(NFFT),im=new Float32Array(NFFT);
+    for(let i=0;i<NFFT;i++) win[i]=.5-.5*Math.cos(2*Math.PI*i/(NFFT-1));
+    const kMin=Math.max(2,Math.floor(75*NFFT/sr)),kMax=Math.min(NFFT/2-2,Math.ceil(2100*NFFT/sr));
+    const mag=new Float32Array(kMax+2),prev=new Float32Array(kMax+2),ch=new Float32Array(12);
+    let noise=-1,rmsAvg=0,lastOnset=-1e9;
+    function process(td,now){
+      const n=td.length,off=Math.max(0,n-NFFT);
+      let s=0;for(let i=n-2048;i<n;i++) s+=td[i]*td[i];
+      const rms=Math.sqrt(s/2048);
+      for(let i=0;i<NFFT;i++){re[i]=(td[off+i]||0)*win[i];im[i]=0}
+      fft(re,im);
+      let flux=0,sum=0,mx=0;
+      for(let k=kMin-1;k<=kMax+1;k++){const m=Math.sqrt(re[k]*re[k]+im[k]*im[k]);mag[k]=m;if(m>mx)mx=m;
+        const a=Math.sqrt(m),b=Math.sqrt(prev[k]);if(k>=kMin&&k<=kMax){sum+=a;if(a>b)flux+=a-b}prev[k]=m}
+      flux=sum>0?flux/sum:0;
+      if(noise<0) noise=rms; else if(rms<noise) noise=noise*.85+rms*.15; else if(rms<noise*2) noise=noise*.995+rms*.005;
+      const liveThr=Math.max(noise*2.5,.0004), live=rms>liveThr;
+      const rise=rms/(rmsAvg+1e-9); rmsAvg=rmsAvg*.8+rms*.2;
+      let onset=false;
+      if(live&&now-lastOnset>130&&(rise>1.32||(flux>.3&&rise>1.05))){onset=true;lastOnset=now}
+      // picos
+      const peaks=[];const floor=mx*.015;
+      for(let k=kMin;k<=kMax;k++){const b=mag[k];if(b>floor&&b>mag[k-1]&&b>=mag[k+1]){
+        const la=Math.log(mag[k-1]+1e-12),lb=Math.log(b+1e-12),lc=Math.log(mag[k+1]+1e-12),den=la-2*lb+lc;
+        const p=den?.5*(la-lc)/den:0;peaks.push({f:(k+p)*sr/NFFT,a:b})}}
+      peaks.sort((x,y)=>y.a-x.a);const top=peaks.slice(0,36).sort((x,y)=>x.f-y.f);
+      ch.fill(0);
+      for(let j=0;j<top.length;j++){const pj=top[j];let w=1;
+        for(let i=0;i<j;i++){const r=pj.f/top[i].f,h=Math.round(r);
+          if(h>=2&&h<=8&&Math.abs(r-h)/h<.012&&top[i].a>pj.a*.2){ if(h===3||h===5||h===6||h===7){w=Math.min(w,.3)} else w=Math.min(w,.7) }}
+        const m=69+12*Math.log2(pj.f/440),rm=Math.round(m),d=Math.abs(m-rm);
+        const fw=pj.f<450?1:pj.f<900?.8:.55;
+        ch[((rm%12)+12)%12]+=w*Math.sqrt(pj.a)*fw*Math.max(0,1-d*1.5)}
+      let bass=-1;{let ma=0;for(const q of top) if(q.a>ma) ma=q.a;for(const q of top){if(q.f>330) break;if(q.a>=ma*.22){const m=69+12*Math.log2(q.f/440);bass=((Math.round(m)%12)+12)%12;break}}}
+      let cm=0;for(let i=0;i<12;i++) if(ch[i]>cm) cm=ch[i];
+      const out=new Float32Array(12);if(cm>0) for(let i=0;i<12;i++) out[i]=ch[i]/cm;
+      return {rms,live,onset,flux,noise,ch:out,bass};
+    }
+    return {process,sampleRate:sr};
+  }
+  function score(c,target,bv){
+    const E=target.pcs,set=new Set(E);
+    let tot=0,good=0;
+    for(let i=0;i<12;i++){tot+=c[i];if(set.has(i))good+=c[i]}
+    const missing=E.filter(pc=>c[pc]<.2), cov=(E.length-missing.length)/E.length, purity=tot?good/tot:0;
+    const extra=[];for(let i=0;i<12;i++) if(!set.has(i)&&c[i]>=.45) extra.push(i);
+    const bm=(bv&&target.bass!=null)?Math.min(1,bv[target.bass]*1.25):.6;
+    return {pct:Math.round(100*(.55*cov*cov+.33*purity+.12*bm)),missing,extra,cov,n:E.length,bassOk:bm>.5};
+  }
+  const SENS={soft:{thr:68,hold:60,margin:5,miss:1},normal:{thr:76,hold:90,margin:4,miss:1},strict:{thr:82,hold:130,margin:3,miss:0}};
+  const allowMiss=(S,s)=>s.missing.length===0||(s.n>=4&&s.missing.length<=S.miss&&!(S.miss===1&&s.n===4&&S!==SENS.soft));
+  function judge(){
+    const sm=new Float32Array(12),bv=new Float32Array(12);let t=null,cands=[],shown=0,armed=null,hold=0,best=null,ref=new Float32Array(12),last=0,failed=false,settled=false;
+    const cosv=(a,b)=>{let d=0,x=0,y=0;for(let i=0;i<12;i++){d+=a[i]*b[i];x+=a[i]*a[i];y+=b[i]*b[i]}return x&&y?d/Math.sqrt(x*y):0};
+    return {
+      setTarget(target,cs,now){t=target;cands=cs.filter(c=>c.key!==target.key);shown=now;armed=null;hold=0;best=null;failed=false;ref.set(sm)},
+      frame(o,now,sensName){
+        const S=SENS[sensName]||SENS.soft,dt=last?Math.min(100,now-last):16;last=now;
+        if(o.live){for(let i=0;i<12;i++){sm[i]=sm[i]*.55+o.ch[i]*.45;bv[i]=bv[i]*.6+(o.bass===i?.4:0)}}else for(let i=0;i<12;i++){sm[i]*=.85;bv[i]*=.85}
+        if(!t) return {sm};
+        if(o.onset&&now-shown>=180){armed=now;hold=0;best=null;failed=false;settled=false}
+        if(!armed&&now-shown>650&&o.live&&cosv(sm,ref)<.82){armed=now;hold=0;best=null;failed=false;settled=true}
+        if(armed&&!settled&&now-armed>=110){settled=true;sm.set(o.ch);bv.fill(0);if(o.bass>=0)bv[o.bass]=1}
+        if(!armed||!o.live||!settled) return {sm,armed:!!armed,best};
+        const s=score(sm,t,bv);
+        let blocked=null;for(const c of cands){const cs=score(sm,c,bv).pct;if(cs>=s.pct+S.margin){blocked=c;break}}
+        if(!best||s.pct>best.pct) best=s;
+        const ok=s.pct>=S.thr&&!blocked&&allowMiss(S,s);
+        hold=ok?hold+dt:0;
+        if(hold>=S.hold){const r={sm,bv,pass:true,pct:Math.max(s.pct,best.pct),score:s};armed=null;return r}
+        if(now-armed>1600&&!failed){failed=true;const r={sm,fail:true,best,blocked};armed=null;ref.set(sm);return r}
+        return {sm,live:s,blocked,armed:true,best};
+      },
+      reset(){sm.fill(0);t=null;armed=null}
+    };
+  }
+  return {create,judge,score,SENS,NFFT};
+})();
+/* EAR-END */
+</script>
+<script>
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -540,10 +661,7 @@ const BASE=[
  ['eb','Eb','x68886','Cejillas'],['ebm','Ebm','x68876','Cejillas'],['bbm','Bbm','x13321','Cejillas'],
 ];
 const DEFAULT_DECKS=[
- {id:'noh-full',name:'No Other Heart · completa',chords:['d','d6','d','d6','em','a7e','em','a7e','d','d6','d','d6','em','a7e','em','a7e','gmaj7mac','gdimmac','fsm7mac','bm11mac','em','a7e','d','d6','d','d6']},
- {id:'noh-verse',name:'No Other Heart · verso',chords:['d','d6','d','d6','em','a7e','em','a7e']},
- {id:'noh-chorus',name:'No Other Heart · coro',chords:['gmaj7mac','gdimmac','fsm7mac','bm11mac','em','a7e','d','d6','d','d6']},
- {id:'noh-mac',name:'Solo los acordes Mac',chords:['gmaj7mac','gdimmac','fsm7mac','bm11mac']},
+ {id:'noh-mac',name:'Coro · acordes Mac',chords:['gmaj7mac','gdimmac','fsm7mac','bm11mac']},
  {id:'basic',name:'Abiertos básicos',chords:['c','d','e','g','a','am','em','dm']},
  {id:'sevenths',name:'Séptimas',chords:['a7','b7','c7','d7','e7','g7']},
  {id:'jazzy',name:'Maj7 y m7',chords:['cmaj7','dmaj7','fmaj7','gmaj7','amaj7','am7','em7','dm7','bm7']},
@@ -562,7 +680,7 @@ const FIRST_DECK_IDS=['noh-full','noh-verse','noh-chorus','noh-mac','basic','sev
 const ACCENTS={nacar:{n:'Nácar',d:'#62ccb7',l:'#13806e'},ambar:{n:'Ámbar',d:'#f0b45a',l:'#94570a'},coral:{n:'Coral',d:'#ff8a70',l:'#b23d22'},lila:{n:'Lila',d:'#b9a0ff',l:'#6440c8'},lima:{n:'Lima',d:'#b8dd5c',l:'#4c7400'},cielo:{n:'Cielo',d:'#7cc4ff',l:'#1462aa'}};
 const WOODS={rosewood:'#7a3f2c',ebano:'#0e0c0b',koa:'#a7652c',arce:'#d8b47a'};
 const DEFAULT_PREFS={theme:'system',accent:'nacar',wood:'rosewood',hand:'right',notes:'en',size:'normal',countdown:true,sound:true};
-const DEFAULT_SET={deck:'noh-full',order:'random',end:'none',n:20,secs:60,adv:'mic',bpm:70,beats:4,click:true,hint:'always',sens:'normal',showNext:true};
+const DEFAULT_SET={deck:'noh-mac',order:'random',end:'none',n:20,secs:60,adv:'mic',bpm:70,beats:4,click:true,hint:'always',sens:'soft',showNext:true};
 
 /* ---------- almacenamiento ---------- */
 const S={get(k,d){try{const v=localStorage.getItem('trastero.'+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -588,6 +706,7 @@ function applyPrefs(){
 }
 let st=Object.assign({},DEFAULT_SET,S.get('settings',{}));
 let history=S.get('history',[]);
+if(!S.get('mig3',false)){ decks=decks.filter(d=>!['noh-full','noh-verse','noh-chorus'].includes(d.id)); if(!decks.find(d=>d.id===st.deck)) st.deck='noh-mac'; st.sens='soft'; S.set('decks',decks); S.set('settings',st); S.set('mig3',true) }
 const saveDecks=()=>S.set('decks',decks), saveSet=()=>S.set('settings',st), saveCustom=()=>S.set('custom',custom), saveHist=()=>S.set('history',history);
 
 /* ---------- biblioteca ---------- */
@@ -609,12 +728,6 @@ const notesOf=c=>c.frets.map((f,i)=>f<0?null:OPEN[i]+f).filter(v=>v!=null);
 const pcsOf=c=>[...new Set(notesOf(c).map(m=>m%12))];
 const fretStr=f=>f.map(v=>v<0?'x':v).join(' ');
 const norm=s=>String(s).toLowerCase().replace(/[\s()·._-]/g,'').replace('♭','b').replace('♯','#');
-function template(c){
-  const t=new Array(12).fill(0);
-  notesOf(c).forEach((m,i)=>{const pc=m%12;t[pc]+=1+(i===0?.3:0);t[(pc+7)%12]+=.3;t[(pc+4)%12]+=.12});
-  return t;
-}
-function cos(a,b){let d=0,na=0,nb=0;for(let i=0;i<12;i++){d+=a[i]*b[i];na+=a[i]*a[i];nb+=b[i]*b[i]}return na&&nb?d/Math.sqrt(na*nb):0}
 
 /* ---------- utilidades ---------- */
 const $=s=>document.querySelector(s);
@@ -713,8 +826,7 @@ function click(time,accent){ const a=ctx(); const o=a.createOscillator(),g=a.cre
   o.connect(g); g.connect(a.destination); o.start(time); o.stop(time+.06); }
 
 /* ---------- micrófono ---------- */
-const SENS={soft:{thr:.68,floor:.004,hold:110,all:false},normal:{thr:.78,floor:.007,hold:160,all:false},strict:{thr:.85,floor:.01,hold:220,all:true}};
-const Mic={on:false,stream:null,an:null,fd:null,td:null,map:null,disp:new Array(12).fill(0),acc:new Array(12).fill(0),slow:0,lastOnset:0,armed:false,match:null,rms:0};
+const Mic={on:false,stream:null,an:null,td:null,ear:null,judge:null,disp:new Array(12).fill(0),rms:0};
 const inFrame=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 let micBlocked=null, testOn=false;
 const hasMicApi=()=>!!(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
@@ -739,37 +851,36 @@ async function micStart(){
   if(!hasMicApi()){ const e=new Error('noapi'); e.name='NoApi'; throw e }
   const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   const a=ctx(); try{ await a.resume() }catch(e){}
-  const src=a.createMediaStreamSource(stream), an=a.createAnalyser(); an.fftSize=8192; an.smoothingTimeConstant=0; src.connect(an);
+  const src=a.createMediaStreamSource(stream), an=a.createAnalyser(); an.fftSize=Ear.NFFT; an.smoothingTimeConstant=0; src.connect(an);
   const tr=stream.getAudioTracks()[0]; if(tr) tr.onended=()=>{ Mic.on=false; if(Sess.running&&Sess.adv==='mic'){ $('#hMic').className='mic off'; $('#hMicTxt').textContent='Micrófono detenido' } if(testOn){ testOn=false; resetTest('El sistema cortó el micrófono. Vuelve a probar.') } };
-  const ks=[],pcs=[],ws=[], sr=a.sampleRate;
-  for(let k=2;k<an.frequencyBinCount-1;k++){const f=k*sr/an.fftSize; if(f<95||f>2100) continue; const m=69+12*Math.log2(f/440), r=Math.round(m), dev=Math.abs(m-r); if(dev>.42) continue; ks.push(k); pcs.push(((r%12)+12)%12); ws.push(1-dev*1.5)}
-  Object.assign(Mic,{on:true,stream,an,src,fd:new Float32Array(an.frequencyBinCount),td:new Float32Array(an.fftSize),map:{ks,pcs,ws},slow:0,armed:false,match:null});
+  Object.assign(Mic,{on:true,stream,an,src,td:new Float32Array(an.fftSize),ear:Ear.create(a.sampleRate),judge:Ear.judge()});
 }
 function micStop(){ if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
+const candOf=id=>{ const c=LIB[id], m=notesOf(c); return {key:id,pcs:[...new Set(m.map(x=>x%12))],bass:m[0]%12} };
+function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
+let failT=null;
 function micFrame(fc){
-  const {an,fd,td,map}=Mic; if(!an) return; an.getFloatFrequencyData(fd); an.getFloatTimeDomainData(td);
-  let sum=0; for(let i=0;i<td.length;i+=2) sum+=td[i]*td[i]; const rms=Math.sqrt(sum/(td.length/2)); Mic.rms=rms;
-  const ch=new Array(12).fill(0);
-  for(let j=0;j<map.ks.length;j++){const k=map.ks[j],db=fd[k]; if(db<-95||db<fd[k-1]||db<fd[k+1]) continue; ch[map.pcs[j]]+=Math.pow(10,db/20)*map.ws[j]}
-  const mx=Math.max(...ch)||1; for(let i=0;i<12;i++) ch[i]/=mx;
-  const s=SENS[st.sens], now=performance.now();
-  if(rms>s.floor&&rms>Mic.slow*1.7&&now-Mic.lastOnset>140){Mic.lastOnset=now;Mic.armed=true;Mic.acc.fill(0);Mic.match=null}
-  Mic.slow=Mic.slow*.94+rms*.06;
-  const live=rms>s.floor*.5;
-  for(let i=0;i<12;i++) Mic.disp[i]=Mic.disp[i]*.6+(live?ch[i]:0)*.4;
-  const lv=Math.min(100,rms*600)+'%'; $('#hLvl').style.width=lv; $('#tLvl').style.width=lv;
+  if(!Mic.an) return; Mic.an.getFloatTimeDomainData(Mic.td);
+  const now=performance.now(), o=Mic.ear.process(Mic.td,now); Mic.rms=o.rms;
+  for(let i=0;i<12;i++) Mic.disp[i]=Mic.disp[i]*.6+(o.live?o.ch[i]:0)*.4;
+  const lv=Math.min(100,Math.sqrt(o.rms)*260)+'%'; $('#hLvl').style.width=lv; $('#tLvl').style.width=lv;
   drawChroma();
-  if(testOn&&fc%3===0) drawTuner(live?detectPitch(td,actx.sampleRate):null);
+  if(testOn&&fc%3===0) drawTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
   if(!Sess.running||Sess.paused||Sess.counting||Sess.adv!=='mic'||!Sess.cur) return;
-  let prog=0;
-  if(Mic.armed&&live&&now-Mic.lastOnset>35){
-    for(let i=0;i<12;i++) Mic.acc[i]=Mic.acc[i]*.75+ch[i]*.25;
-    const tgt=Sess.cands.find(c=>c.id===Sess.cur), sc=cos(Mic.acc,tgt.tpl); let ok=sc>=s.thr;
-    if(ok) for(const c of Sess.cands){ if(c.id===Sess.cur||cos(c.tpl,tgt.tpl)>.985) continue; if(cos(Mic.acc,c.tpl)>sc+.005){ok=false;break} }
-    if(ok&&s.all){const am=Math.max(...Mic.acc); if(tgt.pcs.some(pc=>Mic.acc[pc]<am*.18)) ok=false}
-    if(ok){ if(!Mic.match) Mic.match=now; prog=(now-Mic.match)/s.hold; if(prog>=1){advance('ok');return} } else { Mic.match=null; prog=Math.max(0,(sc-.4)/(s.thr-.4))*.5 }
-  }
-  $('#cMatch').style.width=Math.min(100,prog*100)+'%';
+  const r=Mic.judge.frame(o,now,st.sens), S=Ear.SENS[st.sens]||Ear.SENS.soft;
+  const chips=document.querySelectorAll('#cNotes span');
+  chips.forEach(el=>el.classList.toggle('on',r.sm[+el.dataset.pc]>=.2&&o.live));
+  if(r.pass){ Sess.lastPct=r.pct; advance('ok'); return }
+  if(r.fail){ const b=r.best; if(b){ const parts=[`Último intento ${b.pct}%`]; if(b.missing.length) parts.push('falta '+b.missing.map(nn).join(', ')); if(b.extra.length) parts.push('sobra '+b.extra.map(nn).join(', '));
+      if(r.blocked) parts.push('suena más a '+LIB[r.blocked.key].name); setPct(b.pct,S.thr,true); $('#cHelp').textContent=parts.join(' · ') } return }
+  if(r.live) setPct(Math.max(r.live.pct,r.best?r.best.pct:0),S.thr,false);
+  else if(!r.armed&&now-Sess.shownAt>400&&!o.live) setPct(null);
+}
+function flash(p){ const f=$('#cFlash'); f.textContent=p+'%'; f.hidden=false; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); clearTimeout(flash.t); flash.t=setTimeout(()=>f.hidden=true,700) }
+function setPct(p,thr,stay){
+  const box=$('#cPct'); if(p==null){ if(!box.dataset.stay){ box.hidden=true } return }
+  box.hidden=false; box.dataset.stay=stay?'1':''; $('#cPctN').textContent=p+'%';
+  const bar=$('#cMatch'); bar.style.width=Math.max(4,p)+'%'; bar.className=p>=thr?'ok':'';
 }
 function buildChroma(){ ['#chroma','#tChroma'].forEach(sel=>{ const box=$(sel); box.innerHTML=''; for(let i=0;i<12;i++) box.append(h('div',{class:'cb'},h('div',{class:'bar'},h('i')),h('small',{text:nn(i)}))) }) }
 function drawChroma(){ ['#chroma','#tChroma'].forEach(sel=>{ const box=$(sel); if(box.offsetParent===null) return; box.querySelectorAll('.cb i').forEach((b,i)=>b.style.height=Math.round(Mic.disp[i]*100)+'%') }) }
@@ -829,7 +940,7 @@ async function startSession(fromIds){
   if(!ids.length){toast('Ese mazo está vacío. Agrégale acordes en Mazos.');return}
   if(!ctx()){toast('Este navegador no tiene audio web.')}
   Object.assign(Sess,{running:true,paused:false,deckIds:ids,deckName:fromIds?'Más lentos':dk.name,order:st.order,end:st.end,adv:st.adv,queue:[],bag:[],seqPos:0,lastDrawn:null,done:0,skips:0,times:[],elapsed:0,resumeAt:performance.now(),cur:null,num:0,micFail:false,
-    cands:[...new Set(ids)].map(id=>({id,tpl:template(LIB[id]),pcs:pcsOf(LIB[id])}))});
+    cands:[...new Set(ids)].map(candOf)});
   $('#setup').hidden=true; $('#results').hidden=true; $('#session').hidden=false; $('#micBanner').hidden=true;
   $('#card').classList.remove('paused'); $('#bPause').textContent='Pausa';
   const mic=$('#hMic'); mic.className='mic'; $('#hMicTxt').textContent='—';
@@ -854,17 +965,17 @@ async function startSession(fromIds){
   try{ wake=await navigator.wakeLock?.request('screen') }catch(e){ wake=null }
   if(Mic.on) startLoop();
   if(prefs.countdown){ Sess.counting=true; await countdown(); Sess.counting=false; if(!Sess.running) return }
-  const t0=performance.now(); Sess.resumeAt=t0; Sess.shownAt=t0; Sess.elapsed=0; Mic.armed=false;
+  const t0=performance.now(); Sess.resumeAt=t0; Sess.shownAt=t0; Sess.elapsed=0; micTarget();
   if(Sess.adv==='pulse') pulseStart();
   clearInterval(clockT); clockT=setInterval(tickClock,200); tickClock();
 }
 function showCard(id){
   const c=LIB[id]; Sess.cur=id; Sess.shownAt=performance.now(); Sess.hinted=false; Sess.num++;
-  Mic.armed=false; Mic.match=null; $('#cMatch').style.width='0';
+  $('#cMatch').style.width='0'; $('#cPct').hidden=true; $('#cPct').dataset.stay=''; micTarget();
   const n=$('#cName'); n.textContent=c.name; n.className=c.name.length<=3?'s1':c.name.length<=6?'s2':'s3';
   const card=$('#card'); card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter');
   $('#cIdx').textContent=Sess.end==='count'?`${Sess.done+1} de ${st.n}`:`#${Sess.num}`;
-  const notes=$('#cNotes'); notes.innerHTML=''; const pcs=pcsOf(c); pcs.forEach((pc,i)=>notes.append(h('span',{class:i===0?'root':'',text:nn(pc)})));
+  const notes=$('#cNotes'); notes.innerHTML=''; const pcs=pcsOf(c); pcs.forEach((pc,i)=>notes.append(h('span',{class:i===0?'root':'','data-pc':String(pc),text:nn(pc)})));
   $('#cDiag').innerHTML=diagram(c.frets,{labels:true});
   clearTimeout(hintT);
   const showD=v=>{$('#cDiag').hidden=!v; $('#cReveal').hidden=v; notes.hidden=!v};
@@ -878,7 +989,8 @@ function renderNext(){ const id=Sess.queue[0]; if(!id) return; $('#nName').textC
 function advance(kind){
   if(!Sess.running||Sess.paused||Sess.counting) return;
   const now=performance.now();
-  if(kind==='ok'){ Sess.done++; if(Sess.adv!=='pulse') Sess.times.push({id:Sess.cur,ms:now-Sess.shownAt,hint:Sess.hinted});
+  if(kind==='ok'){ Sess.done++; const pct=Sess.adv==='mic'?Sess.lastPct:null; Sess.lastPct=null; if(Sess.adv!=='pulse') Sess.times.push({id:Sess.cur,ms:now-Sess.shownAt,hint:Sess.hinted,pct});
+    if(pct!=null) flash(pct);
     if(prefs.sound&&Sess.adv!=='pulse') chime();
     const card=$('#card'); card.classList.add('hit'); setTimeout(()=>card.classList.remove('hit'),260) }
   else Sess.skips++;
@@ -911,22 +1023,23 @@ function pulseTick(){
 function togglePause(){
   if(!Sess.running||Sess.counting) return;
   if(!Sess.paused){ Sess.paused=true; Sess.pausedAt=performance.now(); Sess.elapsed+=Sess.pausedAt-Sess.resumeAt; pulseStop(); $('#card').classList.add('paused'); $('#bPause').textContent='Seguir' }
-  else { const now=performance.now(); Sess.shownAt+=now-Sess.pausedAt; Sess.paused=false; Sess.resumeAt=now; Mic.armed=false; if(Sess.adv==='pulse') pulseStart(); $('#card').classList.remove('paused'); $('#bPause').textContent='Pausa' }
+  else { const now=performance.now(); Sess.shownAt+=now-Sess.pausedAt; Sess.paused=false; Sess.resumeAt=now; micTarget(); if(Sess.adv==='pulse') pulseStart(); $('#card').classList.remove('paused'); $('#bPause').textContent='Pausa' }
 }
 function finish(){
   if(!Sess.running) return;
   const dur=elapsed(); Sess.running=false; clearInterval(clockT); clearTimeout(hintT); pulseStop(); micStop(); cancelAnimationFrame(rafId);
   try{wake&&wake.release()}catch(e){} wake=null;
-  const per={}; Sess.times.forEach(t=>{(per[t.id]=per[t.id]||[0,0,Infinity]);per[t.id][0]+=t.ms;per[t.id][1]++;per[t.id][2]=Math.min(per[t.id][2],t.ms)});
+  const per={}; Sess.times.forEach(t=>{(per[t.id]=per[t.id]||[0,0,Infinity,0,0]);per[t.id][0]+=t.ms;per[t.id][1]++;per[t.id][2]=Math.min(per[t.id][2],t.ms);if(t.pct!=null){per[t.id][3]+=t.pct;per[t.id][4]++}});
+  const pcts=Sess.times.filter(t=>t.pct!=null).map(t=>t.pct), pctAvg=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
   const avg=Sess.times.length?Sess.times.reduce((a,b)=>a+b.ms,0)/Sess.times.length:null;
-  const rec={at:Date.now(),deck:Sess.deckName,order:Sess.order,end:Sess.end,adv:Sess.adv,done:Sess.done,skips:Sess.skips,dur,avg,per:Object.fromEntries(Object.entries(per).map(([k,v])=>[k,[v[0],v[1]]]))};
+  const rec={at:Date.now(),deck:Sess.deckName,order:Sess.order,end:Sess.end,adv:Sess.adv,done:Sess.done,skips:Sess.skips,dur,avg,pct:pctAvg,per:Object.fromEntries(Object.entries(per).map(([k,v])=>[k,[v[0],v[1],v[3],v[4]]]))};
   if(avg!=null&&Sess.done>=5){ const prev=history.filter(x=>x.deck===rec.deck&&x.adv===rec.adv&&x.avg!=null&&x.done>=5).map(x=>x.avg); if(prev.length&&avg<Math.min(...prev)) rec.record=true }
   if(Sess.done>0){ history.unshift(rec); history=history.slice(0,300); saveHist() }
   renderResults(rec,per);
 }
 function renderResults(rec,per){
   $('#session').hidden=true; const r=$('#results'); r.hidden=false; r.innerHTML='';
-  const rows=Object.entries(per).map(([id,v])=>({id,avg:v[0]/v[1],n:v[1],best:v[2]})).sort((a,b)=>b.avg-a.avg);
+  const rows=Object.entries(per).map(([id,v])=>({id,avg:v[0]/v[1],n:v[1],best:v[2],pct:v[4]?Math.round(v[3]/v[4]):null})).sort((a,b)=>b.avg-a.avg);
   const mx=rows.length?rows[0].avg:1;
   r.append(h('p',{class:'eyebrow',text:'Sesión terminada'}),h('h1',{class:'h1',text:rec.done?`${rec.done} cambios en ${fmtClock(rec.dur)}`:'No alcanzaste a completar cartas'}),
     rec.record?h('span',{class:'pill',text:'Nuevo récord en este mazo'}):null,
@@ -934,10 +1047,11 @@ function renderResults(rec,per){
       h('div',{class:'kpi'},h('span',{class:'k',text:'Cartas'}),h('b',{text:String(rec.done)})),
       h('div',{class:'kpi'},h('span',{class:'k',text:'Tiempo total'}),h('b',{text:fmtClock(rec.dur)})),
       h('div',{class:'kpi'},h('span',{class:'k',text:'Promedio por cambio'}),h('b',{text:fmtSec(rec.avg)})),
+      rec.pct!=null?h('div',{class:'kpi'},h('span',{class:'k',text:'Precisión media'}),h('b',{text:rec.pct+'%'})):null,
       h('div',{class:'kpi'},h('span',{class:'k',text:'Saltadas'}),h('b',{text:String(rec.skips)}))));
   if(rows.length){
     const box=h('div',{class:'panel',style:'margin-top:16px'},h('span',{class:'lab',text:'Promedio por acorde, de más lento a más rápido'}));
-    const bars=h('div',{class:'bars'}); rows.forEach(x=>bars.append(h('div',{class:'brow'},h('span',{class:'nm',text:LIB[x.id]?.name||x.id}),h('span',{class:'tr'},h('i',{style:`width:${Math.max(4,x.avg/mx*100)}%`})),h('span',{class:'v',text:fmtSec(x.avg)}))));
+    const bars=h('div',{class:'bars'}); rows.forEach(x=>bars.append(h('div',{class:'brow wide'},h('span',{class:'nm',text:LIB[x.id]?.name||x.id}),h('span',{class:'tr'},h('i',{style:`width:${Math.max(4,x.avg/mx*100)}%`})),h('span',{class:'v',text:fmtSec(x.avg)+(x.pct!=null?' · '+x.pct+'%':'')}))));
     box.append(bars); r.append(box);
   } else if(rec.adv==='pulse') r.append(h('p',{class:'sub',text:'En modo pulso no se miden tiempos por acorde: el metrónomo marca el cambio.'}));
   const slow=rows.slice(0,4).map(x=>x.id);
@@ -1100,6 +1214,7 @@ function filterChips(box,cur,set){
 function renderPicker(){
   filterChips($('#pickFilters'),pickG,g=>{pickG=g;renderPicker()});
   const box=$('#pickTiles'); box.innerHTML=''; const grid=h('div',{class:'tiles'});
+  grid.append(h('button',{class:'tile newtile',onclick:()=>{location.hash='acordes';setTimeout(()=>edOpen(null),60)}},h('b',{text:'+'}),h('span',{class:'fr',text:'Crear acorde'})));
   filterLib(pickQ,pickG).forEach(c=>grid.append(tile(c,()=>{const d=decks.find(x=>x.id===selDeck); if(!d){toast('Primero crea un mazo');return} d.chords.push(c.id); saveDecks(); renderEditor(); const l=document.querySelector('.deckbtn[aria-current="true"] .c'); if(l) l.textContent=d.chords.length; toast(`${c.name} agregado`)})));
   if(!grid.children.length) box.append(h('p',{class:'empty',text:'Ningún acorde coincide.'})); else box.append(grid);
 }
@@ -1130,7 +1245,6 @@ function renderLib(){
   GROUPS.forEach(g=>{ const items=list.filter(c=>c.group===g); if(!items.length) return;
     const grid=h('div',{class:'tiles'}); items.forEach(c=>grid.append(tile(c,()=>openDetail(c.id))));
     box.append(h('h3',{class:'gtitle',text:g}),grid) });
-  ccPreview();
 }
 function openDetail(id){
   const c=LIB[id], box=$('#chordDetail'); box.hidden=false; box.innerHTML='';
@@ -1141,29 +1255,108 @@ function openDetail(id){
     h('p',{class:'mono',style:'margin:0',text:fretStr(c.frets)}),
     c.note?h('p',{class:'hint',style:'margin:0',text:c.note}):null,
     h('div',{class:'row'},h('button',{class:'btn',onclick:()=>strum(c)},'Escuchar'),sel,h('button',{class:'btn primary',onclick:()=>{const d=decks.find(x=>x.id===sel.value); if(d){d.chords.push(c.id);saveDecks();toast(`${c.name} agregado a ${d.name}`)}}},'Agregar al mazo')),
+    h('div',{class:'row'},c.custom?h('button',{class:'btn',onclick:()=>{box.hidden=true;edOpen(c)}},'Editar'):null,h('button',{class:'btn ghost',onclick:()=>{box.hidden=true;edOpen(c,{asVariant:true})}},'Crear variante')),
     c.custom?h('div',{},h('button',{class:'btn ghost danger',onclick:()=>{custom=custom.filter(x=>x.id!==c.id);saveCustom();decks.forEach(d=>d.chords=d.chords.filter(x=>x!==c.id));saveDecks();buildLib();box.hidden=true;renderLib();toast('Acorde eliminado')}},'Eliminar este acorde')):null,
     h('button',{class:'linkbtn',style:'align-self:flex-start',onclick:()=>{box.hidden=true}},'Cerrar'));
   box.append(h('div',{class:'detail'},h('div',{class:'diag',html:diagram(c.frets,{labels:true})}),right));
   box.scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('#libSearch').addEventListener('input',e=>{libQ=e.target.value;renderLib()});
-function ccPreview(){
-  const f=parseFrets($('#ccFrets').value);
-  $('#ccPrev').innerHTML=diagram(f||[0,0,0,0,0,0],{labels:!!f});
-  $('#ccPrev').style.opacity=f?'1':'.35';
-  $('#ccNotes').textContent=f?pcsOf({frets:f}).map(p=>nn(p)).join(' '):'';
+/* ---------- editor de acordes ---------- */
+const QUAL=[['',[0,4,7]],['m',[0,3,7]],['7',[0,4,7,10]],['maj7',[0,4,7,11]],['m7',[0,3,7,10]],['6',[0,4,7,9]],['m6',[0,3,7,9]],['sus2',[0,2,7]],['sus4',[0,5,7]],
+  ['add9',[0,2,4,7]],['m(add9)',[0,2,3,7]],['7sus4',[0,5,7,10]],['9',[0,2,4,7,10]],['m9',[0,2,3,7,10]],['maj9',[0,2,4,7,11]],['m11',[0,3,5,7,10]],['m11',[0,2,3,5,7,10]],
+  ['6/9',[0,2,4,7,9]],['dim',[0,3,6]],['dim7',[0,3,6,9]],['aug',[0,4,8]],['m7b5',[0,3,6,10]],['5',[0,7]],['maj7#11',[0,4,6,7,11]],['7#9',[0,3,4,7,10]]];
+function guessName(fr){
+  const ns=fr.map((f,i)=>f<0?null:OPEN[i]+f).filter(v=>v!=null); if(ns.length<2) return null;
+  const set=[...new Set(ns.map(m=>m%12))], bass=ns[0]%12; let best=null;
+  for(const r of set){ const iv=new Set(set.map(p=>(p-r+12)%12));
+    QUAL.forEach(([q,f],qi)=>{ const fs=new Set(f); let sc=0;
+      if(iv.size===fs.size&&[...iv].every(x=>fs.has(x))) sc=10; else if(fs.has(7)&&!iv.has(7)&&iv.size===fs.size-1&&[...iv].every(x=>fs.has(x))) sc=7; else return;
+      if(r===bass) sc+=3; sc-=qi*.01;
+      if(!best||sc>best.sc) best={sc,name:NOTE[r]+q+(r!==bass?'/'+NOTE[bass]:'')} }) }
+  return best&&best.name;
 }
-$('#ccFrets').addEventListener('input',ccPreview);
+const Ed={frets:[0,0,0,0,0,0],base:1,editing:null,drag:null,nameTouched:false};
+function edAutoBase(fr){ const p=fr.filter(f=>f>0); if(!p.length) return 1; const mx=Math.max(...p),mn=Math.min(...p); return mx<=5?1:Math.max(1,mn) }
+function edRender(syncText=true){
+  const fr=Ed.frets, base=Ed.base, lefty=prefs.hand==='left';
+  const L=52,T=46,SX=46,FY=56,W=L+SX*5+30,H=T+5*FY+30;
+  const X=i=>L+(lefty?5-i:i)*SX;
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Editor de digitación">`;
+  for(let j=0;j<=5;j++) s+=`<line x1="${L}" x2="${L+SX*5}" y1="${T+j*FY}" y2="${T+j*FY}" stroke="var(--muted)" stroke-width="${j===0&&base===1?6:1.2}"/>`;
+  for(let j=0;j<5;j++) s+=`<text x="${L-24}" y="${T+j*FY+FY/2+5}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="13" fill="var(--muted)">${base+j}</text>`;
+  [3,5,7,9,15,17].forEach(f=>{const j=f-base;if(j>=0&&j<5)s+=`<circle cx="${L+SX*2.5}" cy="${T+j*FY+FY/2}" r="5" fill="var(--muted)" opacity=".35"/>`});
+  if(12-base>=0&&12-base<5){const y=T+(12-base)*FY+FY/2;s+=`<circle cx="${L+SX*1.5}" cy="${y}" r="5" fill="var(--muted)" opacity=".35"/><circle cx="${L+SX*3.5}" cy="${y}" r="5" fill="var(--muted)" opacity=".35"/>`}
+  for(let i=0;i<6;i++) s+=`<line x1="${X(i)}" x2="${X(i)}" y1="${T}" y2="${T+5*FY}" stroke="var(--fg)" stroke-opacity=".75" stroke-width="${2.6-i*.32}"/>`;
+  fr.forEach((f,i)=>{const x=X(i);
+    if(f<0) s+=`<text x="${x}" y="${T-14}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="20" font-weight="700" fill="var(--bad)">×</text>`;
+    else if(f===0) s+=`<circle cx="${x}" cy="${T-20}" r="9" fill="none" stroke="var(--fg)" stroke-width="2"/>`;
+    else if(f>=base&&f<base+5){const y=T+(f-base+.5)*FY;s+=`<circle cx="${x}" cy="${y}" r="17" fill="var(--accent)"/><text x="${x}" y="${y+5}" text-anchor="middle" font-family="Figtree,system-ui,sans-serif" font-size="13" font-weight="700" fill="var(--accent-ink)">${nn(OPEN[i]+f)}</text>`}
+    else s+=`<text x="${x}" y="${f<base?T+12:T+5*FY-6}" text-anchor="middle" font-size="16" fill="var(--accent)">${f<base?'▲':'▼'}</text>`;
+    s+=`<text x="${x}" y="${H-6}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="var(--muted)">${'EADGBe'[i]}</text>`;
+  });
+  $('#ccBoard').innerHTML=s+'</svg>'; $('#ccBase').textContent=base;
+  if(syncText) $('#ccFrets').value=fretStr(fr);
+  const live=fr.some(f=>f>=0), chips=$('#ccChips'); chips.innerHTML='';
+  if(live) pcsOf({frets:fr}).forEach((pc,i)=>chips.append(h('span',{class:i===0?'root':'',text:nn(pc)})));
+  const g=guessName(fr), gb=$('#ccGuess'); gb.innerHTML='';
+  if(g){ gb.append('Suena como ',h('b',{text:g}),' ');
+    if(!Ed.nameTouched) $('#ccName').value=g; else gb.append(h('button',{class:'linkbtn',onclick:()=>{$('#ccName').value=g;Ed.nameTouched=false}},'Usar este nombre')) }
+  else gb.textContent=live?'No reconozco este acorde. Ponle el nombre que quieras.':'';
+}
+function edPoint(ev){
+  const svg=$('#ccBoard svg'); const r=svg.getBoundingClientRect(), vb=svg.viewBox.baseVal;
+  const x=(ev.clientX-r.left)*vb.width/r.width, y=(ev.clientY-r.top)*vb.height/r.height;
+  const L=52,T=46,SX=46,FY=56; let col=Math.round((x-L)/SX); col=Math.max(0,Math.min(5,col));
+  const si=prefs.hand==='left'?5-col:col; const row=Math.floor((y-T)/FY);
+  return {si,row,top:y<T-2};
+}
+function edSet(si,f){ Ed.frets[si]=f; edRender() }
+$('#ccBoard').addEventListener('pointerdown',ev=>{
+  if(!ev.target.closest('svg')) return; ev.preventDefault(); const p=edPoint(ev);
+  if(p.top||p.row<0){ edSet(p.si,Ed.frets[p.si]===0?-1:0); return }
+  const f=Ed.base+Math.min(4,p.row);
+  if(Ed.frets[p.si]===f){ Ed.drag={si:p.si,moved:false,f}; } else { edSet(p.si,f); Ed.drag={si:p.si,moved:true,f} }
+  try{ $('#ccBoard').setPointerCapture(ev.pointerId) }catch(e){}
+});
+$('#ccBoard').addEventListener('pointermove',ev=>{
+  if(!Ed.drag) return; const p=edPoint(ev); if(p.row<0||p.top) return;
+  const f=Ed.base+Math.min(4,p.row);
+  if(p.si!==Ed.drag.si){ Ed.frets[Ed.drag.si]=0; Ed.drag.si=p.si; Ed.drag.moved=true; edSet(p.si,f) }
+  else if(f!==Ed.frets[p.si]){ Ed.drag.moved=true; edSet(p.si,f) }
+});
+const edUp=()=>{ if(Ed.drag&&!Ed.drag.moved) edSet(Ed.drag.si,0); Ed.drag=null };
+$('#ccBoard').addEventListener('pointerup',edUp); $('#ccBoard').addEventListener('pointercancel',()=>{Ed.drag=null});
+$('#ccBaseDn').addEventListener('click',()=>{ Ed.base=Math.max(1,Ed.base-1); edRender() });
+$('#ccBaseUp').addEventListener('click',()=>{ Ed.base=Math.min(17,Ed.base+1); edRender() });
+$('#ccFrets').addEventListener('input',e=>{ const f=parseFrets(e.target.value); if(f){ Ed.frets=f; Ed.base=edAutoBase(f); edRender(false) } });
+$('#ccName').addEventListener('input',()=>{ Ed.nameTouched=true; edRender() });
+$('#ccPlay').addEventListener('click',()=>{ if(Ed.frets.some(f=>f>=0)) strum({frets:Ed.frets}) });
+$('#ccClear').addEventListener('click',()=>edLoad(null));
+$('#ccCancel').addEventListener('click',()=>edLoad(null));
+function edLoad(c,{asVariant=false}={}){
+  Ed.editing=c&&c.custom&&!asVariant?c.id:null;
+  Ed.frets=c?c.frets.slice():[0,0,0,0,0,0]; Ed.base=edAutoBase(Ed.frets);
+  $('#ccName').value=c?(asVariant?c.name+' (variante)':c.name):''; Ed.nameTouched=!!c;
+  $('#ccErr').hidden=true; $('#ccCancel').hidden=!Ed.editing;
+  $('#ccSave').textContent=Ed.editing?'Guardar cambios':'Guardar acorde';
+  $('#ccSummary').textContent=Ed.editing?`Editar ${c.name}`:'Crear acorde';
+  edRender();
+}
+function edOpen(c,opts){ edLoad(c,opts); const box=$('#customBox'); box.open=true; box.scrollIntoView({behavior:'smooth',block:'start'}) }
 $('#ccSave').addEventListener('click',()=>{
-  const name=$('#ccName').value.trim(), f=parseFrets($('#ccFrets').value), err=$('#ccErr'); err.hidden=true;
-  let msg=''; if(!name) msg='Ponle un nombre al acorde.'; else if(Object.values(LIB).some(c=>norm(c.name)===norm(name))) msg='Ya existe un acorde con ese nombre. Usa otro, por ejemplo agregando la variante entre paréntesis.'; else if(!f) msg='Necesito 6 valores, uno por cuerda, con x para apagada. Ejemplo: x 3 2 0 1 0.';
+  const name=$('#ccName').value.trim(), f=Ed.frets, err=$('#ccErr'); err.hidden=true;
+  let msg=''; if(!f.some(x=>x>=0)) msg='Pon al menos dos cuerdas al aire o con dedo.'; else if(!name) msg='Ponle un nombre al acorde.';
+  else if(Object.values(LIB).some(c=>c.id!==Ed.editing&&norm(c.name)===norm(name))) msg='Ya existe un acorde con ese nombre. Agrega la variante entre paréntesis, por ejemplo «C (3.er traste)».';
   if(msg){err.hidden=false;err.textContent=msg;return}
-  const c={id:'u-'+uid(),name,frets:f}; custom.push(c); saveCustom(); buildLib();
-  $('#ccName').value=''; $('#ccFrets').value=''; libG='Propios'; renderLib(); toast(`${name} guardado en Propios`);
+  if(Ed.editing){ const c=custom.find(x=>x.id===Ed.editing); if(c){c.name=name;c.frets=f.slice()} }
+  else custom.push({id:'u-'+uid(),name,frets:f.slice()});
+  saveCustom(); buildLib(); toast(Ed.editing?`${name} actualizado`:`${name} guardado en Propios`);
+  edLoad(null); libG='Propios'; renderLib();
 });
 
 /* ---------- inicio ---------- */
-buildLib(); applyPrefs(); buildChroma();
+buildLib(); applyPrefs(); buildChroma(); edLoad(null);
 showView(location.hash.slice(1)||'practicar');
 })();
 </script>
