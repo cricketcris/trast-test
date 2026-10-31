@@ -136,8 +136,10 @@ textarea{font-family:var(--mono);font-size:.82rem;min-height:110px;resize:vertic
 .pct{width:min(280px,86%);display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 10px;margin-top:auto}
 .pct b{font-family:var(--mono);font-size:1.05rem;text-align:right;font-variant-numeric:tabular-nums}
 .matchbar{grid-column:1/-1;height:8px;border-radius:4px;background:color-mix(in oklab,var(--fg) 10%,transparent);overflow:hidden}
-.matchbar i{display:block;height:100%;width:0;background:var(--warn);transition:width .1s linear}
-.matchbar i.ok{background:var(--accent)}
+.matchbar{position:relative}
+.matchbar i{display:block;height:100%;width:0;background:color-mix(in oklab,var(--accent) 55%,var(--surface-2));transition:width .1s linear}
+.matchbar i.ok{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.matchbar::after{content:"";position:absolute;top:-3px;bottom:-3px;left:var(--thr,76%);width:2px;border-radius:1px;background:var(--fg);opacity:.55}
 .notes span.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .flash{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%);color:var(--accent);pointer-events:none;z-index:3;text-shadow:0 2px 18px var(--surface)}
 .flash.go{animation:flashUp .7s ease-out forwards}
@@ -300,10 +302,12 @@ details summary{cursor:pointer;font-weight:600}
 .stagebg{display:none}
 #session.stage-on{--bg:#0d0a09;--surface:#1a1412;--surface-2:#251c18;--line:#3a2d26;--fg:#f3eadb;--muted:#a99684;--accent:var(--acc-d,#62ccb7);--accent-ink:var(--ink-d,#14100d);color:var(--fg)}
 #session.stage-on .stagebg{display:block;position:fixed;inset:0;z-index:0;pointer-events:none;background:#0d0a09;overflow:hidden}
-.stagebg i{position:absolute;width:75vmax;height:75vmax;border-radius:50%;filter:blur(40px);opacity:calc(.16 + var(--heat)*.5);animation:sway 9s ease-in-out infinite alternate}
+.stagebg i{position:absolute;width:75vmax;height:75vmax;border-radius:50%;filter:blur(36px);opacity:calc(.32 + var(--heat)*.6);animation:sway 9s ease-in-out infinite alternate}
 .stagebg i:nth-child(1){left:-30vmax;top:-35vmax;background:radial-gradient(circle,var(--accent),transparent 62%)}
 .stagebg i:nth-child(2){right:-32vmax;top:-30vmax;background:radial-gradient(circle,#ff8a5c,transparent 62%);animation-delay:-3s;animation-duration:11s}
 .stagebg i:nth-child(3){left:10vmax;bottom:-50vmax;background:radial-gradient(circle,#b38cff,transparent 62%);animation-delay:-6s;animation-duration:13s}
+#session.stage-on.beat .stagebg{animation:flashbg .45s ease-out}
+@keyframes flashbg{0%{filter:brightness(2.1) saturate(1.4)}100%{filter:none}}
 @keyframes sway{from{transform:translate(0,0) scale(1)}to{transform:translate(6vmax,4vmax) scale(1.12)}}
 #session.fever .stagebg i{animation-duration:2.4s;opacity:.75}
 #session.fever .stagebg{animation:hue 4s linear infinite}
@@ -972,7 +976,7 @@ function micFrame(fc){
 function setPct(p,thr,stay){
   const box=$('#cPct'); if(p==null){ if(!box.dataset.stay){ box.hidden=true } return }
   box.hidden=false; box.dataset.stay=stay?'1':''; $('#cPctN').textContent=p+'%';
-  const bar=$('#cMatch'); bar.style.width=p+'%'; bar.className=p>=thr?'ok':'';
+  const bar=$('#cMatch'); bar.style.width=p+'%'; bar.className=p>=thr?'ok':''; bar.parentElement.style.setProperty('--thr',thr+'%');
 }
 function buildChroma(){ ['#chroma','#tChroma'].forEach(sel=>{ const box=$(sel); box.innerHTML=''; for(let i=0;i<12;i++) box.append(h('div',{class:'cb'},h('div',{class:'bar'},h('i')),h('small',{text:nn(i)}))) }) }
 function drawChroma(){ ['#chroma','#tChroma'].forEach(sel=>{ const box=$(sel); if(box.offsetParent===null) return; box.querySelectorAll('.cb i').forEach((b,i)=>b.style.height=Math.round(Mic.disp[i]*100)+'%') }) }
@@ -1196,7 +1200,7 @@ function gameHud(){
   $('#hScore').textContent=fmtN(Sess.score||0);
   $('#eFill').style.width=Math.round(Math.min(1,Sess.energy||0)*100)+'%';
   $('#eTxt').textContent=Sess.fever?'¡Fiebre! Puntos ×2':'Energía';
-  const heat=Math.min(1,(Sess.combo||0)/20)*.7+Math.min(1,Sess.energy||0)*.3;
+  const heat=Math.min(1,(Sess.combo||0)/10)*.7+Math.min(1,Sess.energy||0)*.3;
   $('#session').style.setProperty('--heat',heat.toFixed(3));
   const c=$('#cCombo'); if((Sess.combo||0)>=2){ c.hidden=false; $('#cComboN').textContent=Sess.combo; $('#cComboX').textContent='combo ×'+multOf(Sess.combo) } else c.hidden=true;
 }
@@ -1219,6 +1223,7 @@ function gameHit(ms,pct){
   Sess.energy=Math.max(0,Math.min(1,Sess.energy+GRADES[g].en));
   if(!Sess.fever&&Sess.energy>=1){ Sess.fever=true; $('#session').classList.add('fever'); if(prefs.sound) feverSound() }
   showGrade(g,pts,pct); gradeSound(g); burst(g);
+  if(g!=='late'){ const ss=$('#session'); ss.classList.remove('beat'); void ss.offsetWidth; ss.classList.add('beat') }
   const c=$('#cCombo'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
   gameHud();
 }
