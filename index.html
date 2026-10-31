@@ -530,7 +530,7 @@ details summary{cursor:pointer;font-weight:600}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
 /* EAR-START */
-/* Oído: FFT propia, picos interpolados, supresión de armónicos y juez de acordes con bloqueo tras cada carta. */
+/* Oído v3: FFT propia, picos interpolados con supresión de armónicos, bajo, y juez continuo. */
 const Ear=(()=>{
   const NFFT=8192;
   function makeFFT(n){
@@ -548,7 +548,7 @@ const Ear=(()=>{
     const fft=makeFFT(NFFT),win=new Float32Array(NFFT),re=new Float32Array(NFFT),im=new Float32Array(NFFT);
     for(let i=0;i<NFFT;i++) win[i]=.5-.5*Math.cos(2*Math.PI*i/(NFFT-1));
     const kMin=Math.max(2,Math.floor(75*NFFT/sr)),kMax=Math.min(NFFT/2-2,Math.ceil(2100*NFFT/sr));
-    const mag=new Float32Array(kMax+2),prev=new Float32Array(kMax+2),ch=new Float32Array(12);
+    const mag=new Float32Array(kMax+2),prev=new Float32Array(kMax+2),ch=new Float32Array(12),prevCh=new Float32Array(12);
     let noise=-1,rmsAvg=0,lastOnset=-1e9;
     function process(td,now){
       const n=td.length,off=Math.max(0,n-NFFT);
@@ -565,12 +565,17 @@ const Ear=(()=>{
       const rise=rms/(rmsAvg+1e-9); rmsAvg=rmsAvg*.8+rms*.2;
       let onset=false;
       if(live&&now-lastOnset>130&&(rise>1.32||(flux>.3&&rise>1.05))){onset=true;lastOnset=now}
+      let bandE=0;for(let k=kMin;k<=kMax;k++) bandE+=mag[k]*mag[k];
       // picos
       const peaks=[];const floor=mx*.015;
       for(let k=kMin;k<=kMax;k++){const b=mag[k];if(b>floor&&b>mag[k-1]&&b>=mag[k+1]){
         const la=Math.log(mag[k-1]+1e-12),lb=Math.log(b+1e-12),lc=Math.log(mag[k+1]+1e-12),den=la-2*lb+lc;
         const p=den?.5*(la-lc)/den:0;peaks.push({f:(k+p)*sr/NFFT,a:b})}}
-      peaks.sort((x,y)=>y.a-x.a);const top=peaks.slice(0,36).sort((x,y)=>x.f-y.f);
+      peaks.sort((x,y)=>y.a-x.a);let prom=0,np=0;
+      for(const q of peaks.slice(0,12)){const k=Math.round(q.f*NFFT/sr);const nb=[];for(let d=4;d<=14;d++){if(k-d>=kMin)nb.push(mag[k-d]);if(k+d<=kMax)nb.push(mag[k+d])}
+        nb.sort((x,y)=>x-y);const med=nb[nb.length>>1]||1e-9;np++;if(q.a>med*8)prom++}
+      const tonality=np?prom/np:0;
+      const top=peaks.slice(0,36).sort((x,y)=>x.f-y.f);
       ch.fill(0);
       for(let j=0;j<top.length;j++){const pj=top[j];let w=1;
         for(let i=0;i<j;i++){const r=pj.f/top[i].f,h=Math.round(r);
@@ -581,7 +586,9 @@ const Ear=(()=>{
       let bass=-1;{let ma=0;for(const q of top) if(q.a>ma) ma=q.a;for(const q of top){if(q.f>330) break;if(q.a>=ma*.22){const m=69+12*Math.log2(q.f/440);bass=((Math.round(m)%12)+12)%12;break}}}
       let cm=0;for(let i=0;i<12;i++) if(ch[i]>cm) cm=ch[i];
       const out=new Float32Array(12);if(cm>0) for(let i=0;i<12;i++) out[i]=ch[i]/cm;
-      return {rms,live,onset,flux,noise,ch:out,bass};
+      let d=0,x2=0,y2=0,npc=0;for(let i=0;i<12;i++){d+=out[i]*prevCh[i];x2+=out[i]*out[i];y2+=prevCh[i]*prevCh[i];if(out[i]>=.2)npc++}
+      const stab=x2&&y2?d/Math.sqrt(x2*y2):0;prevCh.set(out);
+      return {rms,live,onset,flux,noise,ch:out,bass,stab,npc};
     }
     return {process,sampleRate:sr};
   }
@@ -589,36 +596,50 @@ const Ear=(()=>{
     const E=target.pcs,set=new Set(E);
     let tot=0,good=0;
     for(let i=0;i<12;i++){tot+=c[i];if(set.has(i))good+=c[i]}
-    const missing=E.filter(pc=>c[pc]<.2), cov=(E.length-missing.length)/E.length, purity=tot?good/tot:0;
+    // la quinta es opcional (suena como armónico de la fundamental); tercera y séptima definen el acorde y se exigen más
+    const r=target.root!=null?target.root:target.bass, iv=pc=>((pc-r)%12+12)%12;
+    const need=pc=>{const k=r==null?-1:iv(pc);return (k===3||k===4||k===10||k===11)?.28:.2};
+    const opt=pc=>r!=null&&iv(pc)===7&&E.length>2;
+    const missing=E.filter(pc=>c[pc]<need(pc)&&!opt(pc)), counted=E.filter(pc=>!(opt(pc)&&c[pc]<.2)).length, cov=(counted-missing.length)/counted, purity=tot?good/tot:0;
     const extra=[];for(let i=0;i<12;i++) if(!set.has(i)&&c[i]>=.45) extra.push(i);
     const bm=(bv&&target.bass!=null)?Math.min(1,bv[target.bass]*1.25):.6;
-    return {pct:Math.round(100*(.55*cov*cov+.33*purity+.12*bm)),missing,extra,cov,n:E.length,bassOk:bm>.5};
+    return {pct:Math.round(100*(.55*cov*cov+.33*purity+.12*bm)),missing,extra,cov,purity,n:counted,bassOk:bm>.5};
   }
-  const SENS={soft:{thr:68,hold:60,margin:5,miss:1},normal:{thr:76,hold:90,margin:4,miss:1},strict:{thr:82,hold:130,margin:3,miss:0}};
-  const allowMiss=(S,s)=>s.missing.length===0||(s.n>=4&&s.missing.length<=S.miss&&!(S.miss===1&&s.n===4&&S!==SENS.soft));
+  const SENS={soft:{thr:70,hold:120,margin:5,miss:1},normal:{thr:76,hold:170,margin:4,miss:0},strict:{thr:80,hold:200,margin:3,miss:0}};
+  const allowMiss=(S,s)=>s.missing.length===0||(s.n>=5&&s.missing.length<=S.miss);
+  /* Juez continuo: se abre cuando hay un ataque o cuando las notas del acorde pedido suben respecto de cómo sonaba al aparecer la carta.
+     Desde ahí evalúa cada cuadro sin expirar: pasa cuando en los últimos ~400 ms acumula suficiente tiempo de coincidencia. */
   function judge(){
-    const sm=new Float32Array(12),bv=new Float32Array(12);let t=null,cands=[],shown=0,armed=null,hold=0,best=null,ref=new Float32Array(12),last=0,failed=false,settled=false;
-    const cosv=(a,b)=>{let d=0,x=0,y=0;for(let i=0;i<12;i++){d+=a[i]*b[i];x+=a[i]*a[i];y+=b[i]*b[i]}return x&&y?d/Math.sqrt(x*y):0};
+    const sm=new Float32Array(12),bv=new Float32Array(12);
+    let t=null,cands=[],shown=0,gate=false,ref=new Float32Array(12),hist=[],best=null,last=0,miss=new Float32Array(12),settleAt=0;
     return {
-      setTarget(target,cs,now){t=target;cands=cs.filter(c=>c.key!==target.key);shown=now;armed=null;hold=0;best=null;failed=false;ref.set(sm)},
+      setTarget(target,cs,now){t=target;cands=cs.filter(c=>c.key!==target.key);shown=now;gate=false;settleAt=0;ref.set(sm);hist=[];best=null;miss.fill(0)},
       frame(o,now,sensName){
         const S=SENS[sensName]||SENS.soft,dt=last?Math.min(100,now-last):16;last=now;
         if(o.live){for(let i=0;i<12;i++){sm[i]=sm[i]*.55+o.ch[i]*.45;bv[i]=bv[i]*.6+(o.bass===i?.4:0)}}else for(let i=0;i<12;i++){sm[i]*=.85;bv[i]*=.85}
         if(!t) return {sm};
-        if(o.onset&&now-shown>=180){armed=now;hold=0;best=null;failed=false;settled=false}
-        if(!armed&&now-shown>650&&o.live&&cosv(sm,ref)<.82){armed=now;hold=0;best=null;failed=false;settled=true}
-        if(armed&&!settled&&now-armed>=110){settled=true;sm.set(o.ch);bv.fill(0);if(o.bass>=0)bv[o.bass]=1}
-        if(!armed||!o.live||!settled) return {sm,armed:!!armed,best};
+        if(!gate&&o.live&&now-shown>=150){
+          let fresh=0;for(const pc of t.pcs) if(o.ch[pc]>=.3&&o.ch[pc]>ref[pc]*1.5+.1) fresh++;
+          if(o.onset||fresh>=Math.ceil(t.pcs.length/2)){gate=true;settleAt=now+130}
+        }
+        // cada ataque nuevo reinicia la espera: la ventana de análisis aún contiene lo que sonaba antes
+        if(gate&&o.onset&&now>=settleAt) settleAt=now+130;
+        if(gate&&settleAt&&now>=settleAt){settleAt=0;sm.set(o.ch);bv.fill(0);if(o.bass>=0)bv[o.bass]=1}
+        if(!gate||settleAt) return {sm,gate};
+        hist=hist.filter(h=>now-h.t<400);
+        if(!o.live){hist.push({t:now,ok:false,dt});return {sm,gate:true,quiet:true,best}}
         const s=score(sm,t,bv);
-        let blocked=null;for(const c of cands){const cs=score(sm,c,bv).pct;if(cs>=s.pct+S.margin){blocked=c;break}}
+        let blocked=null;for(const c of cands){const cs=score(sm,c,bv).pct;if(cs>=s.pct+S.margin&&cs>=S.thr-4){blocked=c;break}}
+        let bassBad=false;if(t.bass!=null){let bm=0,bi=-1;for(let i=0;i<12;i++) if(bv[i]>bm){bm=bv[i];bi=i}if(bm>.6&&bi!==t.bass&&!t.pcs.includes(bi)) bassBad=true;if(bm>.6&&bi!==t.bass&&cands.some(c=>c.bass===bi&&score(sm,c,bv).pct>=s.pct-3)) bassBad=true}
+        const minPur=.45+Math.max(0,s.n-3)*.04, ok=s.pct>=S.thr&&s.purity>=minPur&&!blocked&&!bassBad&&allowMiss(S,s);
+        hist.push({t:now,ok,dt,pct:s.pct});
         if(!best||s.pct>best.pct) best=s;
-        const ok=s.pct>=S.thr&&!blocked&&allowMiss(S,s);
-        hold=ok?hold+dt:0;
-        if(hold>=S.hold){const r={sm,bv,pass:true,pct:Math.max(s.pct,best.pct),score:s};armed=null;return r}
-        if(now-armed>1600&&!failed){failed=true;const r={sm,fail:true,best,blocked};armed=null;ref.set(sm);return r}
-        return {sm,live:s,blocked,armed:true,best};
+        for(let i=0;i<12;i++) miss[i]*=.97; s.missing.forEach(pc=>miss[pc]+=.03);
+        let okT=0;for(const h of hist) if(h.ok) okT+=h.dt;
+        if(okT>=S.hold){const ps=hist.filter(h=>h.ok).map(h=>h.pct).sort((a,b)=>a-b);gate=false;hist=[];return {sm,pass:true,pct:ps[ps.length>>1],score:s}}
+        return {sm,gate:true,live:s,blocked,best,miss};
       },
-      reset(){sm.fill(0);t=null;armed=null}
+      reset(){t=null;sm.fill(0)}
     };
   }
   return {create,judge,score,SENS,NFFT};
@@ -680,7 +701,7 @@ const FIRST_DECK_IDS=['noh-full','noh-verse','noh-chorus','noh-mac','basic','sev
 const ACCENTS={nacar:{n:'Nácar',d:'#62ccb7',l:'#13806e'},ambar:{n:'Ámbar',d:'#f0b45a',l:'#94570a'},coral:{n:'Coral',d:'#ff8a70',l:'#b23d22'},lila:{n:'Lila',d:'#b9a0ff',l:'#6440c8'},lima:{n:'Lima',d:'#b8dd5c',l:'#4c7400'},cielo:{n:'Cielo',d:'#7cc4ff',l:'#1462aa'}};
 const WOODS={rosewood:'#7a3f2c',ebano:'#0e0c0b',koa:'#a7652c',arce:'#d8b47a'};
 const DEFAULT_PREFS={theme:'system',accent:'nacar',wood:'rosewood',hand:'right',notes:'en',size:'normal',countdown:true,sound:true};
-const DEFAULT_SET={deck:'noh-mac',order:'random',end:'none',n:20,secs:60,adv:'mic',bpm:70,beats:4,click:true,hint:'always',sens:'soft',showNext:true};
+const DEFAULT_SET={deck:'noh-mac',order:'random',end:'none',n:20,secs:60,adv:'mic',bpm:70,beats:4,click:true,hint:'always',sens:'normal',showNext:true};
 
 /* ---------- almacenamiento ---------- */
 const S={get(k,d){try{const v=localStorage.getItem('trastero.'+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -707,6 +728,7 @@ function applyPrefs(){
 let st=Object.assign({},DEFAULT_SET,S.get('settings',{}));
 let history=S.get('history',[]);
 if(!S.get('mig3',false)){ decks=decks.filter(d=>!['noh-full','noh-verse','noh-chorus'].includes(d.id)); if(!decks.find(d=>d.id===st.deck)) st.deck='noh-mac'; st.sens='soft'; S.set('decks',decks); S.set('settings',st); S.set('mig3',true) }
+if(!S.get('mig4',false)){ st.sens='normal'; S.set('settings',st); S.set('mig4',true) }
 const saveDecks=()=>S.set('decks',decks), saveSet=()=>S.set('settings',st), saveCustom=()=>S.set('custom',custom), saveHist=()=>S.set('history',history);
 
 /* ---------- biblioteca ---------- */
@@ -856,9 +878,13 @@ async function micStart(){
   Object.assign(Mic,{on:true,stream,an,src,td:new Float32Array(an.fftSize),ear:Ear.create(a.sampleRate),judge:Ear.judge()});
 }
 function micStop(){ if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
-const candOf=id=>{ const c=LIB[id], m=notesOf(c); return {key:id,pcs:[...new Set(m.map(x=>x%12))],bass:m[0]%12} };
+const ROOTS={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.name); let root=null;
+  if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
+  const notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
+  return {key:id,notes,pcs:[...new Set(m.map(x=>x%12))],bass:m[0]%12,root} };
+const STR=['6.ª','5.ª','4.ª','3.ª','2.ª','1.ª'];
 function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
-let failT=null;
 function micFrame(fc){
   if(!Mic.an) return; Mic.an.getFloatTimeDomainData(Mic.td);
   const now=performance.now(), o=Mic.ear.process(Mic.td,now); Mic.rms=o.rms;
@@ -871,10 +897,16 @@ function micFrame(fc){
   const chips=document.querySelectorAll('#cNotes span');
   chips.forEach(el=>el.classList.toggle('on',r.sm[+el.dataset.pc]>=.2&&o.live));
   if(r.pass){ Sess.lastPct=r.pct; advance('ok'); return }
-  if(r.fail){ const b=r.best; if(b){ const parts=[`Último intento ${b.pct}%`]; if(b.missing.length) parts.push('falta '+b.missing.map(nn).join(', ')); if(b.extra.length) parts.push('sobra '+b.extra.map(nn).join(', '));
-      if(r.blocked) parts.push('suena más a '+LIB[r.blocked.key].name); setPct(b.pct,S.thr,true); $('#cHelp').textContent=parts.join(' · ') } return }
   if(r.live) setPct(Math.max(r.live.pct,r.best?r.best.pct:0),S.thr,false);
-  else if(!r.armed&&now-Sess.shownAt>400&&!o.live) setPct(null);
+  else if(!r.gate&&!o.live&&now-Sess.shownAt>400) setPct(null);
+  // pista: tras ~1.2 s escuchando sin pasar, decir qué falta y en qué cuerda, o a qué suena
+  if(r.live&&r.gate&&now-Sess.shownAt>1400&&fc%10===0){
+    const t=candOf(Sess.cur), parts=[], miss=r.miss?t.pcs.filter(pc=>r.miss[pc]>.25):r.live.missing;
+    if(miss.length) miss.slice(0,2).forEach(pc=>{ const st=t.notes.filter(n=>n.m%12===pc).map(n=>STR[n.s]); parts.push(`falta ${nn(pc)} (${st.join(' o ')} cuerda)`) });
+    if(r.blocked) parts.push('suena más a '+LIB[r.blocked.key].name);
+    else if(!miss.length&&r.live.extra.length) parts.push('sobra '+r.live.extra.slice(0,2).map(nn).join(', '));
+    $('#cHelp').textContent=parts.length?parts.join(' · '):'Casi: rasguea de nuevo, parejo';
+  }
 }
 function flash(p){ const f=$('#cFlash'); f.textContent=p+'%'; f.hidden=false; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); clearTimeout(flash.t); flash.t=setTimeout(()=>f.hidden=true,700) }
 function setPct(p,thr,stay){
