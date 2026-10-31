@@ -483,6 +483,67 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
 .flash b{font-size:clamp(1.8rem,9.5vw,2.6rem)}
 .next{overflow:hidden}
 #session{overflow-x:clip}
+.chiptog[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* ===== canciones, ficha y reproductor ===== */
+.songlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.songcard{position:relative;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--surface);color:var(--fg);text-decoration:none;transition:transform .15s,border-color .15s;min-width:0}
+.songcard:hover,.songcard:focus-visible{transform:translateY(-3px);border-color:var(--accent);outline:none}
+.songcard b{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.2;overflow-wrap:anywhere;padding-right:58px}
+.scat{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+.sdemo{position:absolute;top:14px;right:14px;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.sbest{font-family:var(--mono);font-size:.8rem;color:var(--accent)}
+.secline{display:flex;flex-wrap:wrap;gap:5px}
+.secline i{font-style:normal;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+.impprev{display:flex;flex-direction:column;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.backlink{display:inline-block;color:var(--accent);text-decoration:none;font-weight:600;margin-bottom:10px}
+.secchips{display:flex;flex-wrap:wrap;gap:8px}
+.secchip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);cursor:pointer;min-width:84px}
+.secchip b{color:var(--fg);font-size:.92rem}
+.secchip span{font-family:var(--mono);font-size:.72rem}
+.secchip[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in oklab,var(--accent) 16%,var(--surface-2));color:var(--fg)}
+.speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.speedrow input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.ytcal{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.ytcalv{width:100%;max-width:480px;aspect-ratio:16/9}
+.ytcalv iframe,.ytcalv>div{width:100%;height:100%}
+/* reproductor */
+.player{display:flex;flex-direction:column;gap:12px}
+.ptop{display:flex;align-items:center;gap:12px}
+.ptitle{display:flex;flex-direction:column;min-width:0;flex:1}
+.ptitle b{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptitle span{font-size:.82rem;color:var(--muted)}
+.pmode{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
+.phud{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.phud .stat{min-width:0}
+.hwrap{position:relative;border-radius:16px;border:1px solid var(--line);background:color-mix(in oklab,var(--surface) 82%,transparent);overflow:hidden}
+.hw{display:block;width:100%;height:clamp(240px,42vh,360px)}
+.pcount{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:5rem;color:var(--accent);background:color-mix(in oklab,var(--surface) 55%,transparent)}
+.pcount.beat{animation:beat .5s ease-out}
+.pfeed{position:absolute;left:12px;bottom:26px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.fd{font-family:var(--display);font-weight:700;font-size:1rem;animation:fdUp .9s ease-out forwards;white-space:nowrap}
+.fd.perfect{color:var(--accent)} .fd.great{color:var(--fg)} .fd.good{color:var(--muted)} .fd.bad{color:var(--bad)}
+@keyframes fdUp{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-18px)}}
+.pprog{height:6px;border-radius:3px;background:color-mix(in oklab,var(--fg) 10%,transparent);overflow:hidden}
+.pprog div{height:100%;width:0;background:var(--accent)}
+.pnow{display:grid;grid-template-columns:1.3fr 1.3fr .8fr;gap:8px}
+.pnow>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.pnow b{font-family:var(--display);font-weight:700;font-size:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pnext b{color:var(--muted)}
+.pspeed{display:flex;align-items:center;gap:10px}
+.pspeed input{flex:1;accent-color:var(--accent)}
+.ytwin{display:none;width:100%;max-width:480px;margin:0 auto;aspect-ratio:16/9;border-radius:12px;overflow:hidden;min-height:200px}
+.ytwin.on{display:block}
+.ytwin iframe,.ytwin>div{width:100%;height:100%;border:0}
+.ytbg{display:none}
+.ytbg.on{display:block;position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.ytbg.on iframe,.ytbg.on>div{position:absolute;left:50%;top:50%;width:177.8vh;min-width:100%;height:56.25vw;min-height:100%;transform:translate(-50%,-50%) scale(1.15);filter:blur(14px) brightness(.45) saturate(1.2);border:0}
+.player>*:not(.ytbg){position:relative;z-index:1}
+.gradeL{font-family:var(--display);font-weight:700;font-size:4.2rem;line-height:1;color:var(--accent);text-shadow:0 0 30px color-mix(in oklab,var(--accent) 60%,transparent)}
+@media (max-width:480px){.pnow{grid-template-columns:1fr 1fr}.pnow>div:last-child{grid-column:1/-1;flex-direction:row;align-items:baseline;gap:10px}}
+.player.done .phud,.player.done .hwrap,.player.done .pprog,.player.done .pnow,.player.done .pspeed,.player.done .controls,.player.done .ytwin{display:none}
+a.btn{text-decoration:none;color:inherit}
+a.btn.primary{color:var(--accent-ink)}
 
 </style>
 
@@ -499,7 +560,7 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
 <nav class="dock" aria-label="Secciones">
   <a class="dockbtn" href="#inicio" data-view="inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5.5v-5h-5v5H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Inicio</span></a>
   <a class="dockbtn" href="#practicar" data-view="practicar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Practicar</span></a>
-  <a class="dockbtn" href="#mazos" data-view="mazos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12v11H6zM8 5h8M7.5 8V6.5h9V8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Mazos</span></a>
+  <a class="dockbtn" href="#canciones" data-view="canciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V6l10-2v11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Canciones</span></a>
   <a class="dockbtn" href="#acordes" data-view="acordes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16M10 4v16M14 4v16M18 4v16M5 9h14M5 14h14" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="14" cy="11.5" r="1.8" fill="currentColor"/></svg><span>Acordes</span></a>
   <a class="dockbtn" href="#progreso" data-view="progreso"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V13M10 19V8M15 19v-4M20 19V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Progreso</span></a>
 </nav>
@@ -573,6 +634,7 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
                 <label><input type="radio" name="sens" value="strict"><span>Estricta</span></label>
               </div>
             </div>
+            <label class="check" style="margin-top:10px"><input type="checkbox" id="skip6Chk">6.ª cuerda libre: no exigir la E grave (los acordes que la usan dan 20% menos puntos)</label>
             <div class="micTest" id="fMicTest">
               <div class="row"><span id="tStatus" class="hint" style="margin:0">Prueba el micrófono antes de empezar. Trae un afinador.</span><button id="tBtn" class="btn">Probar micrófono</button></div>
               <div id="tLive" class="tLive" hidden>
@@ -643,6 +705,7 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
         <button id="bListen" class="btn">Escuchar</button>
         <button id="bSkip" class="btn">Saltar</button>
         <button id="bDone" class="btn primary">Listo</button>
+        <button id="bSkip6" class="btn ghost chiptog" aria-pressed="false" title="No exigir la 6.ª cuerda">6.ª libre</button>
         <button id="bPause" class="btn">Pausa</button>
         <button id="bEnd" class="btn ghost">Terminar</button>
       </div>
@@ -788,6 +851,127 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
       <div class="row" style="justify-content:center"><button class="btn primary big" id="tbBtn">Encender micrófono</button></div>
       <p class="hint" id="tbStatus" style="text-align:center"></p>
     </div>
+  </section>
+
+
+  <!-- CANCIONES -->
+  <section id="v-canciones" class="view" hidden>
+    <p class="eyebrow">Canciones y riffs</p>
+    <h1 class="h1">Toca tus temas</h1>
+    <p class="sub">Importa lo que escribes en Fretline y tócalo con la autopista de notas. Los riffs y canciones de ejemplo son originales, para probar.</p>
+    <div class="row" style="margin-top:16px;justify-content:space-between">
+      <div class="filters" id="songFilters" style="margin:0"></div>
+      <button class="btn primary" id="importOpen">Importar canción</button>
+    </div>
+    <div class="panel" id="importBox" style="margin-top:14px" hidden>
+      <span class="lab">Importar desde Fretline</span>
+      <p class="hint" style="margin-top:0">En Fretline exporta como texto y pégalo aquí completo, desde el título hasta la última línea de tablatura. También puedes subir el archivo .txt.</p>
+      <textarea id="importTxt" style="min-height:180px" aria-label="Texto de la canción" placeholder="Título&#10;90 BPM · Standard tuning (E A D G B E) · length 0:30&#10;&#10;[INTRO]&#10;e|-----…"></textarea>
+      <div class="toolbar">
+        <button class="btn primary" id="importParse">Analizar</button>
+        <label class="btn" for="importFile">Subir .txt</label><input type="file" id="importFile" accept=".txt,text/plain" hidden>
+        <button class="btn ghost" id="importClose">Cancelar</button>
+      </div>
+      <div id="importPreview"></div>
+    </div>
+    <div class="songlist" id="songList"></div>
+  </section>
+
+  <!-- FICHA DE CANCIÓN -->
+  <section id="v-cancion" class="view" hidden>
+    <a class="backlink" href="#canciones">← Canciones</a>
+    <div id="songHead"></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="panel opts">
+        <fieldset><legend class="lab">Modo</legend>
+          <div class="seg">
+            <label><input type="radio" name="sMode" value="test"><span>Prueba</span></label>
+            <label><input type="radio" name="sMode" value="practice"><span>Práctica</span></label>
+          </div>
+          <p class="hint" id="sModeHint"></p>
+        </fieldset>
+        <fieldset><legend class="lab">Secciones</legend>
+          <div class="secchips" id="sSecs"></div>
+          <div class="toolbar" style="margin-top:8px"><button class="btn ghost" id="sSecAll">Todas</button></div>
+        </fieldset>
+        <fieldset id="sPracOpts"><legend class="lab">Práctica</legend>
+          <div class="speedrow"><label for="sSpeed">Velocidad</label><input type="range" id="sSpeed" min="40" max="125" step="5"><b id="sSpeedV" class="mono">100%</b></div>
+          <div class="seg" style="margin-top:8px" id="sSpeedQuick"></div>
+          <label class="check" style="margin-top:10px"><input type="checkbox" id="sLoop">Repetir las secciones elegidas en bucle</label>
+        </fieldset>
+        <fieldset><legend class="lab">Sonido</legend>
+          <label class="check"><input type="checkbox" id="sClick">Clic de metrónomo</label>
+          <div class="speedrow" style="margin-top:10px"><label for="sLat">Latencia del micrófono</label><input type="range" id="sLat" min="0" max="350" step="10"><b id="sLatV" class="mono">120 ms</b></div>
+          <p class="hint">Si las notas que tocas a tiempo salen "tarde", sube la latencia.</p>
+        </fieldset>
+      </div>
+      <div class="panel opts">
+        <fieldset><legend class="lab">Pista de fondo</legend>
+          <div class="seg" id="sMediaSrc">
+            <label><input type="radio" name="sMedia" value="none"><span>Ninguna</span></label>
+            <label><input type="radio" name="sMedia" value="yt"><span>YouTube</span></label>
+            <label><input type="radio" name="sMedia" value="sp"><span>Spotify</span></label>
+          </div>
+          <div id="sYt" class="stack" style="gap:10px;margin-top:10px">
+            <div><label class="lab" for="sYtUrl">Enlace del video</label><input type="text" id="sYtUrl" placeholder="https://youtu.be/…" autocomplete="off"></div>
+            <div class="row"><div style="flex:1;min-width:140px"><label class="lab" for="sYtStart">El primer tiempo de la canción está en</label><input type="text" id="sYtStart" class="mono" placeholder="0:12.5" autocomplete="off"></div>
+              <button class="btn" id="sYtCal" style="align-self:flex-end">Calibrar con un toque</button></div>
+            <div class="seg">
+              <label><input type="radio" name="sYtView" value="window"><span>Video en ventana</span></label>
+              <label><input type="radio" name="sYtView" value="bg"><span>Video de fondo borroso</span></label>
+            </div>
+            <div id="sYtCalBox" class="ytcal" hidden></div>
+          </div>
+          <div id="sSp" class="stack" style="gap:10px;margin-top:10px">
+            <div><label class="lab" for="sSpUrl">Enlace de la canción en Spotify</label><input type="text" id="sSpUrl" placeholder="https://open.spotify.com/track/…" autocomplete="off"></div>
+            <div><label class="lab" for="sSpStart">El primer tiempo de la canción está en</label><input type="text" id="sSpStart" class="mono" placeholder="0:12.5" autocomplete="off"></div>
+            <p class="hint" id="sSpStatus"></p>
+            <details><summary>Conectar tu cuenta de Spotify</summary>
+              <ol class="help-ol">
+                <li>Entra a developer.spotify.com/dashboard con tu cuenta Premium y crea una app (Web Playback SDK y Web API).</li>
+                <li>En Redirect URIs agrega exactamente la dirección de esta página, sin el #: <span class="mono" id="sSpRedirect"></span></li>
+                <li>Copia el Client ID y pégalo aquí. Luego toca Conectar.</li>
+              </ol>
+              <div class="row" style="margin-top:10px"><input type="text" id="sSpCid" class="mono" placeholder="Client ID" autocomplete="off" style="flex:1;min-width:160px"><button class="btn" id="sSpLogin">Conectar</button></div>
+              <p class="hint">Si la app instalada se abre en otra ventana al conectar, copia ahí el código de conexión y pégalo aquí:</p>
+              <div class="row"><input type="text" id="sSpCode" class="mono" placeholder="Código de conexión" autocomplete="off" style="flex:1;min-width:160px"><button class="btn ghost" id="sSpCodeBtn">Usar código</button></div>
+            </details>
+          </div>
+          <p class="hint" id="sMediaNote"></p>
+        </fieldset>
+        <details><summary>Ajustes de la tablatura</summary>
+          <div class="speedrow" style="margin-top:10px"><label for="sCpb">Cada columna vale</label>
+            <select id="sCpb" style="width:auto"><option value="2">1/2 de tiempo</option><option value="4">1/4 de tiempo</option><option value="8">1/8 de tiempo</option></select></div>
+          <p class="hint">Si la canción va muy rápida o muy lenta comparada con el original, cambia esto. Se deduce de la duración que indica Fretline.</p>
+          <div class="row" style="margin-top:8px"><label for="sBpm">BPM</label><input type="number" id="sBpm" min="30" max="260" style="width:96px"></div>
+        </details>
+        <div class="toolbar" id="sDangerZone"></div>
+      </div>
+    </div>
+    <div class="startrow"><button class="btn primary big" id="sPlay">Tocar</button><span class="hint" id="sPlayHint" style="margin:0"></span></div>
+  </section>
+
+  <!-- REPRODUCTOR -->
+  <section id="v-tocar" class="view player" hidden>
+    <div id="ytBg" class="ytbg" aria-hidden="true"></div>
+    <div class="ptop">
+      <button class="iconbtn" id="pExit" aria-label="Salir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="ptitle"><b id="pTitle"></b><span id="pSec"></span></div>
+      <span class="pmode" id="pMode"></span>
+    </div>
+    <div class="phud">
+      <div class="stat score"><span class="k">Puntaje</span><b id="pScore">0</b></div>
+      <div class="stat"><span class="k">Combo</span><b id="pCombo">0</b></div>
+      <div class="stat"><span class="k">Acierto</span><b id="pAcc">–</b></div>
+    </div>
+    <div class="hwrap"><canvas id="hw" class="hw"></canvas><div id="pCount" class="pcount" hidden></div><div id="pFeed" class="pfeed"></div></div>
+    <div class="pprog"><div id="pProg"></div></div>
+    <div class="pnow"><div><span class="k">Ahora</span><b id="pNow">–</b></div><div class="pnext"><span class="k">Sigue</span><b id="pNext">–</b></div><div><span class="k">Precisión</span><b id="pPct" class="mono">–</b></div></div>
+    <div class="pspeed" id="pSpeedBox"><label for="pSpeed">Velocidad</label><input type="range" id="pSpeed" min="40" max="125" step="5"><b id="pSpeedV" class="mono"></b></div>
+    <div id="ytWin" class="ytwin"></div>
+    <p class="hint" id="pMsg" style="text-align:center"></p>
+    <div class="controls"><button class="btn" id="pRestart">Reiniciar</button><button class="btn primary" id="pPause">Pausa</button><button class="btn ghost" id="pStop">Terminar</button></div>
+    <div id="pResults" hidden></div>
   </section>
 
 </main>
@@ -966,7 +1150,7 @@ const DEFAULT_DECKS=[
 const FIRST_DECK_IDS=['noh-full','noh-verse','noh-chorus','noh-mac','basic','sevenths','jazzy','barre'];
 const ACCENTS={nacar:{n:'Nácar',d:'#62ccb7',l:'#13806e'},ambar:{n:'Ámbar',d:'#f0b45a',l:'#94570a'},coral:{n:'Coral',d:'#ff8a70',l:'#b23d22'},lila:{n:'Lila',d:'#b9a0ff',l:'#6440c8'},lima:{n:'Lima',d:'#b8dd5c',l:'#4c7400'},cielo:{n:'Cielo',d:'#7cc4ff',l:'#1462aa'}};
 const WOODS={rosewood:'#7a3f2c',ebano:'#0e0c0b',koa:'#a7652c',arce:'#d8b47a'};
-const DEFAULT_PREFS={theme:'system',accent:'nacar',wood:'rosewood',hand:'right',notes:'en',size:'normal',countdown:true,sound:true,stage:true,style:'estudio'};
+const DEFAULT_PREFS={theme:'system',accent:'nacar',wood:'rosewood',hand:'right',notes:'en',size:'normal',countdown:true,sound:true,stage:true,style:'estudio',skip6:false};
 const DEFAULT_SET={deck:'noh-mac',order:'random',end:'none',n:20,secs:60,adv:'mic',bpm:70,beats:4,click:true,hint:'always',sens:'normal',showNext:true};
 
 /* ---------- almacenamiento ---------- */
@@ -1055,15 +1239,18 @@ function diagram(fr,{labels=false}={}){
 }
 
 /* ---------- vistas ---------- */
-const VIEWS=['inicio','practicar','mazos','acordes','progreso','ajustes','afinador'];
+const VIEWS=['inicio','practicar','mazos','acordes','progreso','ajustes','afinador','canciones','cancion','tocar'];
 function showView(v){
   if(!VIEWS.includes(v)) v='inicio';
   if(v!=='afinador'&&typeof leaveTuner==='function') leaveTuner();
+  if(v!=='tocar'&&PL.running) stopPlayer();
+  if(v==='tocar'&&!PL.running&&!PL.song) v='canciones';
   VIEWS.forEach(n=>{ const el=$('#v-'+n); const was=!el.hidden; el.hidden=n!==v; if(n===v&&!was){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter') } });
-  document.querySelectorAll('.dockbtn').forEach(t=>{ if(t.dataset.view===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current') });
+  const dv=v==='cancion'||v==='tocar'?'canciones':v;
+  document.querySelectorAll('.dockbtn').forEach(t=>{ if(t.dataset.view===dv) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current') });
   document.body.classList.toggle('athome',v==='inicio');
-  if(v!=='practicar') document.body.classList.remove('playing');
-  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1);
+  if(v!=='practicar'&&v!=='tocar') document.body.classList.remove('playing');
+  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail();
   window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){location.hash=g.dataset.goto}});
@@ -1080,6 +1267,7 @@ function renderSetup(){
   const dk=decks.find(d=>d.id===st.deck), prev=$('#deckPrev'); prev.innerHTML='';
   if(dk){ dk.chords.filter(id=>LIB[id]).forEach(id=>prev.append(h('span',{class:'chip',text:LIB[id].name}))); if(!dk.chords.length) prev.append(h('span',{class:'hint',text:'Este mazo está vacío.'})); }
   ['order','end','adv','hint','sens'].forEach(k=>{const r=document.querySelector(`input[name="${k}"][value="${st[k]}"]`);if(r)r.checked=true});
+  $('#skip6Chk').checked=!!prefs.skip6; $('#bSkip6').setAttribute('aria-pressed',String(!!prefs.skip6));
   $('#nCards').value=st.n; $('#nSecs').value=String(st.secs); $('#bpm').value=st.bpm; $('#beatsN').value=st.beats; $('#clickChk').checked=st.click; $('#nextChk').checked=st.showNext;
   $('#fN').hidden=st.end!=='count'; $('#fT').hidden=st.end!=='time'; $('#fPulse').hidden=st.adv!=='pulse'; $('#fSens').hidden=st.adv!=='mic'; $('#fMicTest').hidden=st.adv!=='mic';
   $('#orderHint').textContent=ORDER_HINT[st.order];
@@ -1095,6 +1283,11 @@ document.querySelectorAll('#setup [data-k]').forEach(inp=>inp.addEventListener('
   saveSet();
 }));
 $('#startBtn').addEventListener('click',()=>startSession());
+
+/* 6.ª cuerda libre: interruptor en la configuración y en la sesión */
+function setSkip6(v){ prefs.skip6=v; savePrefs(); $('#skip6Chk').checked=v; $('#bSkip6').setAttribute('aria-pressed',String(v)); if(Sess.running&&Sess.adv==='mic') micTarget(); }
+$('#skip6Chk').addEventListener('change',e=>setSkip6(e.target.checked));
+$('#bSkip6').addEventListener('click',()=>{ setSkip6(!prefs.skip6); toast(prefs.skip6?'6.ª cuerda libre: 20% menos puntos en acordes que la usan':'6.ª cuerda exigida otra vez') });
 
 /* ---------- audio ---------- */
 let actx=null;
@@ -1150,8 +1343,12 @@ function micStop(){ if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); 
 const ROOTS={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.name); let root=null;
   if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
-  const notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
-  return {key:id,notes,pcs:[...new Set(m.map(x=>x%12))],bass:m[0]%12,root} };
+  let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
+  // 6.ª libre: si el acorde usa la E grave, se ignora esa cuerda (el juego descuenta puntos)
+  if(prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
+  const ms=notes.map(n=>n.m);
+  return {key:id,notes,pcs:[...new Set(ms.map(x=>x%12))],bass:ms[0]%12,root} };
+const uses6=id=>LIB[id]&&LIB[id].frets[0]>=0&&LIB[id].frets.filter(f=>f>=0).length>2;
 const STR=['6.ª','5.ª','4.ª','3.ª','2.ª','1.ª'];
 function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
 function micFrame(fc){
@@ -1162,6 +1359,7 @@ function micFrame(fc){
   drawChroma();
   if(testOn&&fc%3===0) drawTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
   if(tunerOn&&fc%2===0) drawBigTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
+  if(PL.running){ playerAudio(o,now); return }
   if(!Sess.running||Sess.paused||Sess.counting||Sess.adv!=='mic'||!Sess.cur) return;
   const r=Mic.judge.frame(o,now,st.sens), S=Ear.SENS[st.sens]||Ear.SENS.soft;
   const chips=document.querySelectorAll('#cNotes span');
@@ -1434,7 +1632,8 @@ function gameHit(ms,pct){
   Sess.grades[g]++;
   if(g==='late'){ if(Sess.combo>=5) toast(`Combo de ${Sess.combo} perdido`); Sess.combo=0 } else Sess.combo++;
   Sess.maxCombo=Math.max(Sess.maxCombo,Sess.combo);
-  const pts=GRADES[g].pts*multOf(Sess.combo)*(Sess.fever?2:1); Sess.score+=pts;
+  const pen=prefs.skip6&&uses6(Sess.cur)?.8:1;
+  const pts=Math.round(GRADES[g].pts*multOf(Sess.combo)*(Sess.fever?2:1)*pen); Sess.score+=pts;
   Sess.energy=Math.max(0,Math.min(1,Sess.energy+GRADES[g].en));
   if(!Sess.fever&&Sess.energy>=1){ Sess.fever=true; $('#session').classList.add('fever'); if(prefs.sound) feverSound() }
   showGrade(g,pts,pct); gradeSound(g); burst(g);
@@ -1574,7 +1773,7 @@ function renderProgress(){
       }},'Crear mazo con los 6 más lentos'))));
   }
   const hist=h('div',{class:'hist'});
-  const lbl={random:'aleatorio',rotation:'rotación',sequence:'en orden'}, adv={mic:'micrófono',tap:'toque',pulse:'pulso'};
+  const lbl={random:'aleatorio',rotation:'rotación',sequence:'en orden'}, adv={mic:'micrófono',tap:'toque',pulse:'pulso',song:'canción'};
   history.slice(0,40).forEach(r=>hist.append(h('div',{class:'hrow'},
     h('div',{},h('div',{text:r.deck}),h('div',{class:'meta',text:`${new Date(r.at).toLocaleString('es-CL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · ${lbl[r.order]} · ${adv[r.adv]}`})),
     h('div',{class:'num'},h('div',{text:`${r.done} en ${fmtClock(r.dur)}`}),h('div',{class:'meta',text:r.avg?`${fmtSec(r.avg)} por cambio`:''})))));
@@ -1843,13 +2042,14 @@ function renderHub(){
     {k:'deck',t:'Mazos',d:`${decks.length} mazos`,go:'mazos'},
     {k:'lib',t:'Biblioteca',d:`${Object.keys(LIB).length} acordes`,go:'acordes'},
     {k:'chart',t:'Progreso',d:history.length?`${history.length} sesiones`:'Aún sin sesiones',go:'progreso'},
-    {k:'riff',t:'Riffs',d:'Punteos y power chords',soon:true},
-    {k:'song',t:'Canciones',d:'Importa tus temas de Fretline',soon:true},
+    {k:'riff',t:'Riffs',d:'Punteos y power chords',go:'canciones',f:'riff'},
+    {k:'song',t:'Canciones',d:'Importa tus temas de Fretline',go:'canciones',f:'cancion',big:true},
   ];
   const tl=$('#hubTiles'); tl.innerHTML='';
   tiles.forEach((x,i)=>{
     const el=h(x.soon?'div':'a',{class:'tile2'+(x.big?' big':'')+(x.soon?' soon':''),role:'listitem',href:x.soon?null:'#'+x.go,style:`--i:${i}`,'aria-disabled':x.soon?'true':null},
       h('span',{class:'ticon',html:ico(x.k)}),h('b',{text:x.t}),h('span',{class:'tdesc',text:x.d}),x.soon?h('span',{class:'tsoon',text:'Pronto'}):null);
+    if(x.f) el.addEventListener('click',()=>{ songFilter=x.f });
     tl.append(el) });
   const sc=$('#hubStyles'); sc.innerHTML='';
   Object.entries(STYLES).forEach(([k,s])=>sc.append(h('button',{class:'stylechip','aria-pressed':String(prefs.style===k),onclick:()=>{ setStyle(k); renderHub() }},
@@ -1890,6 +2090,575 @@ async function tunerToggle(){
 }
 $('#tbBtn').addEventListener('click',tunerToggle);
 function leaveTuner(){ if(tunerOn){ tunerOn=false; if(!Sess.running&&!testOn) micStop(); $('#tbBtn').textContent='Encender micrófono'; $('#tbStatus').textContent='' } }
+
+/* ---------- canciones: importador Fretline, biblioteca y línea de tiempo ---------- */
+/* PARSER-START */
+/* Lee el texto que exporta Fretline. Devuelve secciones con eventos por columna:
+   note (una cuerda), chord (2+ cuerdas = rasgueo) y chuck (solo x). Cuerdas: 0 = E grave … 5 = e aguda. */
+function parseFretline(txt){
+  const STR={e:5,B:4,G:3,D:2,A:1,E:0}, isTab=l=>/^\s*[eBGDAE]\s*\|/.test(l);
+  const lines=String(txt||'').replace(/\r/g,'').replace(/\t/g,'    ').split('\n');
+  const out={title:'',bpm:null,len:null,tuning:'E A D G B E',sections:[],warnings:[]};
+  let cur=null,names=null,arrows=null;
+  for(let i=0;i<lines.length;i++){
+    const raw=lines[i],l=raw.trimEnd();
+    if(!l.trim()) continue;
+    if(/^\s*key\s*:/i.test(l)) continue;
+    const sec=/^\s*\[(.+?)\]\s*$/.exec(l);
+    if(sec){cur={name:sec[1].trim(),blocks:[]};out.sections.push(cur);names=arrows=null;continue}
+    if(isTab(l)){
+      const blk=[];let j=i;while(j<lines.length&&isTab(lines[j])){blk.push(lines[j]);j++}
+      i=j-1;
+      if(!cur){cur={name:'Parte 1',blocks:[]};out.sections.push(cur)}
+      cur.blocks.push({lines:blk,names,arrows});names=arrows=null;continue}
+    const meta=/(\d+(?:[.,]\d+)?)\s*BPM/i.exec(l);
+    if(meta){out.bpm=parseFloat(meta[1].replace(',','.'));const lm=/length\s*(\d+):(\d{1,2})/i.exec(l);if(lm)out.len=+lm[1]*60+ +lm[2];const tu=/\(([A-Ga-g#b ]{5,})\)/.exec(l);if(tu)out.tuning=tu[1].trim();continue}
+    if(/[↓↑]/.test(l)){arrows=raw;continue}
+    if(!out.title&&!out.sections.length){out.title=l.trim();continue}
+    if(/^\s*[A-G]/.test(l)){names=raw;continue}
+  }
+  for(const s of out.sections){
+    s.events=[];let off=0;
+    for(const b of s.blocks){
+      const per={};let width=0;const seen=new Set();
+      for(const line of b.lines){
+        const m=/^(\s*)([eBGDAE])\s*\|/.exec(line);const str=STR[m[2]];
+        if(seen.has(str)) out.warnings.push(`${s.name}: cuerda ${m[2]} repetida en un bloque`);seen.add(str);
+        const start=m[0].length;let body=line.slice(start).replace(/\|\s*$/,'');width=Math.max(width,body.length);
+        for(let k=0;k<body.length;k++){const c=body[k];
+          if(c>='0'&&c<='9'){let d=c;if(body[k+1]>='0'&&body[k+1]<='9'&&+(c+body[k+1])<=24){d+=body[k+1]}
+            const col=k;k+=d.length;let tech='';while(k<body.length&&/[bhp\/\\~r]/.test(body[k])){tech+=body[k];k++}k--;
+            (per[col]=per[col]||[]).push({s:str,f:+d,tech})}
+          else if(c==='x'||c==='X'){(per[k]=per[k]||[]).push({s:str,mute:true})}}
+      }
+      const absChar=(line,c)=>line?line[c+2]:undefined; // las líneas de nombres y flechas usan el mismo prefijo "e|"
+      const nameTokens=[];if(b.names){const re=/\S+(?: \S+)*/g;let mm;while((mm=re.exec(b.names))){nameTokens.push({col:mm.index-2,name:mm[0]})}}
+      Object.keys(per).map(Number).sort((a,b)=>a-b).forEach(col=>{
+        const items=per[col],notes=items.filter(x=>!x.mute),mutes=items.filter(x=>x.mute);
+        const ev={col:off+col};
+        if(notes.length>=2){ev.type='chord';ev.frets=[-1,-1,-1,-1,-1,-1];notes.forEach(n=>ev.frets[n.s]=n.f);ev.tech=notes.map(n=>n.tech).filter(Boolean).join('')}
+        else if(notes.length===1){ev.type='note';ev.s=notes[0].s;ev.f=notes[0].f;ev.tech=notes[0].tech}
+        else if(mutes.length){ev.type='chuck';ev.strings=mutes.map(x=>x.s)}
+        else return;
+        if(b.arrows){for(const d of [0,-1,1]){const ch=absChar(b.arrows,col+d);if(ch==='↓'){ev.dir='d';break}if(ch==='↑'){ev.dir='u';break}}}
+        if(nameTokens.length&&ev.type==='chord'){let lab=null;for(const t of nameTokens) if(t.col<=col+1) lab=t.name;ev.label=lab}
+        s.events.push(ev)});
+      off+=width;
+    }
+    s.cols=off;delete s.blocks;
+  }
+  out.sections=out.sections.filter(s=>s.events.length);
+  if(!out.sections.length) out.warnings.push('No encontré tablatura. Pega el texto completo, con las líneas e| B| G| D| A| E|.');
+  return out;
+}
+/* PARSER-END */
+
+/* columnas por tiempo: si Fretline indica la duración, se deduce; si no, 4 (semicorcheas) */
+function guessCpb(raw){
+  const cols=raw.sections.reduce((a,s)=>a+s.cols,0);
+  if(raw.len&&raw.bpm){const beats=raw.bpm*raw.len/60,c=cols/beats;let best=4;for(const k of [2,4,8]) if(Math.abs(Math.log(c/k))<Math.abs(Math.log(c/best))) best=k;return best}
+  return 4;
+}
+const fkey=fr=>fr.map(f=>f<0?'x':f).join('.');
+function chordForFrets(fr,label){
+  const k=fkey(fr);for(const c of Object.values(LIB)) if(fkey(c.frets)===k) return {id:c.id,name:c.name,frets:c.frets};
+  const g=guessName(fr);return {id:'f:'+k,name:(label&&label.replace(/\s+/g,' '))||g||fretStr(fr),frets:fr.slice(),guess:g};
+}
+/* convierte el resultado del parser en una canción con tiempos en segundos (a velocidad 1) */
+function buildSong(song){
+  const bpm=song.bpm||90,cpb=song.cpb||4,spc=60/(bpm*cpb);let t=0;const sections=[],notes=[],blocks=[],strums=[],chucks=[];
+  song.raw.sections.forEach((s,si)=>{
+    const t0=t,dur=s.cols*spc;sections.push({i:si,name:s.name,start:t0,end:t0+dur});
+    const segs=[];
+    s.events.forEach(e=>{const et=t0+e.col*spc;
+      if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:OPEN[e.s]+e.f,tech:e.tech||'',sec:si});
+      else if(e.type==='chuck') chucks.push({t:et,sec:si});
+      else {const c=chordForFrets(e.frets,e.label);strums.push({t:et,dir:e.dir||'',chord:c,sec:si});
+        const last=segs[segs.length-1];if(last&&last.chord.id===c.id) last.t1=et+spc*2;else segs.push({t0:et,t1:et+spc*2,chord:c,sec:si})}});
+    // bloques de evaluación: cambios muy rápidos (D↔D6) se agrupan hasta ~0,8 s y aceptan cualquiera de sus acordes
+    let cur=null;
+    segs.forEach((g,k)=>{const next=segs[k+1];g.t1=next?Math.min(next.t0,g.t1+8*spc):Math.min(t0+dur,g.t1+4*spc);
+      if(!cur){cur={t0:g.t0,t1:g.t1,chords:[g.chord],sec:si}}
+      else{cur.t1=g.t1;if(!cur.chords.some(c=>c.id===g.chord.id)) cur.chords.push(g.chord)}
+      if(cur.t1-cur.t0>=.8||!next||next.t0-cur.t1>.25){blocks.push(cur);cur=null}});
+    if(cur) blocks.push(cur);
+    t+=dur;
+  });
+  return {sections,notes,blocks,strums,chucks,len:t,spc};
+}
+
+/* almacenamiento: canciones importadas + demos originales */
+let songs=S.get('songs',[]);
+const saveSongs=()=>S.set('songs',songs);
+const DEMOS=[
+{id:'demo-penta',cat:'riff',text:`Calentamiento pentatónico en Am
+80 BPM · Standard tuning (E A D G B E)
+
+[SUBIDA]
+e|-------------------------------5---8---|
+B|-----------------------5---8-----------|
+G|---------------5---7-------------------|
+D|-------5---7---------------------------|
+A|-5---7---------------------------------|
+E|---------------------------------------|
+
+[BAJADA]
+e|-8---5---------------------------------|
+B|---------8---5-------------------------|
+G|-----------------7---5-----------------|
+D|-------------------------7---5---------|
+A|---------------------------------7---5-|
+E|---------------------------------------|`},
+{id:'demo-power',cat:'riff',text:`Power chords del garaje
+100 BPM · Standard tuning (E A D G B E)
+
+[RIFF]
+   E5              G5              A5              C5
+   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓
+e|-----------------------------------------------------------------|
+B|-----------------------------------------------------------------|
+G|-----------------------------------------------------------------|
+D|-2---2---2---2---5---5---5---5---7---7---7---7---5---5---5---5---|
+A|-2---2---2---2---5---5---5---5---7---7---7---7---3---3---3---3---|
+E|-0---0---0---0---3---3---3---3---5---5---5---5-------------------|`},
+{id:'demo-ruta',cat:'cancion',text:`Ruta 5 (demo)
+96 BPM · Standard tuning (E A D G B E)
+
+[INTRO]
+e|-----------------3---------------------3-------|
+B|---------3---3-------3---------3---3-------3---|
+G|-0---2-----------------0---2-------------------|
+D|-----------------------------------------------|
+A|-----------------------------------------------|
+E|-----------------------------------------------|
+
+[VERSO]
+   G               D               Em              C
+   ↓   ↓   ↑   ↓   ↓   ↓   ↑   ↓   ↓   ↓   ↑   ↓   ↓   ↓   ↑   ↓
+e|-3---3---3---3---2---2---2---2---0---0---0---0---0---0---0---0---|
+B|-3---3---3---3---3---3---3---3---0---0---0---0---1---1---1---1---|
+G|-0---0---0---0---2---2---2---2---0---0---0---0---0---0---0---0---|
+D|-0---0---0---0---0---0---0---0---2---2---2---2---2---2---2---2---|
+A|-2---2---2---2---x---x---x---x---2---2---2---2---3---3---3---3---|
+E|-3---3---3---3---x---x---x---x---0---0---0---0---x---x---x---x---|
+
+[CORO]
+   Am              F               C               G
+   ↓   ↓   ↑   ↓   ↓   ↓   ↑   ↓   ↓   ↓   ↑   ↓   ↓   ↓   ↑   ↓
+e|-0---0---0---0---1---1---1---1---0---0---0---0---3---3---3---3---|
+B|-1---1---1---1---1---1---1---1---1---1---1---1---3---3---3---3---|
+G|-2---2---2---2---2---2---2---2---0---0---0---0---0---0---0---0---|
+D|-2---2---2---2---3---3---3---3---2---2---2---2---0---0---0---0---|
+A|-0---0---0---0---3---3---3---3---3---3---3---3---2---2---2---2---|
+E|-x---x---x---x---1---1---1---1---x---x---x---x---3---3---3---3---|`}
+];
+function songFromText(text,extra={}){
+  const raw=parseFretline(text);
+  const s=Object.assign({id:'s'+uid(),title:raw.title||'Sin título',bpm:raw.bpm||90,raw,cat:'cancion',media:{},created:Date.now()},extra);
+  s.cpb=extra.cpb||guessCpb(raw);
+  return s;
+}
+function allSongs(){ return DEMOS.map(d=>Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true}),S.get('songmeta',{})[d.id]||{})).concat(songs) }
+function getSong(id){ return allSongs().find(s=>s.id===id) }
+function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importadas, todo
+  if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play}; S.set('songmeta',m) }
+  else { const i=songs.findIndex(x=>x.id===song.id); if(i>=0) songs[i]=song; else songs.push(song); saveSongs() }
+}
+
+/* ---------- reproductor de canciones: autopista, prueba y práctica ---------- */
+let curSongId=null, songFilter='all';
+const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,latency:120};
+const playCfg=s=>Object.assign({},PLAY_DEF,s.play||{});
+function openSong(id){ curSongId=id; if(location.hash==='#cancion') renderSongDetail(); else location.hash='cancion' }
+
+/* lista de canciones */
+function renderSongs(){
+  const f=$('#songFilters'); f.innerHTML='';
+  [['all','Todo'],['cancion','Canciones'],['riff','Riffs']].forEach(([k,t])=>f.append(h('button',{class:'fchip','aria-pressed':String(songFilter===k),onclick:()=>{songFilter=k;renderSongs()}},t)));
+  const box=$('#songList'); box.innerHTML='';
+  const recs=S.get('songrec',{});
+  const list=allSongs().filter(s=>songFilter==='all'||s.cat===songFilter);
+  if(!list.length){ box.append(h('p',{class:'empty',text:'Todavía no hay nada aquí. Importa una canción de Fretline con el botón de arriba.'})); return }
+  list.forEach(s=>{ const tl=buildSong(s), best=Object.entries(recs).filter(([k])=>k.startsWith(s.id+'|')).reduce((a,[,v])=>Math.max(a,v.score||0),0);
+    const card=h('a',{class:'songcard',href:'#cancion',onclick:e=>{e.preventDefault();openSong(s.id)}},
+      h('span',{class:'scat',text:s.cat==='riff'?'Riff':'Canción'}),
+      h('b',{text:s.title}),
+      h('span',{class:'tdesc',text:`${s.bpm} BPM · ${tl.sections.length} ${tl.sections.length===1?'sección':'secciones'} · ${fmtClock(tl.len*1000)}`+(s.media&&s.media.src&&s.media.src!=='none'?` · ${s.media.src==='yt'?'YouTube':'Spotify'}`:'')}),
+      h('span',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
+      best?h('span',{class:'sbest',text:'Récord '+fmtN(best)}):null,
+      s.demo?h('span',{class:'sdemo',text:'Ejemplo'}):null);
+    box.append(card) });
+}
+/* importar */
+let importDraft=null;
+$('#importOpen').addEventListener('click',()=>{ $('#importBox').hidden=false; $('#importTxt').focus() });
+$('#importClose').addEventListener('click',()=>{ $('#importBox').hidden=true; $('#importPreview').innerHTML=''; importDraft=null });
+$('#importFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $('#importTxt').value=r.result; importParse() }; r.readAsText(f) });
+$('#importParse').addEventListener('click',importParse);
+function importParse(){
+  const box=$('#importPreview'); box.innerHTML='';
+  const s=songFromText($('#importTxt').value);
+  if(!s.raw.sections.length){ box.append(h('p',{class:'err',text:s.raw.warnings[0]||'No pude leer la tablatura.'})); importDraft=null; return }
+  importDraft=s; const tl=buildSong(s);
+  const chords=[...new Map(tl.strums.map(x=>[x.chord.id,x.chord])).values()];
+  const name=h('input',{type:'text',id:'importName',value:s.title,'aria-label':'Nombre'});
+  const cat=h('select',{id:'importCat',style:'width:auto'},h('option',{value:'cancion',text:'Canción'}),h('option',{value:'riff',text:'Riff'}));
+  box.append(h('div',{class:'impprev'},
+    h('div',{class:'row'},h('div',{style:'flex:1;min-width:180px'},h('label',{class:'lab',for:'importName',text:'Nombre'}),name),h('div',{},h('label',{class:'lab',for:'importCat',text:'Tipo'}),cat)),
+    h('p',{class:'hint',text:`${s.bpm} BPM · ${tl.sections.length} secciones · ${tl.notes.length} notas · ${tl.strums.length} rasgueos · dura ${fmtClock(tl.len*1000)} (cada columna = 1/${s.cpb} de tiempo)`}),
+    h('div',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
+    chords.length?h('p',{class:'hint'},'Acordes: ',chords.map((c,i)=>h('span',{class:'mono'},(i?', ':'')+c.name+(c.id.startsWith('f:')?' (nuevo)':'')))):null,
+    s.raw.warnings.length?h('p',{class:'err',text:s.raw.warnings.join(' · ')}):null,
+    h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ importDraft.title=name.value.trim()||importDraft.title; importDraft.cat=cat.value; songs.push(importDraft); saveSongs(); toast('Canción importada'); $('#importBox').hidden=true; $('#importTxt').value=''; box.innerHTML=''; openSong(importDraft.id) }},'Guardar y abrir'))));
+}
+
+/* ficha */
+function renderSongDetail(){
+  const s=getSong(curSongId); if(!s){ location.hash='canciones'; return }
+  const tl=buildSong(s), cfg=playCfg(s); if(!cfg.sel||cfg.sel.some(i=>i>=tl.sections.length)) cfg.sel=tl.sections.map((x,i)=>i);
+  const hd=$('#songHead'); hd.innerHTML='';
+  const recs=S.get('songrec',{}), rk=recs[s.id+'|'+cfg.sel.join(',')];
+  hd.append(h('p',{class:'eyebrow',text:s.cat==='riff'?'Riff':'Canción'}),h('h1',{class:'h1',text:s.title}),
+    h('p',{class:'sub',text:`${s.bpm} BPM · ${fmtClock(tl.len*1000)} · ${tl.notes.length} notas y ${tl.blocks.length} cambios de acorde`+(rk?` · récord ${fmtN(rk.score)} (${rk.acc}%)`:'')}));
+  const save=()=>{ s.play=cfg; saveSongMeta(s) };
+  document.querySelectorAll('input[name=sMode]').forEach(r=>{ r.checked=r.value===cfg.mode; r.onchange=()=>{ cfg.mode=r.value; save(); renderSongDetail() } });
+  $('#sModeHint').textContent=cfg.mode==='test'?'Prueba: velocidad original y sin pausas. Cuenta para tu récord y tu XP.':'Práctica: elige secciones, baja la velocidad y repite en bucle. Suma XP, pero no récord.';
+  $('#sPracOpts').hidden=cfg.mode!=='practice';
+  const sc=$('#sSecs'); sc.innerHTML='';
+  tl.sections.forEach((x,i)=>{ const on=cfg.sel.includes(i); sc.append(h('button',{class:'secchip','aria-pressed':String(on),onclick:()=>{ if(on){ if(cfg.sel.length>1) cfg.sel=cfg.sel.filter(k=>k!==i) } else cfg.sel=[...cfg.sel,i].sort((a,b)=>a-b); save(); renderSongDetail() }},
+    h('b',{text:x.name}),h('span',{text:fmtClock((x.end-x.start)*1000)}))) });
+  $('#sSecAll').onclick=()=>{ cfg.sel=tl.sections.map((x,i)=>i); save(); renderSongDetail() };
+  $('#sSpeed').value=cfg.speed; $('#sSpeedV').textContent=cfg.speed+'%';
+  $('#sSpeed').oninput=e=>{ cfg.speed=+e.target.value; $('#sSpeedV').textContent=cfg.speed+'%' }; $('#sSpeed').onchange=save;
+  const q=$('#sSpeedQuick'); q.innerHTML=''; [50,75,90,100].forEach(v=>q.append(h('label',{},h('input',{type:'radio',name:'sSpQ',checked:cfg.speed===v?true:null,onchange:()=>{cfg.speed=v;save();renderSongDetail()}}),h('span',{text:v+'%'}))));
+  $('#sLoop').checked=cfg.loop; $('#sLoop').onchange=e=>{cfg.loop=e.target.checked;save()};
+  $('#sClick').checked=cfg.click; $('#sClick').onchange=e=>{cfg.click=e.target.checked;save()};
+  $('#sLat').value=cfg.latency; $('#sLatV').textContent=cfg.latency+' ms'; $('#sLat').oninput=e=>{cfg.latency=+e.target.value;$('#sLatV').textContent=cfg.latency+' ms'}; $('#sLat').onchange=save;
+  $('#sCpb').value=String(s.cpb); $('#sCpb').onchange=e=>{ s.cpb=+e.target.value; save(); renderSongDetail() };
+  $('#sBpm').value=s.bpm; $('#sBpm').onchange=e=>{ const v=+e.target.value; if(v>=30&&v<=260){ s.bpm=v; save(); renderSongDetail() } };
+  renderMediaCfg(s,save);
+  const dz=$('#sDangerZone'); dz.innerHTML='';
+  if(!s.demo){ const del=h('span',{}); const ask=()=>{ del.innerHTML=''; del.append(h('span',{class:'confirm'},'¿Borrar esta canción?',h('button',{class:'btn danger',onclick:()=>{ songs=songs.filter(x=>x.id!==s.id); saveSongs(); location.hash='canciones' }},'Borrar'),h('button',{class:'btn ghost',onclick:renderSongDetail},'No'))) };
+    del.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar canción')); dz.append(del) }
+  $('#sPlay').onclick=()=>startPlayer(s);
+  $('#sPlayHint').textContent=cfg.mode==='test'?`Prueba de ${cfg.sel.length===tl.sections.length?'la canción completa':cfg.sel.map(i=>tl.sections[i].name).join(' + ')}`:`Práctica al ${cfg.speed}%${cfg.loop?' en bucle':''}`;
+}
+
+/* ===== motor del reproductor ===== */
+const PL={running:false};
+const STRCOL={rock:['#ff4d6d','#ff9f1c','#ffd23f','#22e7ff','#7b61ff','#ff2fb3'],country:['#c0532f','#d9822b','#e8b04b','#9fae5a','#6d9eb0','#c99adb'],estudio:['#e06c75','#e5a65b','#d9c86a','#78c99a','#6ab0de','#b48ead']};
+function startPlayer(s){
+  const tl=buildSong(s), cfg=playCfg(s); if(!cfg.sel||!cfg.sel.length) cfg.sel=tl.sections.map((x,i)=>i);
+  const speed=cfg.mode==='test'?1:cfg.speed/100;
+  const sel=cfg.sel.filter(i=>i<tl.sections.length);
+  const inSel=e=>sel.includes(e.sec);
+  Object.assign(PL,{running:true,paused:false,song:s,tl,cfg,speed,sel,k:0,
+    notes:tl.notes.filter(inSel).map(n=>Object.assign({},n,{st:0})),
+    blocks:tl.blocks.filter(inSel).map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.map(c=>candFrets(c))})),
+    strums:tl.strums.filter(inSel),chucks:tl.chucks.filter(inSel),
+    score:0,combo:0,maxCombo:0,hitN:0,hitC:0,passes:0,started:performance.now(),feed:[],sm:new Float32Array(12),bv:new Float32Array(12),pct:null,media:null,pitches:[]});
+  location.hash='tocar';
+  document.body.classList.add('playing');
+  $('#v-tocar').classList.remove('done');
+  $('#pResults').hidden=true; $('#pTitle').textContent=s.title; $('#pMode').textContent=cfg.mode==='test'?'Prueba':'Práctica';
+  $('#pSpeedBox').hidden=cfg.mode!=='practice'; $('#pSpeed').value=Math.round(speed*100); $('#pSpeedV').textContent=Math.round(speed*100)+'%';
+  $('#pPause').textContent='Pausa'; $('#pMsg').textContent='';
+  const cs=getComputedStyle(document.documentElement); PL.col={acc:cs.getPropertyValue('--accent').trim(),fg:cs.getPropertyValue('--fg').trim(),muted:cs.getPropertyValue('--muted').trim(),bad:cs.getPropertyValue('--bad').trim(),line:cs.getPropertyValue('--line').trim(),surf:cs.getPropertyValue('--surface').trim(),str:STRCOL[prefs.style]||STRCOL.estudio};
+  ctx();
+  // micrófono (si no hay, se toca igual pero sin puntaje)
+  micStart().then(()=>{ PL.mic=true; startLoop() }).catch(e=>{ PL.mic=false; micBlocked=micReason(e); $('#pMsg').textContent='Sin micrófono: la canción avanza igual, pero no puedo puntuar. '+(micBlocked==='frame'?'Ábrela desde la app instalada.':'') });
+  // pista de fondo: arranca dentro de este mismo toque (iOS lo exige)
+  PL.media=mediaFor(s,speed,cfg);
+  playFrom(0,true);
+  cancelAnimationFrame(PL.raf); PL.raf=requestAnimationFrame(playerLoop);
+  try{ navigator.wakeLock?.request('screen').then(w=>PL.wake=w).catch(()=>{}) }catch(e){}
+}
+function candFrets(c){ let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
+  if(prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
+  const mt=/^([A-G])([#b])?/.exec(c.name||''); let root=null; if(mt){ root=(ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0)+12)%12 }
+  return {key:c.id,notes,pcs:[...new Set(notes.map(n=>n.m%12))],bass:notes[0].m%12,root} }
+const beatSec=()=>60/(PL.song.bpm||90);
+/* empieza (o salta) a una sección: con preconteo de un compás al inicio y de un tiempo al saltar */
+function playFrom(k,first){
+  PL.k=k; const sec=PL.tl.sections[PL.sel[k]], pre=(first?4:1)*beatSec();
+  PL.countEnd=sec.start; PL.base=sec.start-pre; PL.t0=performance.now();
+  if(PL.media) PL.media.play(PL.base,PL.speed);
+  scheduleCount(first?4:1);
+}
+function scheduleCount(n){ const a=ctx(); if(!a) return; const b=beatSec()/PL.speed; PL.clickNext=null;
+  for(let i=0;i<n;i++){ const t=a.currentTime+.05+i*b; click(t,i===0) }
+  const box=$('#pCount'); box.hidden=false; let i=n; const step=()=>{ if(!PL.running) return; if(i<=0){ box.hidden=true; return } box.textContent=i; box.classList.remove('beat'); void box.offsetWidth; box.classList.add('beat'); i--; setTimeout(step,b*1000) }; step();
+}
+/* reloj: el video manda si está sonando; si no, el reloj del navegador */
+function songTime(){
+  if(PL.paused) return PL.pausedAt;
+  if(PL.media&&PL.media.ready&&PL.media.playing()) { const mt=PL.media.time(); if(mt!=null) return mt }
+  return PL.base+(performance.now()-PL.t0)/1000*PL.speed;
+}
+function playerLoop(){
+  if(!PL.running) return; PL.raf=requestAnimationFrame(playerLoop);
+  const t=songTime(); PL.t=t;
+  const sec=PL.tl.sections[PL.sel[PL.k]];
+  if(!PL.paused&&t>=sec.end){
+    const nk=PL.k+1;
+    if(nk<PL.sel.length){ const ns=PL.tl.sections[PL.sel[nk]]; if(Math.abs(ns.start-sec.end)<.01){ PL.k=nk } else playFrom(nk,false) }
+    else if(PL.cfg.mode==='practice'&&PL.cfg.loop){ PL.passes++; resetMarks(); playFrom(0,false) }
+    else { finishPlayer(); return }
+  }
+  // clic de metrónomo durante la canción
+  if(PL.cfg.click&&!PL.paused&&t>=PL.countEnd){ const bi=Math.floor((t+1e-6)/beatSec()); if(bi!==PL.lastBeat){ PL.lastBeat=bi; const a=ctx(); if(a) click(a.currentTime+.01,bi%4===0) } }
+  // fallos: lo que ya pasó sin acertarse
+  const lateN=.28*PL.speed+.1;
+  for(const n of PL.notes) if(n.st===0&&t>n.t+lateN){ n.st=-1; breakCombo() }
+  for(const b of PL.blocks) if(b.st===0&&t>b.t1+.2){ b.st=-1; breakCombo() }
+  drawHighway(t); playerHud(t);
+}
+function resetMarks(){ PL.notes.forEach(n=>n.st=0); PL.blocks.forEach(b=>{b.st=0;b.ok=0;b.best=0}) }
+function breakCombo(){ if(PL.combo>=5) feed('Combo perdido','bad'); PL.combo=0 }
+function award(base,dt,label){
+  PL.combo++; PL.maxCombo=Math.max(PL.maxCombo,PL.combo);
+  const g=Math.abs(dt)<.07?'perfect':Math.abs(dt)<.16?'great':'good';
+  const pts=Math.round(base*multOf(PL.combo)*(g==='perfect'?1.2:g==='great'?1:.8)); PL.score+=pts;
+  feed(gradeWord(g)+(label?' · '+label:''),g); if(prefs.sound&&g==='perfect') gradeSound('good');
+}
+function feed(txt,cls){ const f=$('#pFeed'); const el=h('span',{class:'fd '+cls,text:txt}); f.append(el); setTimeout(()=>el.remove(),900); while(f.children.length>3) f.firstChild.remove() }
+/* audio: notas sueltas por tono, acordes por croma */
+function playerAudio(o,now){
+  if(!PL.running||PL.paused||!PL.mic) return;
+  const lat=PL.cfg.latency/1000*PL.speed, t=songTime()-lat;
+  // cada nota tocada es un evento: nace con un ataque o cuando cambia la altura; se usa para una sola nota de la tablatura
+  if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440);
+      if(o.onset||PL.lastM==null||Math.abs(m-PL.lastM)>.6) PL.pitches.push({t,m,used:false}); PL.lastM=m } }
+  else PL.lastM=null;
+  PL.pitches=PL.pitches.filter(p=>t-p.t<.8);
+  const win=.09*PL.speed+.04, late=.2*PL.speed+.06;
+  for(const n of PL.notes){ if(n.st!==0||n.t>t+win||n.t<t-late-.3) continue;
+    const hit=PL.pitches.find(p=>!p.used&&p.t>=n.t-win&&p.t<=n.t+late&&(Math.abs(p.m-n.m)<.55||Math.abs(Math.abs(p.m-n.m)-12)<.55||(/b/.test(n.tech)&&p.m>n.m&&p.m<n.m+2.3)));
+    if(hit){ hit.used=true; n.st=1; PL.hitN++; award(100,hit.t-n.t,'') } }
+  // acordes
+  for(let i=0;i<12;i++){ PL.sm[i]=o.live?PL.sm[i]*.55+o.ch[i]*.45:PL.sm[i]*.85; PL.bv[i]=o.live?PL.bv[i]*.6+(o.bass===i?.4:0):PL.bv[i]*.85 }
+  const thr=(Ear.SENS[st.sens]||Ear.SENS.normal).thr-4; PL.pct=null;
+  for(const b of PL.blocks){ if(b.st!==0||t<b.t0-.1||t>b.t1+.15) continue;
+    let best=0; for(const c of b.cands){ const sc=Ear.score(PL.sm,c,PL.bv); const okn=sc.missing.length===0||(sc.n>=5&&sc.missing.length<=1); if(okn&&sc.pct>best) best=sc.pct; else if(!okn) best=Math.max(best,Math.min(sc.pct,thr-1)) }
+    b.best=Math.max(b.best,best); PL.pct=best;
+    if(o.live&&best>=thr) b.ok+=16; if(b.ok>=96){ b.st=1; PL.hitC++; award(150,t-b.t0-.15,b.chords.map(c=>c.name).join('/')) } }
+}
+function playerHud(t){
+  $('#pScore').textContent=fmtN(PL.score); $('#pCombo').textContent=PL.combo>=2?PL.combo+' ×'+multOf(PL.combo):PL.combo;
+  const done=PL.notes.filter(n=>n.st!==0).length+PL.blocks.filter(b=>b.st!==0).length, hits=PL.notes.filter(n=>n.st===1).length+PL.blocks.filter(b=>b.st===1).length;
+  $('#pAcc').textContent=done?Math.round(hits/done*100)+'%':'–';
+  const sec=PL.tl.sections[PL.sel[PL.k]]; $('#pSec').textContent=sec.name+(PL.cfg.mode==='practice'?` · ${Math.round(PL.speed*100)}%`+(PL.passes?` · vuelta ${PL.passes+1}`:''):'');
+  const first=PL.tl.sections[PL.sel[0]],last=PL.tl.sections[PL.sel[PL.sel.length-1]];
+  $('#pProg').style.width=Math.max(0,Math.min(100,(t-first.start)/(last.end-first.start)*100))+'%';
+  const cur=PL.blocks.find(b=>t>=b.t0-.05&&t<b.t1), nxt=PL.blocks.find(b=>b.t0>t+.05), nn=PL.notes.filter(n=>n.t>t-.05).slice(0,4);
+  $('#pNow').textContent=cur?cur.chords.map(c=>c.name).join(' / '):(nn.length&&nn[0].t-t<1.2?'Riff':'–');
+  $('#pNext').textContent=nxt&&(!nn.length||nxt.t0<nn[0].t)?nxt.chords.map(c=>c.name).join(' / '):nn.map(n=>nn.length?`${'EADGBe'[n.s]}${n.f}${n.tech}`:'').join(' ')||'–';
+  $('#pPct').textContent=PL.pct!=null?PL.pct+'%':'–';
+}
+/* autopista: el tiempo corre de derecha a izquierda hacia la línea de golpe */
+function drawHighway(t){
+  const cv=$('#hw'), dpr=Math.min(2,window.devicePixelRatio||1), W=cv.clientWidth, H=cv.clientHeight; if(!W) return;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr) }
+  const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H);
+  const C=PL.col, hx=Math.min(90,W*.18), pxs=Math.max(120,Math.min(220,W*.42)), top=40, bot=H-14, gap=(bot-top)/5, y=s=>top+(5-s)*gap, x=tt=>hx+(tt-t)*pxs;
+  const tmin=t-hx/pxs-.2, tmax=t+(W-hx)/pxs+.2, bs=beatSec();
+  // cuerdas
+  for(let s=0;s<6;s++){ c.strokeStyle=C.line; c.globalAlpha=.9; c.lineWidth=1+(5-s)*.25; c.beginPath(); c.moveTo(0,y(s)); c.lineTo(W,y(s)); c.stroke() } c.globalAlpha=1;
+  // tiempos y compases
+  for(let b=Math.floor(tmin/bs);b*bs<tmax;b++){ const xx=x(b*bs); c.strokeStyle=C.muted; c.globalAlpha=b%4===0?.45:.15; c.lineWidth=b%4===0?1.5:1; c.beginPath(); c.moveTo(xx,top-6); c.lineTo(xx,bot); c.stroke() } c.globalAlpha=1;
+  // secciones
+  c.font='600 11px '+getComputedStyle(document.body).fontFamily; c.textBaseline='alphabetic';
+  for(const s of PL.tl.sections){ if(s.start<tmin-10||s.start>tmax) continue; const xx=x(s.start); c.fillStyle=C.acc; c.globalAlpha=.8; c.fillRect(xx,top-24,2,bot-top+24); c.globalAlpha=1; c.fillText(s.name.toUpperCase(),xx+5,top-14) }
+  // bloques de acordes
+  for(const b of PL.blocks){ if(b.t1<tmin||b.t0>tmax) continue; const x0=x(b.t0),x1=x(b.t1);
+    c.fillStyle=b.st===1?C.acc:b.st===-1?C.bad:C.fg; c.globalAlpha=b.st===1?.28:b.st===-1?.16:.08; roundRect(c,x0,top-8,Math.max(6,x1-x0-3),bot-top+16,8); c.fill(); c.globalAlpha=1;
+    c.strokeStyle=b.st===1?C.acc:C.line; c.lineWidth=1.5; roundRect(c,x0,top-8,Math.max(6,x1-x0-3),bot-top+16,8); c.stroke();
+    c.font='700 14px '+getComputedStyle(document.body).fontFamily; const lab=b.chords.map(q=>q.name).join(' / '), lx=Math.max(x0+6,hx+6), tw=c.measureText(lab).width;
+    if(lx+tw<x1-4||x0>hx){ c.fillStyle=b.st===-1?C.bad:C.fg; c.fillText(lab,lx,top-24) } }
+  // rasgueos
+  c.font='700 13px system-ui'; c.textAlign='center';
+  for(const r of PL.strums){ if(r.t<tmin||r.t>tmax) continue; c.fillStyle=C.muted; c.globalAlpha=r.t<t?.35:.9; c.fillText(r.dir==='u'?'↑':r.dir==='d'?'↓':'•',x(r.t),bot+12) } c.globalAlpha=1;
+  for(const k of PL.chucks){ if(k.t<tmin||k.t>tmax) continue; c.fillStyle=C.muted; c.fillText('×',x(k.t),y(2.5)+4) }
+  // notas
+  for(const n of PL.notes){ if(n.t<tmin||n.t>tmax) continue; const xx=x(n.t),yy=y(n.s),r=Math.max(11,Math.min(15,gap*.42));
+    c.beginPath(); c.arc(xx,yy,r,0,Math.PI*2); c.fillStyle=n.st===1?C.acc:n.st===-1?C.bad:C.str[n.s]; c.globalAlpha=n.st===-1?.5:1; c.fill();
+    if(n.st===1){ c.shadowColor=C.acc; c.shadowBlur=16; c.fill(); c.shadowBlur=0 }
+    c.globalAlpha=1; c.fillStyle='#111'; c.font=`700 ${r>12?13:11}px system-ui`; c.textBaseline='middle'; c.fillText(String(n.f),xx,yy+.5); c.textBaseline='alphabetic';
+    if(n.tech){ c.fillStyle=C.fg; c.font='700 11px system-ui'; c.fillText(n.tech.replace('b','↗').replace('/','⟋').replace('\\','⟍'),xx+r+7,yy-r+4) } }
+  c.textAlign='left';
+  // línea de golpe
+  c.strokeStyle=C.acc; c.lineWidth=3; c.shadowColor=C.acc; c.shadowBlur=12; c.beginPath(); c.moveTo(hx,top-10); c.lineTo(hx,bot+4); c.stroke(); c.shadowBlur=0;
+}
+function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath() }
+/* controles */
+$('#pPause').addEventListener('click',()=>{ if(!PL.running) return;
+  if(!PL.paused){ PL.pausedAt=songTime(); PL.paused=true; if(PL.media) PL.media.pause(); $('#pPause').textContent='Seguir' }
+  else { PL.paused=false; PL.base=PL.pausedAt-beatSec(); PL.t0=performance.now(); if(PL.media) PL.media.play(PL.base,PL.speed); scheduleCount(1); $('#pPause').textContent='Pausa' } });
+$('#pRestart').addEventListener('click',()=>{ if(!PL.song) return; const s=PL.song; stopPlayer(); startPlayer(s) });
+$('#pStop').addEventListener('click',()=>{ if(PL.running) finishPlayer() });
+$('#pExit').addEventListener('click',()=>{ stopPlayer(); openSong(PL.song?PL.song.id:curSongId) });
+$('#pSpeed').addEventListener('input',e=>{ if(!PL.running||PL.cfg.mode!=='practice') return; const v=+e.target.value/100, t=songTime();
+  let sp=v; if(PL.media&&PL.media.rates){ sp=PL.media.rates.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a,1) }
+  PL.speed=sp; PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.setRate(sp); $('#pSpeedV').textContent=Math.round(sp*100)+'%' });
+function stopPlayer(){ PL.running=false; cancelAnimationFrame(PL.raf); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCount').hidden=true }
+function finishPlayer(){
+  const s=PL.song, totalN=PL.notes.length, totalC=PL.blocks.length, hits=PL.notes.filter(n=>n.st===1).length+PL.blocks.filter(b=>b.st===1).length;
+  const tot=totalN+totalC, acc=tot?Math.round(hits/tot*100):0, dur=performance.now()-PL.started;
+  const mic=PL.mic, mode=PL.cfg.mode; stopPlayer();
+  const grade=!mic?'—':acc>=95?'S':acc>=85?'A':acc>=70?'B':acc>=50?'C':'D';
+  let rec=null, newBest=false;
+  if(mic&&hits>0){
+    const lvBefore=levelOf(totalXP()).L;
+    rec={at:Date.now(),deck:(s.cat==='riff'?'Riff: ':'Canción: ')+s.title,order:'sequence',end:'none',adv:'song',done:hits,skips:tot-hits,dur,avg:null,score:Math.round(PL.score/4),songScore:PL.score,per:{}};
+    history.unshift(rec); history=history.slice(0,300); saveHist();
+    rec.xp=xpOfRec(rec); const lvAfter=levelOf(totalXP()).L; if(lvAfter>lvBefore) rec.levelUp=lvAfter;
+    if(mode==='test'){ const recs=S.get('songrec',{}), key=s.id+'|'+PL.sel.join(','); if(!recs[key]||PL.score>recs[key].score){ newBest=!!recs[key]; recs[key]={score:PL.score,acc,at:Date.now()}; S.set('songrec',recs) } }
+  }
+  $('#v-tocar').classList.add('done');
+  const r=$('#pResults'); r.hidden=false; r.innerHTML='';
+  const add=(...xs)=>r.append(...xs.filter(x=>x!=null&&x!==false));
+  add(h('div',{class:'bigscore'},h('span',{class:'k',text:mode==='test'?'Prueba terminada':'Práctica terminada'}),
+      h('div',{class:'gradeL',text:grade}),h('b',{text:fmtN(PL.score)}),
+      h('div',{class:'grades'},h('span',{},h('b',{text:acc+'%'}),' acierto'),h('span',{},h('b',{text:`${PL.notes.filter(n=>n.st===1).length}/${totalN}`}),' notas'),h('span',{},h('b',{text:`${PL.blocks.filter(b=>b.st===1).length}/${totalC}`}),' acordes'),h('span',{},h('b',{text:String(PL.maxCombo)}),' combo máx'))),
+    newBest?h('span',{class:'pill',text:'¡Nuevo récord!'}):null,
+    rec&&rec.levelUp?h('div',{class:'levelup'},h('span',{class:'k',text:'¡Subiste de nivel!'}),h('b',{text:'Nivel '+rec.levelUp}),h('span',{text:titleOf(rec.levelUp)})):null,
+    rec?h('p',{class:'xpgain',text:'+'+fmtN(rec.xp)+' XP'}):null,
+    !mic?h('p',{class:'hint',text:'Sin micrófono no hay puntaje.'}):null,
+    h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>startPlayer(getSong(s.id))},'Otra vez'),h('button',{class:'btn',onclick:()=>openSong(s.id)},'Ajustes de la canción'),h('a',{class:'btn ghost',href:'#canciones'},'Canciones')));
+  window.scrollTo(0,0);
+}
+/* la detección de notas acepta errores de octava del detector de tono */
+
+/* ---------- pista de fondo: YouTube y Spotify ---------- */
+const parseTime=v=>{ v=String(v||'').trim().replace(',','.'); if(!v) return 0; const p=v.split(':').map(Number); if(p.some(isNaN)) return 0; return p.length>1?p[0]*60+p[1]:p[0] };
+const showTime=s=>{ s=Math.max(0,+s||0); const m=Math.floor(s/60), r=s-m*60; return m+':'+(r<10?'0':'')+r.toFixed(1) };
+const ytId=u=>{ u=String(u||'').trim(); const m=/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([\w-]{11})/.exec(u); return m?m[1]:(/^[\w-]{11}$/.test(u)?u:null) };
+const spTrack=u=>{ const m=/track[\/:]([A-Za-z0-9]{22})/.exec(String(u||'')); return m?m[1]:null };
+const inArtifact=(()=>{ try{ return window.self!==window.top }catch(e){ return true } })();
+
+/* YouTube IFrame API */
+let ytApi=null;
+function loadYT(){ if(ytApi) return ytApi; ytApi=new Promise((res,rej)=>{ if(window.YT&&YT.Player) return res(); const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=()=>{ prev&&prev(); res() };
+  const s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api'; s.onerror=()=>{ ytApi=null; rej(new Error('yt')) }; document.head.append(s); setTimeout(()=>rej(new Error('timeout')),12000) }); return ytApi }
+function ytMedia(id,start,view){
+  const holder=view==='bg'?$('#ytBg'):$('#ytWin'); $('#ytBg').innerHTML=''; $('#ytWin').innerHTML='';
+  $('#ytBg').classList.toggle('on',view==='bg'); $('#ytWin').classList.toggle('on',view!=='bg');
+  const host=h('div',{id:'ytHost'}); holder.append(host);
+  const M={kind:'yt',ready:false,p:null,rates:null,pending:null,timer:null,
+    playing(){ return this.ready&&this.p.getPlayerState&&this.p.getPlayerState()===1 },
+    time(){ if(!this.ready) return null; const v=this.p.getCurrentTime(); return v-start },
+    play(songT,rate){ const go=()=>{ clearTimeout(this.timer); const target=start+songT;
+        try{ this.p.setPlaybackRate(rate) }catch(e){}
+        if(target<0){ this.p.seekTo(0,true); this.p.playVideo(); this.p.pauseVideo(); this.timer=setTimeout(()=>{ this.p.seekTo(0,true); this.p.playVideo() },-target/rate*1000) }
+        else { this.p.seekTo(target,true); this.p.playVideo() } };
+      if(this.ready) go(); else this.pending=go },
+    pause(){ clearTimeout(this.timer); if(this.ready) this.p.pauseVideo(); else this.pending=null },
+    setRate(r){ if(this.ready) try{ this.p.setPlaybackRate(r) }catch(e){} },
+    destroy(){ clearTimeout(this.timer); try{ this.p&&this.p.destroy() }catch(e){} $('#ytBg').innerHTML=''; $('#ytWin').innerHTML=''; $('#ytBg').classList.remove('on'); $('#ytWin').classList.remove('on') }};
+  loadYT().then(()=>{ M.p=new YT.Player('ytHost',{videoId:id,width:'100%',height:'100%',playerVars:{playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3},
+    events:{onReady:()=>{ M.ready=true; try{ M.rates=M.p.getAvailablePlaybackRates() }catch(e){} if(M.pending){ M.pending(); M.pending=null } },
+            onError:e=>{ $('#pMsg').textContent='YouTube no pudo reproducir este video (puede estar bloqueado para insertar en otras páginas). Sigue sin pista.'; M.destroy(); if(PL.media===M) PL.media=null }}}) })
+  .catch(()=>{ $('#pMsg').textContent=inArtifact?'YouTube no funciona dentro de claude.ai. Usa la app instalada.':'No pude cargar YouTube. Revisa tu conexión.'; if(PL.media===M) PL.media=null });
+  return M;
+}
+
+/* Spotify: Web Playback SDK con tu propia app (PKCE). Requiere Premium. */
+const SPC={get(){ return S.get('spotify',{}) },set(v){ S.set('spotify',v) }};
+const b64url=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const spRedirect=()=>location.origin+location.pathname;
+async function spLogin(){
+  const cfg=SPC.get(); if(!cfg.clientId){ toast('Pega primero tu Client ID'); return }
+  const ver=b64url(crypto.getRandomValues(new Uint8Array(48)));
+  const chal=b64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ver)));
+  try{ localStorage.setItem('trastero.spver',ver) }catch(e){}
+  const q=new URLSearchParams({response_type:'code',client_id:cfg.clientId,scope:'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state',redirect_uri:spRedirect(),code_challenge_method:'S256',code_challenge:chal});
+  location.href='https://accounts.spotify.com/authorize?'+q;
+}
+async function spTokenReq(body){ const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body)}); if(!r.ok) throw new Error('token '+r.status); return r.json() }
+async function spToken(){
+  const c=SPC.get(); if(!c.refresh&&!c.access) throw new Error('nologin');
+  if(c.access&&Date.now()<c.exp-60000) return c.access;
+  const j=await spTokenReq({grant_type:'refresh_token',refresh_token:c.refresh,client_id:c.clientId});
+  c.access=j.access_token; c.exp=Date.now()+j.expires_in*1000; if(j.refresh_token) c.refresh=j.refresh_token; SPC.set(c); return c.access;
+}
+(async()=>{ // vuelta desde Spotify con ?code=
+  const q=new URLSearchParams(location.search), code=q.get('code'); if(!code&&!q.get('error')) return;
+  history.replaceState(null,'',location.pathname+location.hash);
+  if(q.get('error')){ toast('Spotify no autorizó la conexión'); return }
+  let ver=null; try{ ver=localStorage.getItem('trastero.spver') }catch(e){}
+  const c=SPC.get(); if(!ver||!c.clientId){ toast('Falta el Client ID en esta ventana. Vuelve a conectar desde la canción.'); return }
+  try{ const j=await spTokenReq({grant_type:'authorization_code',code,redirect_uri:spRedirect(),client_id:c.clientId,code_verifier:ver});
+    c.access=j.access_token; c.refresh=j.refresh_token; c.exp=Date.now()+j.expires_in*1000; SPC.set(c);
+    toast('Spotify conectado'); if(window.navigator.standalone===false||!matchMedia('(display-mode: standalone)').matches) setTimeout(()=>toast('Si usas la app instalada, copia el código de conexión desde la ficha de la canción'),2500) }
+  catch(e){ toast('No pude completar la conexión con Spotify') }
+})();
+let spSdk=null;
+function loadSpSdk(){ if(spSdk) return spSdk; spSdk=new Promise((res,rej)=>{ window.onSpotifyWebPlaybackSDKReady=res; const s=document.createElement('script'); s.src='https://sdk.scdn.co/spotify-player.js'; s.onerror=()=>{ spSdk=null; rej(new Error('sdk')) }; document.head.append(s); setTimeout(()=>rej(new Error('timeout')),12000) }); return spSdk }
+function spMedia(track,start){
+  const M={kind:'sp',ready:false,rates:[1],dev:null,state:null,at:0,pending:null,player:null,
+    playing(){ return this.state&&!this.state.paused },
+    time(){ if(!this.state) return null; return (this.state.position+(this.state.paused?0:performance.now()-this.at))/1000-start },
+    async play(songT){ const pos=Math.max(0,Math.round((start+songT)*1000));
+      if(!this.ready){ this.pending=()=>this.play(songT); return }
+      const wait=start+songT<0?-(start+songT)*1000:0;
+      const go=async()=>{ try{ const tk=await spToken(); await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${this.dev}`,{method:'PUT',headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json'},body:JSON.stringify({uris:['spotify:track:'+track],position_ms:pos})}) }catch(e){ $('#pMsg').textContent='Spotify no respondió. Revisa la conexión en la ficha de la canción.' } };
+      if(wait) setTimeout(go,wait); else go() },
+    pause(){ try{ this.player&&this.player.pause() }catch(e){} },
+    setRate(){},
+    destroy(){ try{ this.player&&this.player.pause(); this.player&&this.player.disconnect() }catch(e){} }};
+  loadSpSdk().then(()=>{ const pl=new Spotify.Player({name:'Trastero',getOAuthToken:cb=>{ spToken().then(cb).catch(()=>{ $('#pMsg').textContent='Conecta tu cuenta de Spotify en la ficha de la canción.' }) },volume:.85});
+    M.player=pl; try{ pl.activateElement&&pl.activateElement() }catch(e){}
+    pl.addListener('ready',({device_id})=>{ M.dev=device_id; M.ready=true; if(M.pending){ const f=M.pending; M.pending=null; f() } });
+    pl.addListener('player_state_changed',s=>{ if(s){ M.state={position:s.position,paused:s.paused}; M.at=performance.now() } });
+    ['initialization_error','authentication_error','account_error'].forEach(ev=>pl.addListener(ev,({message})=>{ $('#pMsg').textContent='Spotify: '+(ev==='account_error'?'hace falta Premium.':message) }));
+    pl.connect() })
+  .catch(()=>{ $('#pMsg').textContent=inArtifact?'Spotify no funciona dentro de claude.ai. Usa la app instalada.':'No pude cargar el reproductor de Spotify.' });
+  return M;
+}
+function mediaFor(s,speed,cfg){
+  const m=s.media||{};
+  if(m.src==='yt'){ const id=ytId(m.url); if(!id) return null; return ytMedia(id,parseTime(m.start),m.view||'window') }
+  if(m.src==='sp'){ const tr=spTrack(m.url); if(!tr) return null; if(Math.abs(speed-1)>.01){ $('#pMsg').textContent='Spotify no permite cambiar la velocidad: a este ritmo se toca sin pista.'; return null } return spMedia(tr,parseTime(m.start)) }
+  return null;
+}
+
+/* configuración por canción */
+function renderMediaCfg(s,save){
+  const m=s.media=s.media||{src:'none'}; const src=m.src||'none';
+  document.querySelectorAll('input[name=sMedia]').forEach(r=>{ r.checked=r.value===src; r.onchange=()=>{ m.src=r.value; save(); renderSongDetail() } });
+  $('#sYt').hidden=src!=='yt'; $('#sSp').hidden=src!=='sp';
+  $('#sYtUrl').value=m.src==='yt'?(m.url||''):''; $('#sYtStart').value=m.start?showTime(parseTime(m.start)):'';
+  $('#sYtUrl').onchange=e=>{ m.url=e.target.value.trim(); save(); renderSongDetail() };
+  $('#sYtStart').onchange=e=>{ m.start=showTime(parseTime(e.target.value)); save() };
+  document.querySelectorAll('input[name=sYtView]').forEach(r=>{ r.checked=r.value===(m.view||'window'); r.onchange=()=>{ m.view=r.value; save() } });
+  $('#sSpUrl').value=m.src==='sp'?(m.url||''):''; $('#sSpStart').value=m.start?showTime(parseTime(m.start)):'';
+  $('#sSpUrl').onchange=e=>{ m.url=e.target.value.trim(); save(); renderSongDetail() };
+  $('#sSpStart').onchange=e=>{ m.start=showTime(parseTime(e.target.value)); save() };
+  $('#sSpRedirect').textContent=spRedirect();
+  const c=SPC.get(); $('#sSpCid').value=c.clientId||'';
+  $('#sSpCid').onchange=e=>{ const v=SPC.get(); v.clientId=e.target.value.trim(); SPC.set(v) };
+  $('#sSpLogin').onclick=()=>{ const v=SPC.get(); v.clientId=$('#sSpCid').value.trim(); SPC.set(v); spLogin() };
+  $('#sSpCodeBtn').onclick=()=>{ const raw=$('#sSpCode').value.trim(); try{ const o=JSON.parse(atob(raw)); const v=SPC.get(); v.clientId=o.c; v.refresh=o.r; v.access=null; v.exp=0; SPC.set(v); toast('Código aplicado'); renderSongDetail() }catch(e){ toast('Ese código no es válido') } };
+  const linked=!!(c.refresh&&c.clientId);
+  $('#sSpStatus').innerHTML=''; $('#sSpStatus').append(linked?h('span',{},'Cuenta conectada. ',h('button',{class:'linkbtn',onclick:()=>{ const code=btoa(JSON.stringify({c:c.clientId,r:c.refresh})); navigator.clipboard?.writeText(code).then(()=>toast('Código de conexión copiado'),()=>{ $('#sSpCode').value=code; toast('Copia el código del campo de abajo') }) }},'Copiar código de conexión')):'Aún no conectas tu cuenta de Spotify.');
+  if(src==='yt'&&!ytId(m.url)) $('#sMediaNote').textContent='Pega el enlace de un video de YouTube.';
+  else if(src==='sp'&&!spTrack(m.url)) $('#sMediaNote').textContent='Pega el enlace de una canción de Spotify (Compartir → Copiar enlace).';
+  else if(src!=='none') $('#sMediaNote').textContent='Usa audífonos: si la pista suena por el parlante, el micrófono también la escucha y puede contar acordes que no tocaste.'+(inArtifact?' Las pistas solo funcionan en la app instalada, no dentro de claude.ai.':'');
+  else $('#sMediaNote').textContent='';
+  $('#sYtCal').onclick=()=>ytCalibrate(s,save);
+}
+/* calibrar: suena el video desde un poco antes y tocas en el primer tiempo */
+function ytCalibrate(s,save){
+  const id=ytId(s.media.url); if(!id){ toast('Primero pega el enlace del video'); return }
+  const box=$('#sYtCalBox'); box.hidden=false; box.innerHTML='';
+  const host=h('div',{id:'ytCalHost'}), tap=h('button',{class:'btn primary big',disabled:true},'Toca justo en el primer tiempo'), close=h('button',{class:'btn ghost'},'Cerrar');
+  box.append(h('p',{class:'hint',text:'El video parte unos segundos antes del inicio que tienes guardado. Toca el botón exactamente cuando empiece la canción.'}),h('div',{class:'ytcalv'},host),h('div',{class:'toolbar'},tap,close));
+  let p=null; const from=Math.max(0,parseTime(s.media.start)-4);
+  loadYT().then(()=>{ p=new YT.Player('ytCalHost',{videoId:id,width:'100%',height:'100%',playerVars:{playsinline:1,rel:0,start:Math.floor(from)},events:{onReady:()=>{ tap.disabled=false; p.seekTo(from,true); p.playVideo() }}}) })
+    .catch(()=>{ box.append(h('p',{class:'err',text:inArtifact?'YouTube no funciona dentro de claude.ai. Usa la app instalada.':'No pude cargar YouTube.'})) });
+  tap.onclick=()=>{ if(!p) return; const t=p.getCurrentTime(); s.media.start=showTime(t); save(); $('#sYtStart').value=s.media.start; toast('Inicio guardado en '+s.media.start) };
+  close.onclick=()=>{ try{ p&&p.destroy() }catch(e){} box.hidden=true; box.innerHTML='' };
+}
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
