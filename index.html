@@ -668,6 +668,7 @@ a.btn.primary{color:var(--accent-ink)}
 .foldman{margin-top:12px;display:flex;flex-direction:column;gap:8px}
 .foldman .row input{flex:1;min-width:120px}
 .pcount.wait{background:color-mix(in oklab,var(--surface) 18%,transparent);text-shadow:0 2px 14px rgba(0,0,0,.8)}
+.pwait.stall{background:var(--surface);color:var(--fg);border:1px solid var(--accent);animation:none}
 
 </style>
 
@@ -1124,7 +1125,7 @@ a.btn.primary{color:var(--accent-ink)}
       <div class="stat score"><span class="k">Puntaje</span><b id="pScore">0</b></div>
       <div class="stat"><span class="k">Combo</span><b id="pCombo">0</b></div>
       <div class="stat"><span class="k">Acierto</span><b id="pAcc">–</b></div>
-    </div><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div></div>
+    </div><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div></div>
     <div class="ptl" id="ptl" aria-label="Línea de tiempo de la canción">
       <div class="ptl-secs" id="ptlSecs"></div>
       <div class="ptl-loop" id="ptlLoop"></div>
@@ -2689,10 +2690,15 @@ function startPlayer(s,opts={}){
 function songTime(){
   if(PL.paused) return PL.pausedAt;
   if(PL.hold) return PL.holdT;
-  if(PL.media&&PL.media.ready&&PL.media.playing()){ const mt=PL.media.time(); if(mt!=null) return mt }
+  if(PL.stall) return PL.stall.t;
+  // el video manda, pero suavizado: getCurrentTime avanza a saltos en algunos equipos; se corrige de a poco y de golpe si se aleja más de 0,25 s
+  if(PL.media&&PL.media.ready&&PL.media.expect&&PL.media.playing()){ const mt=PL.media.time(); if(mt!=null){ const now=performance.now(), own=PL.base+(now-PL.t0)/1000*PL.speed, d=mt-own;
+      if(Math.abs(d)>.25){ PL.base=mt; PL.t0=now } else if(Math.abs(d)>.015){ PL.base+=d*.08 }
+      return PL.base+(now-PL.t0)/1000*PL.speed } }
   return PL.base+(performance.now()-PL.t0)/1000*PL.speed;
 }
 function seek(t,preBeats,delay=0){
+  PL.stall=null; $('#pStall').hidden=true;
   PL.jumped=true; clearTimeout(PL.rsT); if(PL.rsWaiting){ PL.rsWaiting=false; PL.paused=false; $('#pPause').textContent='Pausa' }
   PL.countEnd=t; PL.base=t-preBeats*beatSec()-delay*PL.speed; PL.t0=performance.now(); PL.hold=false; $('#pWait').hidden=true;
   PL.k=Math.max(0,PL.segs.findIndex(g=>t<g.b));
@@ -2716,6 +2722,7 @@ function playerLoop(){
   if(!PL.running) return; PL.raf=requestAnimationFrame(playerLoop);
   if(PL.edit){ edFrame(); return }
   PL.jumped=false;
+  if(PL.media) mediaWatch(performance.now());
   let t=songTime();
   // nota por nota: la canción se detiene en lo próximo que falta tocar
   if(PL.mode==='practice'&&PL.cfg.wait&&!PL.paused&&!PL.hold&&t>=PL.countEnd){
@@ -2806,7 +2813,7 @@ function feed(txt,cls){ const f=$('#pFeed'); const el=h('span',{class:'fd '+cls,
 function banner(txt){ const b=$('#pBanner'); b.textContent=txt; b.hidden=false; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); clearTimeout(banner.t); banner.t=setTimeout(()=>b.hidden=true,1100) }
 /* audio: notas sueltas por tono, acordes por croma */
 function playerAudio(o,now){
-  if(!PL.running||PL.paused||!PL.mic) return;
+  if(!PL.running||PL.paused||!PL.mic||PL.stall) return;
   const t=songTime()-lagT(), waiting=PL.hold;
   if(o.onset) PL.lastOn={t,used:false};
   if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
@@ -2992,7 +2999,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
 /* controles */
 $('#pPause').addEventListener('click',()=>{ if(!PL.running) return;
   if(PL.rsWaiting){ clearTimeout(PL.rsT); PL.rsWaiting=false; $('#pCnt').hidden=true; $('#pPause').textContent='Seguir'; return }
-  if(!PL.paused){ PL.pausedAt=songTime(); PL.paused=true; if(PL.media) PL.media.pause(); $('#pPause').textContent='Seguir' }
+  if(!PL.paused){ PL.pausedAt=songTime(); PL.stall=null; $('#pStall').hidden=true; PL.paused=true; if(PL.media) PL.media.pause(); $('#pPause').textContent='Seguir' }
   else { PL.paused=false; seek(PL.pausedAt,1); $('#pPause').textContent='Pausa' } });
 $('#pRestart').addEventListener('click',()=>{ if(!PL.running){ if(PL.song) startPlayer(getSong(PL.song.id)); return }
   if(PL.mode==='practice'){ resetMarks(); PL.passes=0; PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,PL.cfg.wait?1:4,PL.cfg.delay||0); banner('Desde el inicio del loop') }
@@ -3008,7 +3015,7 @@ $('#pSpeed').addEventListener('input',e=>{ if(!PL.running||PL.mode!=='practice')
   let sp=v; if(PL.media&&PL.media.rates){ sp=PL.media.rates.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a,1) }
   PL.speed=sp; PL.cfg.speed=Math.round(sp*100); PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.setRate(sp); $('#pSpeedV').textContent=Math.round(sp*100)+'%' });
 $('#pSpeed').addEventListener('change',()=>{ if(PL.running){ PL.song.play=PL.cfg; saveSongMeta(PL.song) } });
-function stopPlayer(){ PL.running=false; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
+function stopPlayer(){ PL.running=false; PL.stall=null; $('#pStall').hidden=true; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
 function timingSummary(){
   const C=PL.cats||{}, parts=[['perfect','Perfecto'],['great','Bien'],['early','Un poco antes'],['late','Un poco tarde'],['tooEarly','Aún no'],['tooLate','Tarde']].filter(([k])=>C[k]).map(([k,n])=>h('span',{class:'tm '+k},h('b',{text:String(C[k])}),' '+n));
   if(!parts.length) return null;
@@ -3077,12 +3084,16 @@ function ytMedia(id,start,view){
   const M={kind:'yt',ready:false,p:null,rates:null,pending:null,timer:null,
     playing(){ return this.ready&&this.p.getPlayerState&&this.p.getPlayerState()===1 },
     time(){ if(!this.ready) return null; const v=this.p.getCurrentTime(); return v-start },
-    play(songT,rate){ const go=()=>{ clearTimeout(this.timer); const target=start+songT;
+    expect:false,expectAt:0,first:true,lastMt:null,lastMove:0,
+    code(){ try{ return this.ready?this.p.getPlayerState():-9 }catch(e){ return -9 } },
+    seekOnly(songT){ if(this.ready){ this.p.seekTo(Math.max(0,start+songT),true); this.p.playVideo() } },
+    play(songT,rate){ const now=performance.now(), t0=start+songT; this.expect=true; this.expectAt=now+(t0<0?-t0/rate*1000:0)+(this.first?2500:700); this.first=false; this.lastMt=null; this.lastMove=now;
+      const go=()=>{ clearTimeout(this.timer); const target=start+songT;
         try{ this.p.setPlaybackRate(rate) }catch(e){}
         if(target<0){ this.p.seekTo(0,true); this.p.playVideo(); this.p.pauseVideo(); this.timer=setTimeout(()=>{ this.p.seekTo(0,true); this.p.playVideo() },-target/rate*1000) }
         else { this.p.seekTo(target,true); this.p.playVideo() } };
       if(this.ready) go(); else this.pending=go },
-    pause(){ clearTimeout(this.timer); if(this.ready) this.p.pauseVideo(); else this.pending=null },
+    pause(){ this.expect=false; this.pausedAt=performance.now(); clearTimeout(this.timer); if(this.ready) this.p.pauseVideo(); else this.pending=null },
     setRate(r){ if(this.ready) try{ this.p.setPlaybackRate(r) }catch(e){} },
     destroy(){ clearTimeout(this.timer); try{ this.p&&this.p.destroy() }catch(e){} $('#ytBg').innerHTML=''; $('#ytWin').innerHTML=''; $('#ytBg').classList.remove('on'); $('#ytWin').classList.remove('on') }};
   loadYT().then(()=>{ M.p=new YT.Player('ytHost',{videoId:id,width:'100%',height:'100%',playerVars:{playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3},
@@ -3128,12 +3139,15 @@ function spMedia(track,start){
   const M={kind:'sp',ready:false,rates:[1],dev:null,state:null,at:0,pending:null,player:null,
     playing(){ return this.state&&!this.state.paused },
     time(){ if(!this.state) return null; return (this.state.position+(this.state.paused?0:performance.now()-this.at))/1000-start },
-    async play(songT){ const pos=Math.max(0,Math.round((start+songT)*1000));
+    expect:false,expectAt:0,first:true,lastMt:null,lastMove:0,
+    code(){ return !this.ready?-9:!this.state?3:this.state.paused?2:1 },
+    seekOnly(songT){ this.play(songT) },
+    async play(songT){ const pos=Math.max(0,Math.round((start+songT)*1000)), now=performance.now(), t0=start+songT; this.expect=true; this.expectAt=now+(t0<0?-t0*1000:0)+(this.first?3000:1200); this.first=false; this.lastMt=null; this.lastMove=now;
       if(!this.ready){ this.pending=()=>this.play(songT); return }
       const wait=start+songT<0?-(start+songT)*1000:0;
       const go=async()=>{ try{ const tk=await spToken(); await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${this.dev}`,{method:'PUT',headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json'},body:JSON.stringify({uris:['spotify:track:'+track],position_ms:pos})}) }catch(e){ $('#pMsg').textContent='Spotify no respondió. Revisa la conexión en la ficha de la canción.' } };
       if(wait) setTimeout(go,wait); else go() },
-    pause(){ try{ this.player&&this.player.pause() }catch(e){} },
+    pause(){ this.expect=false; this.pausedAt=performance.now(); try{ this.player&&this.player.pause() }catch(e){} },
     setRate(){},
     destroy(){ try{ this.player&&this.player.pause(); this.player&&this.player.disconnect() }catch(e){} }};
   loadSpSdk().then(()=>{ const pl=new Spotify.Player({name:'Trastero',getOAuthToken:cb=>{ spToken().then(cb).catch(()=>{ $('#pMsg').textContent='Conecta tu cuenta de Spotify en la ficha de la canción.' }) },volume:.85});
@@ -3188,6 +3202,31 @@ function ytCalibrate(s,save){
     .catch(()=>{ box.append(h('p',{class:'err',text:inArtifact?'YouTube no funciona dentro de claude.ai. Usa la app instalada.':'No pude cargar YouTube.'})) });
   tap.onclick=()=>{ if(!p) return; const t=p.getCurrentTime(); s.media.start=showTime(t); save(); $('#sYtStart').value=s.media.start; toast('Inicio guardado en '+s.media.start) };
   close.onclick=()=>{ try{ p&&p.destroy() }catch(e){} box.hidden=true; box.innerHTML='' };
+}
+
+/* vigilante de la pista: si el video debería sonar y no avanza (carga, anuncio, corte), la autopista se congela
+   en ese punto y no cuenta fallos; cuando vuelve, sigue desde la posición real del video. Si pausas o reanudas
+   el video tocándolo, la app hace lo mismo. */
+function mediaWatch(now){
+  const M=PL.media; if(!M||M.ended) return;
+  const code=M.code(), mt=M.ready?M.time():null;
+  if(mt!=null&&(M.lastMt==null||Math.abs(mt-M.lastMt)>.004)){ M.lastMt=mt; M.lastMove=now }
+  if(code===0){ M.ended=true; M.expect=false; PL.stall=null; $('#pStall').hidden=true; feed('El video terminó; sigo sin pista','good'); PL.base=PL.t; PL.t0=now; return }
+  // reanudaste el video desde el propio video mientras la app estaba en pausa
+  if(!M.expect){ if(code===1&&PL.paused&&!PL.rsWaiting&&!PL.edit&&now-(M.pausedAt||0)>900&&now-M.lastMove<300&&mt!=null){ PL.paused=false; M.expect=true; M.expectAt=now; PL.base=mt; PL.t0=now; $('#pPause').textContent='Pausa'; feed('Seguimos con el video','good') } return }
+  if(PL.paused||PL.hold||now<M.expectAt) return;
+  const moving=code===1&&now-M.lastMove<650;
+  if(!PL.stall){
+    if(moving) return;
+    if(code===2){ // pausaste el video tocándolo
+      PL.pausedAt=PL.t; PL.paused=true; M.expect=false; $('#pPause').textContent='Seguir'; banner('Pausa'); return }
+    PL.stall={t:PL.t,since:now,reseek:false}; return }
+  const box=$('#pStall');
+  if(moving){
+    if(Math.abs(mt-PL.stall.t)>1.5&&!PL.stall.reseek){ PL.stall.reseek=true; M.seekOnly(PL.stall.t); M.lastMove=now-700; return }   // tras un anuncio el video puede volver a otra parte
+    PL.base=mt; PL.t0=now; PL.stall=null; box.hidden=true; feed('Seguimos','good'); return }
+  if(now-PL.stall.since>400){ box.hidden=false; box.textContent=code===3||code===-9?'Cargando el video…':code===-1||code===5?'Esperando el video (¿anuncio?)…':'El video se detuvo (¿anuncio?)…' }
+  if((code===-1||code===5||code===2)&&now-(PL.stall.nudge||PL.stall.since)>2500){ PL.stall.nudge=now; try{ M.p&&M.p.playVideo() }catch(e){} }
 }
 
 /* ---------- medidor de latencia: rasgueas cuando la bola llega al blanco ---------- */
