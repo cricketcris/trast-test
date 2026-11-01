@@ -645,6 +645,9 @@ a.btn.primary{color:var(--accent-ink)}
   .edpanel .seg span{padding:4px 10px;font-size:.8rem;min-height:0}
 }
 .edhead .edwhere{align-items:flex-start}
+.rescue{display:flex;flex-direction:column;gap:6px;margin:8px 0 4px 28px;font-size:.92rem}
+.rescue p{margin:0;line-height:2.1}
+.nin{width:58px!important;display:inline-block;padding:4px 6px!important;text-align:center;font-family:var(--mono)}
 
 </style>
 
@@ -1001,6 +1004,13 @@ a.btn.primary{color:var(--accent-ink)}
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sLoop">Repetir las secciones elegidas en bucle</label>
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sWait">Nota por nota: si no la tocas a tiempo, la canción te espera</label>
           <label class="check" style="margin-top:8px"><input type="checkbox" id="sWaitJump">Al acertar, saltar al instante a la siguiente nota</label>
+          <label class="check" style="margin-top:12px"><input type="checkbox" id="sRescue">Anti-colapso: si me pierdo, volver un poco y esperarme</label>
+          <div class="rescue" id="sRescueOpts">
+            <p>Si fallo <input type="number" id="s_rsStreak" class="nin" min="0" max="20" inputmode="numeric"> seguidas,</p>
+            <p>o si de las últimas <input type="number" id="s_rsWin" class="nin" min="0" max="30" inputmode="numeric"> fallo más del <input type="number" id="s_rsPct" class="nin" min="10" max="95" inputmode="numeric"> %,</p>
+            <p>volver <input type="number" id="s_rsBack" class="nin" min="0" max="15" inputmode="numeric"> s antes del primer fallo y esperar <input type="number" id="s_rsWait" class="nin" min="0" max="15" inputmode="numeric"> s.</p>
+            <p class="hint" style="margin:0">Las notas entre ese punto y el fallo no cuentan y se ven casi transparentes. Pon 0 en una regla para apagarla. No se usa con "Nota por nota".</p>
+          </div>
           <p class="hint">Mientras tocas puedes mover los corchetes [ ] de la línea de tiempo para elegir dónde empieza y termina el loop, o tocarla para saltar a otra parte.</p>
         </fieldset>
         <fieldset><legend class="lab">Margen de tiempo</legend>
@@ -2429,7 +2439,7 @@ function rawToText(song){
 
 /* ---------- reproductor de canciones: autopista, prueba y práctica ---------- */
 let curSongId=null, songFilter='all';
-const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait:false,waitJump:false,loopA:null,loopB:null,delay:0,margin:'normal'};
+const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait:false,waitJump:false,loopA:null,loopB:null,delay:0,margin:'normal',rescue:true,rsStreak:3,rsWin:8,rsPct:50,rsBack:2,rsWait:2};
 const playCfg=s=>{ const c=Object.assign({},PLAY_DEF,s.play||{}); if(c.lat===140&&!c.latUser) c.lat=120; return c };
 function openSong(id){ curSongId=id; if(location.hash==='#cancion') renderSongDetail(); else location.hash='cancion' }
 
@@ -2500,6 +2510,8 @@ function renderSongDetail(){
   $('#sLat').value=cfg.lat; $('#sLatV').textContent=cfg.lat+' ms'; $('#sLat').oninput=e=>{cfg.lat=+e.target.value;cfg.latUser=true;$('#sLatV').textContent=cfg.lat+' ms'}; $('#sLat').onchange=save;
   $('#sDelay').value=cfg.delay||0; $('#sDelayV').textContent=(cfg.delay||0)+' s'; $('#sDelay').oninput=e=>{cfg.delay=+e.target.value;$('#sDelayV').textContent=cfg.delay+' s'}; $('#sDelay').onchange=save;
   $('#latBtn').onclick=()=>latStart(cfg,save); $('#latAgain').onclick=()=>latStart(cfg,save);
+  const rs=$('#sRescue'); rs.checked=!!cfg.rescue; rs.onchange=e=>{ cfg.rescue=e.target.checked; save(); $('#sRescueOpts').hidden=!cfg.rescue }; $('#sRescueOpts').hidden=!cfg.rescue;
+  [['rsStreak',0,20],['rsWin',0,30],['rsPct',10,95],['rsBack',0,15],['rsWait',0,15]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   $('#sWait').checked=cfg.wait; $('#sWait').onchange=e=>{cfg.wait=e.target.checked;save();$('#sWaitJump').disabled=!cfg.wait};
   $('#sWaitJump').checked=cfg.waitJump; $('#sWaitJump').disabled=!cfg.wait; $('#sWaitJump').onchange=e=>{cfg.waitJump=e.target.checked;save()};
   $('#sCpb').value=String(s.cpb); $('#sCpb').onchange=e=>{ s.cpb=+e.target.value; save(); renderSongDetail() };
@@ -2557,7 +2569,7 @@ function startPlayer(s,opts={}){
   const mode=cfg.mode, speed=mode==='test'?1:cfg.speed/100;
   Object.assign(PL,{running:true,paused:false,hold:false,song:s,tl,cfg,mode,speed,k:0,
     score:0,shown:0,combo:0,maxCombo:0,passes:0,started:performance.now(),sm:new Float32Array(12),bv:new Float32Array(12),pct:null,media:null,pitches:[],dts:[],
-    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false});
+    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0});
   plColors(); plLoad(tl);
   PL.segs=buildSegs();
   location.hash='tocar';
@@ -2621,10 +2633,28 @@ function playerLoop(){
   // fallos (en nota por nota no hay: la canción espera)
   if(!(PL.mode==='practice'&&PL.cfg.wait)){
     const lateN=lagT()+winL()+.04;
-    for(const n of PL.notes) if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; miss(n.s) }
-    for(const b of PL.blocks) if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; miss(-1) }
+    for(const n of PL.notes) if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; miss(n.s); track(n.t,false) }
+    for(const b of PL.blocks) if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; miss(-1); track(b.t0,false) }
   }
   drawHighway(t); playerHud(t); updateTimeline(t);
+}
+/* anti-colapso (práctica): si se acumulan fallos, vuelve unos segundos antes del primero y espera */
+function track(t,ok){
+  const c=PL.cfg; if(PL.mode!=='practice'||c.wait||!c.rescue) return;
+  const R=PL.recent||(PL.recent=[]); R.push({t,ok}); if(R.length>60) R.shift();
+  let streak=0; while(streak<R.length&&!R[R.length-1-streak].ok) streak++;
+  let first=null;
+  if(c.rsStreak>0&&streak>=c.rsStreak) first=R[R.length-streak].t;
+  else if(c.rsWin>0&&R.length>=c.rsWin){ const w=R.slice(-c.rsWin), bad=w.filter(x=>!x.ok); if(bad.length/w.length*100>c.rsPct) first=Math.min(...bad.map(x=>x.t)) }
+  if(first!=null) rescue(first);
+}
+function rescue(first){
+  const c=PL.cfg, g=PL.segs[0], target=Math.max(g.a,first-(c.rsBack||0)*PL.speed);
+  const ghost=(tt,o)=>{ if(tt>=target-1e-6&&tt<first-1e-6) o.st=2; else if(tt>=first-1e-6){ o.st=0; o.fb=0; if(o.ok!=null){ o.ok=0; o.best=0 } } };
+  PL.notes.forEach(n=>ghost(n.t,n)); PL.blocks.forEach(b=>ghost(b.t0,b));
+  PL.recent=[]; PL.pitches=[]; PL.combo=0; PL.lastMult=1; PL.rescues=(PL.rescues||0)+1;
+  banner('Anti-colapso'); feed(`Volvemos ${c.rsBack} s · espera ${c.rsWait} s`,'good');
+  seek(target,1,c.rsWait||0);
 }
 function nextPending(after){ let best=null;
   for(const n of PL.notes) if(n.st===0&&inSegs(n.t)&&n.t>=after-.5&&(!best||n.t<best.time)) best={time:n.t,obj:n};
@@ -2632,7 +2662,7 @@ function nextPending(after){ let best=null;
   return best }
 function release(){ if(!PL.hold) return; const t=PL.holdT; PL.hold=false; $('#pWait').hidden=true; PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.play(t,PL.speed) }
 function jumpNext(){ const nx=nextPending(PL.t+.01); if(!nx) return; const lead=.35; const target=nx.time-lead; if(target>songTime()+.05){ PL.hold=false; $('#pWait').hidden=true; PL.base=target; PL.t0=performance.now(); if(PL.media) PL.media.play(target,PL.speed) } }
-function resetMarks(){ PL.notes.forEach(n=>{n.st=0;n.fb=0}); PL.blocks.forEach(b=>{b.st=0;b.ok=0;b.best=0}); PL.pitches=[] }
+function resetMarks(){ PL.recent=[]; PL.notes.forEach(n=>{n.st=0;n.fb=0}); PL.blocks.forEach(b=>{b.st=0;b.ok=0;b.best=0}); PL.pitches=[] }
 function miss(s){ if(PL.combo>=5){ feed('Combo perdido','bad'); if(prefs.sound) tone(110,ctx().currentTime+.01,.18,'sine',.25) } PL.combo=0; PL.missGlow=1; PL.shake=Math.max(PL.shake,4); if(s>=0) PL.lane[s]=-1 }
 function award(base,dt,label,lane,chord){
   PL.combo++; PL.maxCombo=Math.max(PL.maxCombo,PL.combo);
@@ -2671,7 +2701,7 @@ function playerAudio(o,now){
   else { const we=winE(), wl=winL();
     for(const n of PL.notes){ if(n.st!==0||!inSegs(n.t)||n.t>t+we||n.t<t-wl-.3) continue;
       const hit=PL.pitches.find(p=>!p.used&&p.t>=n.t-we&&p.t<=n.t+wl&&match(p,n));
-      if(hit){ hit.used=true; n.st=1; award(100,hit.t-n.t,'',n.s); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+      if(hit){ hit.used=true; n.st=1; award(100,hit.t-n.t,'',n.s); track(n.t,true); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
     // fuera del margen: "¡Aún no!" si se adelantó mucho, "¡Tarde!" si ya pasó (una vez por nota)
     if(!PL.cfg.wait||PL.mode!=='practice') for(const p of PL.pitches){ if(p.used||p.cl) continue; p.cl=1; if(!p.on||PL.notes.some(n=>n.st===1&&Math.abs(p.t-n.t)<.6*PL.speed&&match(p,n))) continue;
       let best=null; for(const n of PL.notes){ if(n.st===1||n.fb||!inSegs(n.t)||!match(p,n)) continue; const d=p.t-n.t;
@@ -2686,7 +2716,7 @@ function playerAudio(o,now){
     let best=0; for(const c of b.cands){ const sc=Ear.score(PL.sm,c,PL.bv); const okn=sc.missing.length===0||(sc.n>=5&&sc.missing.length<=1); if(okn&&sc.pct>best) best=sc.pct; else if(!okn) best=Math.max(best,Math.min(sc.pct,thr-1)) }
     b.best=Math.max(b.best,best); PL.pct=best;
     if(o.live&&best>=thr) b.ok+=16;
-    if(b.ok>=96){ b.st=1; award(150,isWait?0:t-b.t0-.15,b.chords.map(c=>c.name).join('/'),-1,true); if(isWait) afterWaitHit(); else if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+    if(b.ok>=96){ b.st=1; if(!isWait) track(b.t0,true); award(150,isWait?0:t-b.t0-.15,b.chords.map(c=>c.name).join('/'),-1,true); if(isWait) afterWaitHit(); else if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
 }
 function afterWaitHit(){ if(PL.cfg.waitJump){ PL.hold=false; $('#pWait').hidden=true; const t=PL.holdT; PL.base=t; PL.t0=performance.now(); jumpNext(); if(!PL.hold&&PL.base===t&&PL.media) PL.media.play(t,PL.speed) } else release() }
 const midiName=m=>{ const r=Math.round(m); return nn(r)+(Math.floor(r/12)-1) };
@@ -2694,7 +2724,7 @@ function playerHud(t){
   PL.shown+=(PL.score-PL.shown)*.25; if(Math.abs(PL.score-PL.shown)<1) PL.shown=PL.score;
   $('#pScore').textContent=fmtN(PL.shown); $('#pCombo').textContent=PL.combo>=2?PL.combo+' ×'+multOf(PL.combo):PL.combo;
   const act=e=>inSegs(e.t!=null?e.t:e.t0);
-  const done=PL.notes.filter(n=>n.st!==0&&act(n)).length+PL.blocks.filter(b=>b.st!==0&&act(b)).length, hits=PL.notes.filter(n=>n.st===1&&act(n)).length+PL.blocks.filter(b=>b.st===1&&act(b)).length;
+  const done=PL.notes.filter(n=>(n.st===1||n.st===-1)&&act(n)).length+PL.blocks.filter(b=>(b.st===1||b.st===-1)&&act(b)).length, hits=PL.notes.filter(n=>n.st===1&&act(n)).length+PL.blocks.filter(b=>b.st===1&&act(b)).length;
   $('#pAcc').textContent=done?Math.round(hits/done*100)+'%':'–';
   const secs=PL.tl.sections, sec=secs.find(x=>t>=x.start&&t<x.end)||(t<secs[0].start?secs[0]:secs[secs.length-1]);
   $('#pSec').textContent=sec.name+(PL.mode==='practice'?` · ${Math.round(PL.speed*100)}%`+(PL.passes?` · vuelta ${PL.passes+1}`:''):'');
@@ -2762,6 +2792,7 @@ function drawHighway(t){
   // bloques de acordes: un bloque de color por acorde con su nombre grande arriba
   const fsz=Math.round(hh*.62), by0=top-hh-2, by1=bot+10;
   for(const g of PL.csegs){ if(g.t1<tmin||g.t0>tmax) continue; const x0=x(g.t0)+1.5, x1=x(g.t1)-1.5, w=Math.max(8,x1-x0), st=g.blk?g.blk.st:0, col=g.col, rr=Math.min(12,w/2);
+    if(st===2){ c.globalAlpha=.12; c.strokeStyle=col; c.lineWidth=2; roundRect(c,x0,by0,w,by1-by0,rr); c.stroke(); c.globalAlpha=1; continue }
     const fill=c.createLinearGradient(0,by0,0,by1); fill.addColorStop(0,col); fill.addColorStop(1,'transparent');
     c.globalAlpha=st===1?.34:st===-1?.1:.2; c.fillStyle=fill; roundRect(c,x0,by0,w,by1-by0,rr); c.fill(); c.globalAlpha=1;
     c.lineWidth=st===1?3:2; c.strokeStyle=st===-1?C.bad:col; if(st===1){ c.shadowColor=col; c.shadowBlur=18 } c.globalAlpha=st===-1?.9:st===1?1:.75;
@@ -2781,7 +2812,8 @@ function drawHighway(t){
   for(const r of PL.strums){ if(r.t<tmin||r.t>tmax) continue; c.fillStyle=C.muted; c.globalAlpha=r.t<t?.3:.9; c.fillText(r.dir==='u'?'↑':r.dir==='d'?'↓':'•',x(r.t),bot-4) } c.globalAlpha=1;
   for(const k of PL.chucks){ if(k.t<tmin||k.t>tmax) continue; c.fillStyle=C.muted; c.fillText('×',x(k.t),y(2.5)+4) }
   // notas: discos de neón (núcleo oscuro, aro brillante, reflejo); crecen y brillan al acercarse
-  for(const n of PL.notes){ if(n.t<tmin||n.t>tmax) continue; const xx=x(n.t),yy=y(n.s), near=Math.max(0,1-Math.abs(n.t-t)/1.2), r=rN*(1+(n.st===0?near*.25:0)), col=C.str[n.s];
+  for(const n of PL.notes){ if(n.t<tmin||n.t>tmax) continue; if(n.st===2){ c.globalAlpha=.13; c.strokeStyle=C.str[n.s]; c.lineWidth=2; c.beginPath(); c.arc(x(n.t),y(n.s),rN*.8,0,Math.PI*2); c.stroke(); c.globalAlpha=1; continue }
+    const xx=x(n.t),yy=y(n.s), near=Math.max(0,1-Math.abs(n.t-t)/1.2), r=rN*(1+(n.st===0?near*.25:0)), col=C.str[n.s];
     if(n.st===0&&n.t>t){ const tail=c.createLinearGradient(xx,0,xx+r*3.4,0); tail.addColorStop(0,col); tail.addColorStop(1,'transparent'); c.fillStyle=tail; c.globalAlpha=.4; c.fillRect(xx,yy-r*.3,r*3.4,r*.6); c.globalAlpha=1 }
     const ring=n.st===-1?C.bad:col;
     // halo
@@ -2853,7 +2885,7 @@ function timingSummary(){
   const txt=med==null?'':Math.abs(med)<25?'Vas a tiempo: tus notas caen justo en la línea.':`Tiendes a tocar ${Math.abs(med)} ms ${med>0?'tarde':'antes'}.`+(Math.abs(med)>70?' Si sientes que tocas a tiempo, mide tu latencia en la ficha.':'');
   return h('div',{class:'timing'},h('span',{class:'k',text:'Tiempo · margen '+mg().n}),h('div',{class:'tmrow'},parts),txt?h('p',{class:'hint',text:txt}):null) }
 function finishPlayer(){
-  const s=PL.song, act=e=>inSegs(e.t!=null?e.t:e.t0), ns=PL.notes.filter(act), bs=PL.blocks.filter(act);
+  const s=PL.song, act=e=>inSegs(e.t!=null?e.t:e.t0)&&e.st!==2, ns=PL.notes.filter(act), bs=PL.blocks.filter(act);
   const hN=ns.filter(n=>n.st===1).length, hC=bs.filter(b=>b.st===1).length, tot=ns.length+bs.length, hits=hN+hC;
   const acc=tot?Math.round(hits/tot*100):0, dur=performance.now()-PL.started, mic=PL.mic, mode=PL.mode, cfg=PL.cfg;
   // sugerencia de latencia: promedio de cuán tarde/temprano llegaron tus aciertos
@@ -2877,6 +2909,7 @@ function finishPlayer(){
     rec&&rec.levelUp?h('div',{class:'levelup'},h('span',{class:'k',text:'¡Subiste de nivel!'}),h('b',{text:'Nivel '+rec.levelUp}),h('span',{text:titleOf(rec.levelUp)})):null,
     rec?h('p',{class:'xpgain',text:'+'+fmtN(rec.xp)+' XP'}):null,
     timingSummary(),
+    mode==='practice'&&PL.rescues?h('p',{class:'hint',text:`Anti-colapso te hizo retomar ${PL.rescues} ${PL.rescues===1?'vez':'veces'}.`}):null,
     !mic?h('p',{class:'hint',text:'Sin micrófono no hay puntaje.'}):null,
     mic&&tot>0&&hits===0?h('p',{class:'hint',text:'No acerté ninguna. Mira el recuadro "Escucho" mientras tocas: si muestra tus notas, mide tu latencia en la ficha de la canción; si se queda en "…", el micrófono no te está oyendo.'}):null,
     h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>startPlayer(getSong(s.id))},'Otra vez'),h('button',{class:'btn',onclick:()=>openSong(s.id)},'Ajustes de la canción'),h('button',{class:'btn',onclick:()=>startEditor(getSong(s.id),0)},'Editar'),h('a',{class:'btn ghost',href:'#canciones'},'Canciones')));
