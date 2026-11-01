@@ -514,10 +514,12 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
 .ptitle b{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptitle span{font-size:.82rem;color:var(--muted)}
 .pmode{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
-.phud{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.phud .stat{min-width:0}
+.phud{position:absolute;z-index:2;top:8px;left:8px;right:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;pointer-events:none}
+.phud .stat{min-width:0;flex-direction:row;align-items:baseline;justify-content:space-between;gap:6px;padding:5px 10px;border-radius:10px;background:color-mix(in oklab,var(--surface) 72%,transparent)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.phud .stat .k{font-size:.62rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phud .stat b{font-size:1.05rem;white-space:nowrap}
 .hwrap{position:relative;border-radius:16px;border:1px solid var(--line);background:color-mix(in oklab,var(--surface) 82%,transparent);overflow:hidden}
-.hw{display:block;width:100%;height:clamp(240px,42vh,360px)}
+.hw{display:block;width:100%;height:clamp(320px,56vh,560px)}
 .pcount{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:5rem;color:var(--accent);background:color-mix(in oklab,var(--surface) 55%,transparent)}
 .pcount.beat{animation:beat .5s ease-out}
 .pfeed{position:absolute;left:12px;bottom:26px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
@@ -556,17 +558,17 @@ a.btn.primary{color:var(--accent-ink)}
 .pbanner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:700;font-size:clamp(2rem,9vw,3.6rem);color:var(--accent);text-shadow:0 0 24px var(--accent),0 2px 0 rgba(0,0,0,.6);pointer-events:none;white-space:nowrap;z-index:3}
 .pbanner.go{animation:bannerIn 1.1s cubic-bezier(.2,1.4,.4,1) forwards}
 @keyframes bannerIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
-.pfeed{left:auto;right:14px;top:12px;bottom:auto;align-items:flex-end}
+.pfeed{left:auto;right:14px;top:52px;bottom:auto;align-items:flex-end;z-index:3}
 .fd{font-size:clamp(1.05rem,4.5vw,1.5rem);text-shadow:0 2px 10px rgba(0,0,0,.6)}
 .fd.perfect{text-shadow:0 0 16px var(--accent)}
-.pwait{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.85rem;animation:pulseW 1s ease-in-out infinite alternate;z-index:3}
+.pwait{position:absolute;z-index:3;white-space:nowrap;left:50%;bottom:auto;top:46px;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.85rem;animation:pulseW 1s ease-in-out infinite alternate;z-index:3}
 @keyframes pulseW{from{opacity:.65}to{opacity:1}}
 .hwrap.fire{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 28px color-mix(in oklab,var(--accent) 55%,transparent),inset 0 0 40px color-mix(in oklab,var(--accent) 18%,transparent);animation:fireB 1.2s ease-in-out infinite alternate}
 @keyframes fireB{from{box-shadow:0 0 0 1px var(--accent),0 0 18px color-mix(in oklab,var(--accent) 45%,transparent)}to{box-shadow:0 0 0 2px var(--warn),0 0 40px color-mix(in oklab,var(--warn) 55%,transparent)}}
 .pear b{font-size:1.15rem} .pear span{font-size:.8rem;color:var(--muted)}
 .pear{flex-direction:row!important;align-items:baseline;gap:8px!important;flex-wrap:wrap}
 .pear .k{flex-basis:100%}
-.hw{height:clamp(220px,40vh,380px)}
+.hw{height:clamp(320px,56vh,560px)}
 .controls{flex-wrap:wrap}
 @media (max-width:480px){.pnow{grid-template-columns:1fr 1fr}.pnow>div:last-child{grid-column:1/-1}.pear .k{flex-basis:auto}}
 /* teléfono de lado: la autopista ocupa casi todo, como Yousician */
@@ -580,9 +582,10 @@ a.btn.primary{color:var(--accent-ink)}
   .player>.pnow{grid-area:now} .player>.pspeed{grid-area:spd} .player>.controls{grid-area:ctl;margin:0}
   .player>#pMsg{grid-column:1/-1;margin:0}
   .player>#pResults{grid-column:1/-1}
-  .phud{grid-template-columns:repeat(3,auto);gap:6px}
-  .phud .stat{padding:4px 10px;flex-direction:row;align-items:baseline;gap:8px}
-  .phud .stat b{font-size:1.05rem}
+  .phud{top:6px;left:auto;right:8px;width:min(440px,60%)}
+  .phud .stat{padding:3px 9px}
+  .phud .stat b{font-size:.95rem}
+  .pfeed{top:40px}
   .ptop .iconbtn{width:32px;height:32px}
   .ptitle b{font-size:1rem}
   .hw{height:calc(100dvh - 160px);min-height:170px}
@@ -648,6 +651,9 @@ a.btn.primary{color:var(--accent-ink)}
 .rescue{display:flex;flex-direction:column;gap:6px;margin:8px 0 4px 28px;font-size:.92rem}
 .rescue p{margin:0;line-height:2.1}
 .nin{width:58px!important;display:inline-block;padding:4px 6px!important;text-align:center;font-family:var(--mono)}
+
+/* iOS acerca la página al tocar un campo con letra menor a 16 px y no la vuelve a alejar */
+@media (pointer:coarse){input,select,textarea{font-size:16px!important}}
 
 </style>
 
@@ -1004,6 +1010,12 @@ a.btn.primary{color:var(--accent-ink)}
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sLoop">Repetir las secciones elegidas en bucle</label>
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sWait">Nota por nota: si no la tocas a tiempo, la canción te espera</label>
           <label class="check" style="margin-top:8px"><input type="checkbox" id="sWaitJump">Al acertar, saltar al instante a la siguiente nota</label>
+          <label class="check" style="margin-top:12px"><input type="checkbox" id="sProg">Progresión inteligente: subir la velocidad cuando me sale bien</label>
+          <div class="rescue" id="sProgOpts">
+            <p>Si en una vuelta acierto al menos el <input type="number" id="s_progPct" class="nin" min="50" max="100" inputmode="numeric"> %,</p>
+            <p>subir <input type="number" id="s_progStep" class="nin" min="1" max="25" inputmode="numeric"> % hasta llegar a <input type="number" id="s_progMax" class="nin" min="40" max="125" inputmode="numeric"> %.</p>
+            <p class="hint" style="margin:0">Funciona con "Repetir en bucle": se evalúa al terminar cada vuelta. En "Nota por nota", las notas en que la canción tuvo que esperarte cuentan como fallos.</p>
+          </div>
           <label class="check" style="margin-top:12px"><input type="checkbox" id="sRescue">Anti-colapso: si me pierdo, volver un poco y esperarme</label>
           <div class="rescue" id="sRescueOpts">
             <p>Si fallo <input type="number" id="s_rsStreak" class="nin" min="0" max="20" inputmode="numeric"> seguidas,</p>
@@ -1089,12 +1101,11 @@ a.btn.primary{color:var(--accent-ink)}
       <div class="ptitle"><b id="pTitle"></b><span id="pSec"></span></div>
       <span class="pmode" id="pMode"></span>
     </div>
-    <div class="phud">
+    <div class="hwrap" id="hwrap"><div class="phud" id="phud">
       <div class="stat score"><span class="k">Puntaje</span><b id="pScore">0</b></div>
       <div class="stat"><span class="k">Combo</span><b id="pCombo">0</b></div>
       <div class="stat"><span class="k">Acierto</span><b id="pAcc">–</b></div>
-    </div>
-    <div class="hwrap" id="hwrap"><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div></div>
+    </div><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div></div>
     <div class="ptl" id="ptl" aria-label="Línea de tiempo de la canción">
       <div class="ptl-secs" id="ptlSecs"></div>
       <div class="ptl-loop" id="ptlLoop"></div>
@@ -2439,7 +2450,7 @@ function rawToText(song){
 
 /* ---------- reproductor de canciones: autopista, prueba y práctica ---------- */
 let curSongId=null, songFilter='all';
-const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait:false,waitJump:false,loopA:null,loopB:null,delay:0,margin:'normal',rescue:true,rsStreak:3,rsWin:8,rsPct:50,rsBack:2,rsWait:2};
+const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait:false,waitJump:false,loopA:null,loopB:null,delay:0,margin:'normal',prog:false,progPct:90,progStep:5,progMax:100,rescue:true,rsStreak:3,rsWin:8,rsPct:50,rsBack:2,rsWait:2};
 const playCfg=s=>{ const c=Object.assign({},PLAY_DEF,s.play||{}); if(c.lat===140&&!c.latUser) c.lat=120; return c };
 function openSong(id){ curSongId=id; if(location.hash==='#cancion') renderSongDetail(); else location.hash='cancion' }
 
@@ -2510,6 +2521,8 @@ function renderSongDetail(){
   $('#sLat').value=cfg.lat; $('#sLatV').textContent=cfg.lat+' ms'; $('#sLat').oninput=e=>{cfg.lat=+e.target.value;cfg.latUser=true;$('#sLatV').textContent=cfg.lat+' ms'}; $('#sLat').onchange=save;
   $('#sDelay').value=cfg.delay||0; $('#sDelayV').textContent=(cfg.delay||0)+' s'; $('#sDelay').oninput=e=>{cfg.delay=+e.target.value;$('#sDelayV').textContent=cfg.delay+' s'}; $('#sDelay').onchange=save;
   $('#latBtn').onclick=()=>latStart(cfg,save); $('#latAgain').onclick=()=>latStart(cfg,save);
+  const pg=$('#sProg'); pg.checked=!!cfg.prog; pg.onchange=e=>{ cfg.prog=e.target.checked; save(); $('#sProgOpts').hidden=!cfg.prog }; $('#sProgOpts').hidden=!cfg.prog;
+  [['progPct',50,100],['progStep',1,25],['progMax',40,125]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   const rs=$('#sRescue'); rs.checked=!!cfg.rescue; rs.onchange=e=>{ cfg.rescue=e.target.checked; save(); $('#sRescueOpts').hidden=!cfg.rescue }; $('#sRescueOpts').hidden=!cfg.rescue;
   [['rsStreak',0,20],['rsWin',0,30],['rsPct',10,95],['rsBack',0,15],['rsWait',0,15]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   $('#sWait').checked=cfg.wait; $('#sWait').onchange=e=>{cfg.wait=e.target.checked;save();$('#sWaitJump').disabled=!cfg.wait};
@@ -2569,7 +2582,7 @@ function startPlayer(s,opts={}){
   const mode=cfg.mode, speed=mode==='test'?1:cfg.speed/100;
   Object.assign(PL,{running:true,paused:false,hold:false,song:s,tl,cfg,mode,speed,k:0,
     score:0,shown:0,combo:0,maxCombo:0,passes:0,started:performance.now(),sm:new Float32Array(12),bv:new Float32Array(12),pct:null,media:null,pitches:[],dts:[],
-    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0});
+    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0,progUps:0,speed0:speed});
   plColors(); plLoad(tl);
   PL.segs=buildSegs();
   location.hash='tocar';
@@ -2620,13 +2633,13 @@ function playerLoop(){
   let t=songTime();
   // nota por nota: la canción se detiene en lo próximo que falta tocar
   if(PL.mode==='practice'&&PL.cfg.wait&&!PL.paused&&!PL.hold&&t>=PL.countEnd){
-    const ev=nextPending(t-.02); if(ev&&ev.time<=t){ PL.hold=true; PL.holdT=ev.time; PL.holdEv=ev.obj; PL.holdSince=performance.now(); if(PL.media) PL.media.pause(); $('#pWait').hidden=false; t=PL.holdT }
+    const ev=nextPending(t-.02); if(ev&&ev.time<=t){ PL.hold=true; ev.obj.late=1; PL.holdT=ev.time; PL.holdEv=ev.obj; PL.holdSince=performance.now(); if(PL.media) PL.media.pause(); $('#pWait').hidden=false; t=PL.holdT }
   }
   PL.t=t;
   const g=PL.segs[PL.k];
   if(!PL.paused&&!PL.hold&&g&&t>=g.b){
     if(PL.k+1<PL.segs.length){ PL.k++; seek(PL.segs[PL.k].a,1) }
-    else if(PL.mode==='practice'&&PL.cfg.loop){ PL.passes++; resetMarks(); seek(PL.segs[0].a,1); banner('Vuelta '+(PL.passes+1)) }
+    else if(PL.mode==='practice'&&PL.cfg.loop){ PL.passes++; const up=progressCheck(); resetMarks(); seek(PL.segs[0].a,1); if(!up) banner('Vuelta '+(PL.passes+1)) }
     else { finishPlayer(); return }
   }
   if(PL.cfg.click&&!PL.paused&&!PL.hold&&t>=PL.countEnd){ const bi=Math.floor((t+1e-6)/beatSec()); if(bi!==PL.lastBeat){ PL.lastBeat=bi; PL.beatPulse=1; const a=ctx(); if(a) click(a.currentTime+.01,bi%4===0) } }
@@ -2656,13 +2669,25 @@ function rescue(first){
   banner('Anti-colapso'); feed(`Volvemos ${c.rsBack} s · espera ${c.rsWait} s`,'good');
   seek(target,1,c.rsWait||0);
 }
+/* progresión inteligente: al cerrar cada vuelta, si acertaste lo suficiente, sube la velocidad */
+function progressCheck(){
+  const c=PL.cfg; if(!c.prog) return;
+  const act=e=>inSegs(e.t!=null?e.t:e.t0)&&e.st!==2, items=PL.notes.filter(act).concat(PL.blocks.filter(act)); if(!items.length) return;
+  const pct=Math.round(items.filter(e=>e.st===1&&!e.late).length/items.length*100), cur=Math.round(PL.speed*100);
+  if(cur>=c.progMax){ feed(`Vuelta: ${pct}%`,'good'); return }
+  if(pct<c.progPct){ feed(`Vuelta: ${pct}% (necesitas ${c.progPct}%)`,'good'); return }
+  let v=Math.min(c.progMax,cur+c.progStep);
+  if(PL.media&&PL.media.rates){ const r=PL.media.rates.filter(x=>x*100>cur+.5&&x*100<=c.progMax+.5).sort((a,b)=>a-b)[0]; if(!r){ feed('La pista no permite subir más','good'); return } v=Math.round(r*100) }
+  const sp=$('#pSpeed'); sp.value=v; sp.dispatchEvent(new Event('input')); sp.dispatchEvent(new Event('change'));
+  banner(`¡${pct}%! Subimos a ${Math.round(PL.speed*100)}%`); PL.progUps=(PL.progUps||0)+1; return true;
+}
 function nextPending(after){ let best=null;
   for(const n of PL.notes) if(n.st===0&&inSegs(n.t)&&n.t>=after-.5&&(!best||n.t<best.time)) best={time:n.t,obj:n};
   for(const b of PL.blocks) if(b.st===0&&inSegs(b.t0)&&b.t0>=after-.5&&(!best||b.t0<best.time)) best={time:b.t0,obj:b};
   return best }
 function release(){ if(!PL.hold) return; const t=PL.holdT; PL.hold=false; $('#pWait').hidden=true; PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.play(t,PL.speed) }
 function jumpNext(){ const nx=nextPending(PL.t+.01); if(!nx) return; const lead=.35; const target=nx.time-lead; if(target>songTime()+.05){ PL.hold=false; $('#pWait').hidden=true; PL.base=target; PL.t0=performance.now(); if(PL.media) PL.media.play(target,PL.speed) } }
-function resetMarks(){ PL.recent=[]; PL.notes.forEach(n=>{n.st=0;n.fb=0}); PL.blocks.forEach(b=>{b.st=0;b.ok=0;b.best=0}); PL.pitches=[] }
+function resetMarks(){ PL.recent=[]; PL.notes.forEach(n=>{n.st=0;n.fb=0;n.late=0}); PL.blocks.forEach(b=>b.late=0); PL.blocks.forEach(b=>{b.st=0;b.ok=0;b.best=0}); PL.pitches=[] }
 function miss(s){ if(PL.combo>=5){ feed('Combo perdido','bad'); if(prefs.sound) tone(110,ctx().currentTime+.01,.18,'sine',.25) } PL.combo=0; PL.missGlow=1; PL.shake=Math.max(PL.shake,4); if(s>=0) PL.lane[s]=-1 }
 function award(base,dt,label,lane,chord){
   PL.combo++; PL.maxCombo=Math.max(PL.maxCombo,PL.combo);
@@ -2773,24 +2798,29 @@ function drawHighway(t){
   const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H);
   PL.shake*=.86; if(PL.shake>.3){ c.translate((Math.random()-.5)*PL.shake,(Math.random()-.5)*PL.shake) }
   const C=PL.col, fam=getComputedStyle(document.body).fontFamily, hx=Math.max(78,Math.min(190,W*.22)), pxs=Math.max(130,Math.min(260,W*.33)),
-    hasCh=PL.csegs.length>0, hh=Math.round(Math.max(22,Math.min(38,H*.085))), top=hasCh?Math.max(hh+30,H*.17):Math.max(30,H*.13), bot=H-Math.max(16,H*.07), gap=(bot-top)/5, y=s=>top+(5-s)*gap, x=tt=>hx+(tt-t)*pxs, rN=Math.max(9,Math.min(19,gap*.4));
+    hasCh=PL.csegs.length>0, hh=Math.round(Math.max(22,Math.min(38,H*.075))), he=document.getElementById('phud'), hudOn=!PL.edit&&he&&he.offsetHeight, hudH=hudOn?he.offsetTop+he.offsetHeight+4:4, side=hudOn&&he.offsetLeft>140, secB=side?0:15,
+    head=hudH+secB+(hasCh?hh+4:0), rN=Math.max(9,Math.min(19,(H-head)/5.8*.4)), top=head+rN+2, bot=H-rN-8, gap=(bot-top)/5, y=s=>top+(5-s)*gap, x=tt=>hx+(tt-t)*pxs;
   PL.lay={hx,top,bot,y,pxs,gap,rN,t,W,H};
   const tmin=t-hx/pxs-.2, tmax=t+(W-hx)/pxs+.2, bs=beatSec();
   PL.beatPulse=(PL.beatPulse||0)*.9; PL.hitGlow*=.88; PL.missGlow*=.85;
   // zona fuera del loop / tramo
   for(const g of [{a:-1e9,b:PL.segs[0].a},{a:PL.segs[PL.segs.length-1].b,b:1e9}]){ const x0=Math.max(0,x(g.a)),x1=Math.min(W,x(g.b)); if(x1>x0){ c.fillStyle='#000'; c.globalAlpha=.35; c.fillRect(x0,0,x1-x0,H); c.globalAlpha=1 } }
   // cuerdas (se encienden al acertar en ellas)
-  for(let s=0;s<6;s++){ const lf=PL.lane[s]; PL.lane[s]*=.9;
-    c.strokeStyle=lf>0.05?C.str[s]:lf<-.05?C.bad:C.line; c.globalAlpha=.85+Math.abs(lf)*.15; c.lineWidth=1+(5-s)*.3+Math.abs(lf)*3;
+  // grosor como una guitarra real: las tres graves son entorchadas y más gruesas
+  const SW=[4.2,3.3,2.6,1.6,1.25,1], sk=Math.max(.8,Math.min(1.4,gap/36));
+  for(let s=0;s<6;s++){ const lf=PL.lane[s]; PL.lane[s]*=.9; const yy=y(s), w=SW[s]*sk+Math.abs(lf)*3;
+    c.strokeStyle=lf>0.05?C.str[s]:lf<-.05?C.bad:C.line; c.globalAlpha=.9+Math.abs(lf)*.1; c.lineWidth=w;
     if(Math.abs(lf)>.05){ c.shadowColor=lf>0?C.str[s]:C.bad; c.shadowBlur=14*Math.abs(lf) }
-    c.beginPath(); c.moveTo(0,y(s)); c.lineTo(W,y(s)); c.stroke(); c.shadowBlur=0 } c.globalAlpha=1;
+    c.beginPath(); c.moveTo(0,yy); c.lineTo(W,yy); c.stroke(); c.shadowBlur=0;
+    if(s<=2){ c.setLineDash([1.3,1.9]); c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=w*.85; c.beginPath(); c.moveTo(0,yy); c.lineTo(W,yy); c.stroke(); c.setLineDash([]) }
+    c.strokeStyle='rgba(255,255,255,.16)'; c.lineWidth=Math.max(.6,w*.25); c.beginPath(); c.moveTo(0,yy-w*.25); c.lineTo(W,yy-w*.25); c.stroke() } c.globalAlpha=1;
   // tiempos y compases
   for(let b=Math.floor(tmin/bs);b*bs<tmax;b++){ const xx=x(b*bs); c.strokeStyle=C.muted; c.globalAlpha=b%4===0?.45:.14; c.lineWidth=b%4===0?1.5:1; c.beginPath(); c.moveTo(xx,top-8); c.lineTo(xx,bot+4); c.stroke() } c.globalAlpha=1;
   // secciones
   c.font=`700 ${Math.round(Math.max(10,Math.min(13,H*.04)))}px ${fam}`;
-  for(const s of PL.tl.sections){ if(s.start<tmin-10||s.start>tmax) continue; const xx=x(s.start); c.fillStyle=C.acc; c.globalAlpha=.85; c.fillRect(xx,0,2,bot); c.globalAlpha=1; c.fillText(s.name.toUpperCase(),xx+6,hasCh?14:top*.42+4) }
+  for(const s of PL.tl.sections){ if(s.start<tmin-10||s.start>tmax) continue; const xx=x(s.start); c.fillStyle=C.acc; c.globalAlpha=.85; c.fillRect(xx,0,2,bot); c.globalAlpha=1; c.fillText(s.name.toUpperCase(),xx+6,side?he.offsetTop+16:hudH+11) }
   // bloques de acordes: un bloque de color por acorde con su nombre grande arriba
-  const fsz=Math.round(hh*.62), by0=top-hh-2, by1=bot+10;
+  const fsz=Math.round(hh*.62), by0=top-rN-hh-2, by1=bot+rN+4;
   for(const g of PL.csegs){ if(g.t1<tmin||g.t0>tmax) continue; const x0=x(g.t0)+1.5, x1=x(g.t1)-1.5, w=Math.max(8,x1-x0), st=g.blk?g.blk.st:0, col=g.col, rr=Math.min(12,w/2);
     if(st===2){ c.globalAlpha=.12; c.strokeStyle=col; c.lineWidth=2; roundRect(c,x0,by0,w,by1-by0,rr); c.stroke(); c.globalAlpha=1; continue }
     const fill=c.createLinearGradient(0,by0,0,by1); fill.addColorStop(0,col); fill.addColorStop(1,'transparent');
@@ -2845,10 +2875,10 @@ function drawHighway(t){
   if(hg>.05){ const gr=c.createLinearGradient(hx-60,0,hx+20,0); gr.addColorStop(0,'transparent'); gr.addColorStop(1,C.acc); c.fillStyle=gr; c.globalAlpha=hg*.35; c.fillRect(hx-60,top-14,80,bot-top+22); c.globalAlpha=1 }
   if(mg>.05){ c.fillStyle=C.bad; c.globalAlpha=mg*.22; c.fillRect(0,0,hx+10,H); c.globalAlpha=1 }
   // medidor de tiempo: a la derecha de la línea = antes, a la izquierda = tarde
-  if(!PL.edit){ const M=mgOf(), half=Math.min(70,hx-12), sc=half/(M.l/1000*1.2), my=H-7;
+  if(!PL.edit){ const M=mgOf(), half=Math.min(70,hx-12), sc=half/(M.l/1000*1.2), my=H-4;
     const zone=(a,b,col,al)=>{ c.fillStyle=col; c.globalAlpha=al; c.fillRect(hx-b*sc/1000,my-2,(b-a)*sc/1000,4); c.fillRect(hx+a*sc/1000,my-2,(b-a)*sc/1000,4) };
     zone(M.g,M.l,C.warn,.45); zone(M.p,M.g,C.fg,.4); c.fillStyle=C.acc; c.globalAlpha=.9; c.fillRect(hx-M.p*sc/1000,my-2,M.p*2*sc/1000,4); c.globalAlpha=1;
-    PL.ticks=PL.ticks.filter(k=>k.life>0); for(const k of PL.ticks){ k.life-=.012; const xx=hx-k.d*sc; c.fillStyle=k.g==='perfect'?C.acc:k.g==='great'?C.fg:k.g==='out'?C.bad:C.warn; c.globalAlpha=Math.max(0,k.life); c.fillRect(xx-1.5,my-7,3,14) } c.globalAlpha=1;
+    PL.ticks=PL.ticks.filter(k=>k.life>0); for(const k of PL.ticks){ k.life-=.012; const xx=hx-k.d*sc; c.fillStyle=k.g==='perfect'?C.acc:k.g==='great'?C.fg:k.g==='out'?C.bad:C.warn; c.globalAlpha=Math.max(0,k.life); c.fillRect(xx-1.5,my-6,3,9) } c.globalAlpha=1;
     c.font=`700 9px system-ui`; c.fillStyle=C.muted; c.textAlign='left'; c.fillText('antes',hx+half+4,my+3); c.textAlign='right'; c.fillText('tarde',hx-half-4,my+3); c.textAlign='left' }
   // anillos y chispas
   PL.rings=PL.rings.filter(r=>r.life>0); for(const r of PL.rings){ r.r+=4.5; r.life-=.06; c.strokeStyle=r.c; c.globalAlpha=Math.max(0,r.life); c.lineWidth=3*r.life; c.beginPath(); c.arc(r.x,r.y,r.r,0,Math.PI*2); c.stroke() } c.globalAlpha=1;
@@ -2909,6 +2939,7 @@ function finishPlayer(){
     rec&&rec.levelUp?h('div',{class:'levelup'},h('span',{class:'k',text:'¡Subiste de nivel!'}),h('b',{text:'Nivel '+rec.levelUp}),h('span',{text:titleOf(rec.levelUp)})):null,
     rec?h('p',{class:'xpgain',text:'+'+fmtN(rec.xp)+' XP'}):null,
     timingSummary(),
+    mode==='practice'&&PL.progUps?h('p',{class:'hint',text:`Progresión inteligente: empezaste en ${Math.round(PL.speed0*100)}% y llegaste a ${cfg.speed}%.`}):null,
     mode==='practice'&&PL.rescues?h('p',{class:'hint',text:`Anti-colapso te hizo retomar ${PL.rescues} ${PL.rescues===1?'vez':'veces'}.`}):null,
     !mic?h('p',{class:'hint',text:'Sin micrófono no hay puntaje.'}):null,
     mic&&tot>0&&hits===0?h('p',{class:'hint',text:'No acerté ninguna. Mira el recuadro "Escucho" mientras tocas: si muestra tus notas, mide tu latencia en la ficha de la canción; si se queda en "…", el micrófono no te está oyendo.'}):null,
