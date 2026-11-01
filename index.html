@@ -520,7 +520,7 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
 .phud .stat b{font-size:1.05rem;white-space:nowrap}
 .hwrap{position:relative;border-radius:16px;border:1px solid var(--line);background:color-mix(in oklab,var(--surface) 82%,transparent);overflow:hidden}
 .hw{display:block;width:100%;height:clamp(320px,56vh,560px)}
-.pcount{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:5rem;color:var(--accent);background:color-mix(in oklab,var(--surface) 55%,transparent)}
+.pcount{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:5rem;color:var(--accent);background:color-mix(in oklab,var(--surface) 55%,transparent)}
 .pcount.beat{animation:beat .5s ease-out}
 .pfeed{position:absolute;left:12px;bottom:26px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
 .fd{font-family:var(--display);font-weight:700;font-size:1rem;animation:fdUp .9s ease-out forwards;white-space:nowrap}
@@ -669,6 +669,10 @@ a.btn.primary{color:var(--accent-ink)}
 .foldman .row input{flex:1;min-width:120px}
 .pcount.wait{background:color-mix(in oklab,var(--surface) 18%,transparent);text-shadow:0 2px 14px rgba(0,0,0,.8)}
 .pwait.stall{background:var(--surface);color:var(--fg);border:1px solid var(--accent);animation:none}
+.pcount.confirm{pointer-events:auto;gap:8px}
+.pcount .cnext{font-size:clamp(1.6rem,7vw,2.6rem);color:var(--accent);text-align:center}
+.pcount.confirm .btn{font-size:.85rem;font-family:var(--body,inherit);font-weight:600;padding:6px 12px;min-height:34px}
+.player:not(.editing) .hw{cursor:pointer;touch-action:pan-y}
 
 </style>
 
@@ -1041,6 +1045,7 @@ a.btn.primary{color:var(--accent-ink)}
             <p>Si fallo <input type="number" id="s_rsStreak" class="nin" min="0" max="20" inputmode="numeric"> seguidas,</p>
             <p>o si de las últimas <input type="number" id="s_rsWin" class="nin" min="0" max="30" inputmode="numeric"> fallo más del <input type="number" id="s_rsPct" class="nin" min="10" max="95" inputmode="numeric"> %,</p>
             <p>volver <input type="number" id="s_rsBack" class="nin" min="0" max="15" inputmode="numeric"> s antes del primer fallo y esperar <input type="number" id="s_rsWait" class="nin" min="0" max="15" inputmode="numeric"> s.</p>
+            <label class="check"><input type="checkbox" id="sRsConfirm">Antes de seguir, pedirme tocar la nota o acorde que viene, para ubicarme</label>
             <p class="hint" style="margin:0">Las notas entre ese punto y el fallo no cuentan y se ven casi transparentes. Pon 0 en una regla para apagarla. No se usa con "Nota por nota".</p>
           </div>
           <p class="hint">Mientras tocas puedes mover los corchetes [ ] de la línea de tiempo para elegir dónde empieza y termina el loop, o tocarla para saltar a otra parte.</p>
@@ -2608,6 +2613,7 @@ function renderSongDetail(){
   $('#latBtn').onclick=()=>latStart(cfg,save); $('#latAgain').onclick=()=>latStart(cfg,save);
   const pg=$('#sProg'); pg.checked=!!cfg.prog; pg.onchange=e=>{ cfg.prog=e.target.checked; save(); $('#sProgOpts').hidden=!cfg.prog }; $('#sProgOpts').hidden=!cfg.prog;
   [['progPct',50,100],['progStep',1,25],['progMax',40,125]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
+  $('#sRsConfirm').checked=!!cfg.rsConfirm; $('#sRsConfirm').onchange=e=>{ cfg.rsConfirm=e.target.checked; save() };
   const rs=$('#sRescue'); rs.checked=!!cfg.rescue; rs.onchange=e=>{ cfg.rescue=e.target.checked; save(); $('#sRescueOpts').hidden=!cfg.rescue }; $('#sRescueOpts').hidden=!cfg.rescue;
   [['rsStreak',0,20],['rsWin',0,30],['rsPct',10,95],['rsBack',0,15],['rsWait',0,15]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   $('#sWait').checked=cfg.wait; $('#sWait').onchange=e=>{cfg.wait=e.target.checked;save();$('#sWaitJump').disabled=!cfg.wait};
@@ -2698,6 +2704,7 @@ function songTime(){
   return PL.base+(performance.now()-PL.t0)/1000*PL.speed;
 }
 function seek(t,preBeats,delay=0){
+  if(PL.confirm){ PL.confirm=null; $('#pCnt').classList.remove('confirm') }
   PL.stall=null; $('#pStall').hidden=true;
   PL.jumped=true; clearTimeout(PL.rsT); if(PL.rsWaiting){ PL.rsWaiting=false; PL.paused=false; $('#pPause').textContent='Pausa' }
   PL.countEnd=t; PL.base=t-preBeats*beatSec()-delay*PL.speed; PL.t0=performance.now(); PL.hold=false; $('#pWait').hidden=true;
@@ -2762,18 +2769,26 @@ function rescue(first){
   PL.notes.forEach(n=>ghost(n.t,n)); PL.blocks.forEach(b=>ghost(b.t0,b));
   PL.recent=[]; PL.pitches=[]; PL.combo=0; PL.lastMult=1; PL.rescues=(PL.rescues||0)+1;
   banner('Anti-colapso'); feed(`Volvemos ${c.rsBack} s`,'good');
-  PL.lostAt=first; freezeAt(target,c.rsWait||0,'Respira · retomamos en');
+  PL.lostAt=first;
+  const nx=c.rsConfirm?PL.notes.map(n=>({t:n.t,e:n})).concat(PL.blocks.map(b=>({t:b.t0,e:b}))).filter(x=>x.t>=target-1e-6&&inSegs(x.t)).sort((a,b)=>a.t-b.t)[0]:null;
+  freezeAt(target,c.rsWait||0,'Respira · retomamos en',nx&&nx.e);
 }
 /* pausa de verdad: la autopista queda quieta en "target" mientras corre una cuenta; luego sigue con un tiempo de clic */
-function freezeAt(target,secs,label){
-  const wait=Math.round(secs||0); if(wait<=0){ seek(target,1); return }
+function freezeAt(target,secs,label,confirm){
+  const wait=Math.round(secs||0); if(wait<=0&&!confirm){ seek(target,1); return }
   PL.jumped=true; PL.k=Math.max(0,PL.segs.findIndex(g=>target<g.b)); PL.hold=false; $('#pWait').hidden=true; PL.paused=true; PL.pausedAt=target; PL.rsWaiting=true; if(PL.media) PL.media.pause();
   const box=$('#pCnt'); box.hidden=false; box.classList.add('wait'); let n=wait;
   const tick=()=>{ if(!PL.running||!PL.rsWaiting) return;
     if(n<=0){ box.classList.remove('wait'); seek(target,1); return }
     box.innerHTML=''; box.append(h('small',{text:label}),h('span',{text:String(n)})); n--; PL.rsT=setTimeout(tick,1000) };
+  // primero te pide tocar lo que viene, para ubicarte; después sigue la cuenta normal
+  if(confirm&&PL.mic){ PL.confirm={ev:confirm,go:tick,ok:0}; box.classList.add('confirm'); box.innerHTML='';
+    box.append(h('small',{text:'Ubícate: toca lo que viene'}),h('span',{class:'cnext',text:evLabel(confirm)}),h('button',{class:'btn ghost',onclick:e=>{ e.stopPropagation(); confirmDone(true) }},'Seguir sin tocarla')); return }
   tick();
 }
+const evLabel=e=>e.chords?e.chords.map(c=>c.name).join(' / '):`Cuerda ${'EADGBe'[e.s]} · traste ${e.f}`;
+function confirmDone(skipped){ const c=PL.confirm; if(!c) return; PL.confirm=null; const box=$('#pCnt'); box.classList.remove('confirm');
+  if(!skipped){ feed('¡Ahí estás!','perfect'); PL.hitGlow=1; burstAt(c.ev.chords?-1:c.ev.s,24,'perfect') } c.go() }
 /* progresión inteligente: al cerrar cada vuelta, si acertaste lo suficiente, sube la velocidad */
 function progressCheck(){
   const c=PL.cfg; if(!c.prog) return;
@@ -2794,11 +2809,11 @@ function release(){ if(!PL.hold) return; const t=PL.holdT; PL.hold=false; $('#pW
 function jumpNext(){ const nx=nextPending(PL.t+.01); if(!nx) return; const lead=.35; const target=nx.time-lead; if(target>songTime()+.05){ PL.hold=false; $('#pWait').hidden=true; PL.base=target; PL.t0=performance.now(); if(PL.media) PL.media.play(target,PL.speed) } }
 function resetMarks(){ PL.recent=[]; PL.notes.forEach(n=>{n.st=0;n.fb=0;n.late=0}); PL.blocks.forEach(b=>b.late=0); PL.blocks.forEach(b=>{b.st=0;b.ok=0;b.best=0}); PL.pitches=[] }
 function miss(s){ if(PL.combo>=5){ feed('Combo perdido','bad'); if(prefs.sound) tone(110,ctx().currentTime+.01,.18,'sine',.25) } PL.combo=0; PL.missGlow=1; PL.shake=Math.max(PL.shake,4); if(s>=0) PL.lane[s]=-1 }
-function award(base,dt,label,lane,chord){
+function award(base,dt,label,lane,chord,obj){
   PL.combo++; PL.maxCombo=Math.max(PL.maxCombo,PL.combo);
   const dr=dt/PL.speed, tg=timingOf(dr,chord), g=tg==='perfect'?'perfect':tg==='great'?'great':'good';
   const mult=multOf(PL.combo), pts=Math.round(base*mult*(tg==='perfect'?1.2:tg==='great'?.9:.5)); PL.score+=pts;
-  PL.cats[tg]=(PL.cats[tg]||0)+1;
+  PL.cats[tg]=(PL.cats[tg]||0)+1; if(obj){ obj.pts=pts; obj.tg=tg }
   if(!chord&&(PL.mode!=='practice'||!PL.cfg.wait)) PL.dts.push(dr);
   if(!(PL.mode==='practice'&&PL.cfg.wait)) PL.ticks.push({d:dr/(chord?1.8:1),g:tg,life:1});
   feed((tg==='early'?'Un poco antes':tg==='late'?'Un poco tarde':gradeWord(g))+(label?' · '+label:''),tg==='early'||tg==='late'?'good':g);
@@ -2813,6 +2828,12 @@ function feed(txt,cls){ const f=$('#pFeed'); const el=h('span',{class:'fd '+cls,
 function banner(txt){ const b=$('#pBanner'); b.textContent=txt; b.hidden=false; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); clearTimeout(banner.t); banner.t=setTimeout(()=>b.hidden=true,1100) }
 /* audio: notas sueltas por tono, acordes por croma */
 function playerAudio(o,now){
+  if(PL.confirm&&PL.mic){ const ev=PL.confirm.ev;
+    for(let i=0;i<12;i++){ PL.sm[i]=o.live?PL.sm[i]*.55+o.ch[i]*.45:PL.sm[i]*.85; PL.bv[i]=o.live?PL.bv[i]*.6+(o.bass===i?.4:0):PL.bv[i]*.85 }
+    if(ev.chords){ const thr=(Ear.SENS[st.sens]||Ear.SENS.normal).thr-4; let best=0; for(const c of ev.cands){ const sc=Ear.score(PL.sm,c,PL.bv); if(sc.missing.length===0||(sc.n>=5&&sc.missing.length<=1)) best=Math.max(best,sc.pct) }
+      PL.pct=best; if(o.live&&best>=thr) PL.confirm.ok+=16; if(PL.confirm.ok>=96) confirmDone(false) }
+    else if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m; const d=Math.abs(m-ev.m); if(d<.55||Math.abs(d-12)<.55||(/b/.test(ev.tech)&&m>ev.m&&m<ev.m+2.3)) PL.confirm.ok+=16; if(PL.confirm.ok>=64) confirmDone(false) } }
+    return }
   if(!PL.running||PL.paused||!PL.mic||PL.stall) return;
   const t=songTime()-lagT(), waiting=PL.hold;
   if(o.onset) PL.lastOn={t,used:false};
@@ -2827,11 +2848,11 @@ function playerAudio(o,now){
   const match=(p,n)=>Math.abs(p.m-n.m)<.55||Math.abs(Math.abs(p.m-n.m)-12)<.55||(/b/.test(n.tech)&&p.m>n.m&&p.m<n.m+2.3);
   if(waiting&&PL.holdEv&&PL.holdEv.m!=null){ // esperando una nota: vale cualquier intento desde que se detuvo
     const n=PL.holdEv, hit=PL.pitches.find(p=>!p.used&&p.rt>=PL.holdSince-250&&match(p,n));
-    if(hit){ hit.used=true; n.st=1; award(100,0,'',n.s); afterWaitHit() } }
+    if(hit){ hit.used=true; n.st=1; award(100,0,'',n.s,false,n); afterWaitHit() } }
   else { const we=winE(), wl=winL();
     for(const n of PL.notes){ if(n.st!==0||!inSegs(n.t)||n.t>t+we||n.t<t-wl-.3) continue;
       const hit=PL.pitches.find(p=>!p.used&&p.t>=n.t-we&&p.t<=n.t+wl&&match(p,n));
-      if(hit){ hit.used=true; n.st=1; award(100,hit.t-n.t,'',n.s); track(n.t,true); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+      if(hit){ hit.used=true; n.st=1; award(100,hit.t-n.t,'',n.s,false,n); track(n.t,true); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
     // fuera del margen: "¡Aún no!" si se adelantó mucho, "¡Tarde!" si ya pasó (una vez por nota)
     if(!PL.cfg.wait||PL.mode!=='practice') for(const p of PL.pitches){ if(p.used||p.cl) continue; p.cl=1; if(!p.on||PL.notes.some(n=>n.st===1&&Math.abs(p.t-n.t)<.6*PL.speed&&match(p,n))) continue;
       let best=null; for(const n of PL.notes){ if(n.st===1||n.fb||!inSegs(n.t)||!match(p,n)) continue; const d=p.t-n.t;
@@ -2846,7 +2867,7 @@ function playerAudio(o,now){
     let best=0; for(const c of b.cands){ const sc=Ear.score(PL.sm,c,PL.bv); const okn=sc.missing.length===0||(sc.n>=5&&sc.missing.length<=1); if(okn&&sc.pct>best) best=sc.pct; else if(!okn) best=Math.max(best,Math.min(sc.pct,thr-1)) }
     b.best=Math.max(b.best,best); PL.pct=best;
     if(o.live&&best>=thr) b.ok+=16;
-    if(b.ok>=96){ b.st=1; if(!isWait) track(b.t0,true); award(150,isWait?0:t-b.t0-.15,b.chords.map(c=>c.name).join('/'),-1,true); if(isWait) afterWaitHit(); else if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+    if(b.ok>=96){ b.st=1; if(!isWait) track(b.t0,true); award(150,isWait?0:t-b.t0-.15,b.chords.map(c=>c.name).join('/'),-1,true,b); if(isWait) afterWaitHit(); else if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
 }
 function afterWaitHit(){ if(PL.cfg.waitJump){ PL.hold=false; $('#pWait').hidden=true; const t=PL.holdT; PL.base=t; PL.t0=performance.now(); jumpNext(); if(!PL.hold&&PL.base===t&&PL.media) PL.media.play(t,PL.speed) } else release() }
 const midiName=m=>{ const r=Math.round(m); return nn(r)+(Math.floor(r/12)-1) };
@@ -2973,6 +2994,8 @@ function drawHighway(t){
     if(n.st===-1){ const bx=xx+r*.75, byy=yy-r*.75, br=Math.max(6,r*.42); c.fillStyle=C.bad; c.beginPath(); c.arc(bx,byy,br,0,Math.PI*2); c.fill(); c.fillStyle='#fff'; c.font=`900 ${Math.round(br*1.3)}px system-ui`; c.textBaseline='middle'; c.fillText('✕',bx,byy+1); c.textBaseline='alphabetic' }
     if(n.tech){ c.fillStyle=C.fg; c.font=`700 ${Math.round(r*.75)}px system-ui`; c.fillText(n.tech.replace('b','↗').replace('/','⟋').replace('\\','⟍'),xx+r+8,yy-r+4) } }
   c.textAlign='left';
+  if(PL.confirm){ const e=PL.confirm.ev, pu=.5+.5*Math.sin(performance.now()/180); c.strokeStyle=C.acc; c.lineWidth=3; c.shadowColor=C.acc; c.shadowBlur=18*pu;
+    if(e.chords){ const x0=x(e.t0),x1=x(e.t1); roundRect(c,x0-3,top-rN-4,Math.max(20,x1-x0)+6,bot-top+rN*2+8,12); c.stroke() } else { c.beginPath(); c.arc(x(e.t),y(e.s),rN*(1.5+.25*pu),0,Math.PI*2); c.stroke() } c.shadowBlur=0 }
   // anti-colapso: dónde te perdiste
   if(PL.lostAt!=null){ if(t>PL.lostAt+1.5) PL.lostAt=null; else { const lx=x(PL.lostAt); c.setLineDash([6,5]); c.strokeStyle=C.bad; c.lineWidth=2; c.beginPath(); c.moveTo(lx,top-rN); c.lineTo(lx,bot+rN); c.stroke(); c.setLineDash([]); c.fillStyle=C.bad; c.font=`800 11px system-ui`; c.fillText('aquí te perdiste',lx+5,bot+rN-2) } }
   // línea de golpe: late con el pulso, brilla al acertar, se enrojece al fallar
@@ -2998,11 +3021,11 @@ function drawHighway(t){
 function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath() }
 /* controles */
 $('#pPause').addEventListener('click',()=>{ if(!PL.running) return;
-  if(PL.rsWaiting){ clearTimeout(PL.rsT); PL.rsWaiting=false; $('#pCnt').hidden=true; $('#pPause').textContent='Seguir'; return }
+  if(PL.rsWaiting){ clearTimeout(PL.rsT); PL.rsWaiting=false; PL.confirm=null; $('#pCnt').classList.remove('confirm'); $('#pCnt').hidden=true; $('#pPause').textContent='Seguir'; return }
   if(!PL.paused){ PL.pausedAt=songTime(); PL.stall=null; $('#pStall').hidden=true; PL.paused=true; if(PL.media) PL.media.pause(); $('#pPause').textContent='Seguir' }
   else { PL.paused=false; seek(PL.pausedAt,1); $('#pPause').textContent='Pausa' } });
 $('#pRestart').addEventListener('click',()=>{ if(!PL.running){ if(PL.song) startPlayer(getSong(PL.song.id)); return }
-  if(PL.mode==='practice'){ resetMarks(); PL.passes=0; PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,PL.cfg.wait?1:4,PL.cfg.delay||0); banner('Desde el inicio del loop') }
+  if(PL.mode==='practice'){ resetMarks(); PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,PL.cfg.wait?1:4,PL.cfg.delay||0); banner('Desde el inicio del loop · vuelta '+(PL.passes+1)) }
   else { const s=PL.song; stopPlayer(); startPlayer(getSong(s.id)) } });
 $('#pReset').addEventListener('click',()=>{ if(!PL.running||PL.mode!=='practice') return;
   const cfg=PL.cfg; cfg.loopA=null; cfg.loopB=null; cfg.sel=PL.tl.sections.map((x,i)=>i); cfg.speed=100; PL.song.play=cfg; saveSongMeta(PL.song);
@@ -3015,7 +3038,7 @@ $('#pSpeed').addEventListener('input',e=>{ if(!PL.running||PL.mode!=='practice')
   let sp=v; if(PL.media&&PL.media.rates){ sp=PL.media.rates.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a,1) }
   PL.speed=sp; PL.cfg.speed=Math.round(sp*100); PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.setRate(sp); $('#pSpeedV').textContent=Math.round(sp*100)+'%' });
 $('#pSpeed').addEventListener('change',()=>{ if(PL.running){ PL.song.play=PL.cfg; saveSongMeta(PL.song) } });
-function stopPlayer(){ PL.running=false; PL.stall=null; $('#pStall').hidden=true; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
+function stopPlayer(){ PL.running=false; PL.confirm=null; PL.stall=null; $('#pStall').hidden=true; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
 function timingSummary(){
   const C=PL.cats||{}, parts=[['perfect','Perfecto'],['great','Bien'],['early','Un poco antes'],['late','Un poco tarde'],['tooEarly','Aún no'],['tooLate','Tarde']].filter(([k])=>C[k]).map(([k,n])=>h('span',{class:'tm '+k},h('b',{text:String(C[k])}),' '+n));
   if(!parts.length) return null;
@@ -3065,6 +3088,27 @@ document.addEventListener('keydown',e=>{
   else if(PL.mode==='practice'&&(k==='ArrowUp'||k==='ArrowDown')){ e.preventDefault(); const sp=$('#pSpeed'); sp.value=+sp.value+(k==='ArrowUp'?5:-5); sp.dispatchEvent(new Event('input')); sp.dispatchEvent(new Event('change')) }
   else if(PL.mode==='practice'&&(k==='ArrowLeft'||k==='ArrowRight')){ e.preventDefault(); const g=PL.segs[0], t=Math.max(g.a,Math.min(g.b-beatSec(),PL.t+(k==='ArrowRight'?1:-1)*4*beatSec())); if(PL.paused) PL.pausedAt=t; else seek(t,1) }
 });
+
+/* tocar la autopista pausa o reanuda; en Práctica, deslizar el dedo con la canción en pausa te mueve por ella */
+function rewindTo(nt){
+  const from=PL.pausedAt; if(nt===from) return;
+  if(nt<from){ // hacia atrás: lo que ya habías tocado desde ahí deja de contar
+    let back=0; const undo=o=>{ if(o.st===1||o.st===-1){ if(o.st===1&&o.pts){ back+=o.pts; if(o.tg) PL.cats[o.tg]=Math.max(0,(PL.cats[o.tg]||0)-1) } o.st=0; o.fb=0; o.late=0; o.pts=0; if(o.ok!=null){ o.ok=0; o.best=0 } } else if(o.st===2) o.st=0 };
+    PL.notes.forEach(n=>{ if(n.t>=nt-1e-6) undo(n) }); PL.blocks.forEach(b=>{ if(b.t0>=nt-1e-6) undo(b) });
+    PL.score=Math.max(0,PL.score-back); PL.shown=PL.score; PL.recent=(PL.recent||[]).filter(r=>r.t<nt); PL.combo=0; PL.lastMult=1 }
+  else { // hacia adelante: lo que saltaste no cuenta
+    PL.notes.forEach(n=>{ if(n.st===0&&n.t>=from&&n.t<nt) n.st=2 }); PL.blocks.forEach(b=>{ if(b.st===0&&b.t0>=from&&b.t0<nt) b.st=2 }) }
+  PL.lostAt=null; PL.pausedAt=nt }
+(()=>{ const cv=$('#hw'); let d=null;
+  cv.addEventListener('pointerdown',e=>{ if(!PL.running||PL.edit||$('#v-tocar').classList.contains('done')) return; d={x:e.clientX,moved:false,startT:null}; try{ cv.setPointerCapture(e.pointerId) }catch(_){} });
+  cv.addEventListener('pointermove',e=>{ if(!d||PL.mode!=='practice'||PL.confirm) return; const dx=e.clientX-d.x; if(!d.moved&&Math.abs(dx)<8) return;
+    if(!d.moved){ d.moved=true; if(!PL.paused||PL.rsWaiting) $('#pPause').click(); d.startT=PL.pausedAt; d.x0=e.clientX }
+    const L=PL.lay, g=PL.segs[0]; PL.scrubT=Math.max(g.a,Math.min(g.b-.05,d.startT-(e.clientX-d.x0)/L.pxs)); PL.pausedAt=PL.scrubT });
+  const up=()=>{ if(!d) return; const dd=d; d=null;
+    if(dd.moved){ const nt=PL.scrubT; PL.pausedAt=dd.startT; rewindTo(nt); PL.scrubT=null; toast('En pausa: toca la autopista o "Seguir" para continuar desde aquí'); return }
+    if(PL.confirm) return; $('#pPause').click() };
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',()=>{ if(d&&d.moved){ PL.pausedAt=d.startT; PL.scrubT=null } d=null });
+})();
 
 /* ---------- pista de fondo: YouTube y Spotify ---------- */
 const parseTime=v=>{ v=String(v||'').trim().replace(',','.'); if(!v) return 0; const p=v.split(':').map(Number); if(p.some(isNaN)) return 0; return p.length>1?p[0]*60+p[1]:p[0] };
