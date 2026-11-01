@@ -2609,6 +2609,7 @@ function songTime(){
   return PL.base+(performance.now()-PL.t0)/1000*PL.speed;
 }
 function seek(t,preBeats,delay=0){
+  PL.jumped=true; clearTimeout(PL.rsT); if(PL.rsWaiting){ PL.rsWaiting=false; PL.paused=false; $('#pPause').textContent='Pausa' }
   PL.countEnd=t; PL.base=t-preBeats*beatSec()-delay*PL.speed; PL.t0=performance.now(); PL.hold=false; $('#pWait').hidden=true;
   PL.k=Math.max(0,PL.segs.findIndex(g=>t<g.b));
   if(PL.media) PL.media.play(PL.base,PL.speed);
@@ -2630,6 +2631,7 @@ function timingOf(dr,chord){ const m=mg(), a=Math.abs(dr*1000)/(chord?1.8:1); re
 function playerLoop(){
   if(!PL.running) return; PL.raf=requestAnimationFrame(playerLoop);
   if(PL.edit){ edFrame(); return }
+  PL.jumped=false;
   let t=songTime();
   // nota por nota: la canción se detiene en lo próximo que falta tocar
   if(PL.mode==='practice'&&PL.cfg.wait&&!PL.paused&&!PL.hold&&t>=PL.countEnd){
@@ -2642,12 +2644,14 @@ function playerLoop(){
     else if(PL.mode==='practice'&&PL.cfg.loop){ PL.passes++; const up=progressCheck(); resetMarks(); seek(PL.segs[0].a,1); if(!up) banner('Vuelta '+(PL.passes+1)) }
     else { finishPlayer(); return }
   }
+  // tras un salto (vuelta, sección), el resto de este cuadro usaría el tiempo viejo: se juzgaría todo como fallo
+  if(PL.jumped){ const nt=songTime(); drawHighway(nt); playerHud(nt); updateTimeline(nt); return }
   if(PL.cfg.click&&!PL.paused&&!PL.hold&&t>=PL.countEnd){ const bi=Math.floor((t+1e-6)/beatSec()); if(bi!==PL.lastBeat){ PL.lastBeat=bi; PL.beatPulse=1; const a=ctx(); if(a) click(a.currentTime+.01,bi%4===0) } }
   // fallos (en nota por nota no hay: la canción espera)
   if(!(PL.mode==='practice'&&PL.cfg.wait)){
     const lateN=lagT()+winL()+.04;
-    for(const n of PL.notes) if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; miss(n.s); track(n.t,false) }
-    for(const b of PL.blocks) if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; miss(-1); track(b.t0,false) }
+    for(const n of PL.notes){ if(PL.jumped) break; if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; miss(n.s); track(n.t,false) } }
+    for(const b of PL.blocks){ if(PL.jumped) break; if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; miss(-1); track(b.t0,false) } }
   }
   drawHighway(t); playerHud(t); updateTimeline(t);
 }
@@ -2666,8 +2670,15 @@ function rescue(first){
   const ghost=(tt,o)=>{ if(tt>=target-1e-6&&tt<first-1e-6) o.st=2; else if(tt>=first-1e-6){ o.st=0; o.fb=0; if(o.ok!=null){ o.ok=0; o.best=0 } } };
   PL.notes.forEach(n=>ghost(n.t,n)); PL.blocks.forEach(b=>ghost(b.t0,b));
   PL.recent=[]; PL.pitches=[]; PL.combo=0; PL.lastMult=1; PL.rescues=(PL.rescues||0)+1;
-  banner('Anti-colapso'); feed(`Volvemos ${c.rsBack} s · espera ${c.rsWait} s`,'good');
-  seek(target,1,c.rsWait||0);
+  banner('Anti-colapso'); feed(`Volvemos ${c.rsBack} s`,'good');
+  const wait=Math.round(c.rsWait||0); if(wait<=0){ seek(target,1); return }
+  // pausa de verdad: la autopista queda quieta en el punto de regreso mientras corre la cuenta
+  PL.jumped=true; PL.k=Math.max(0,PL.segs.findIndex(g=>target<g.b)); PL.hold=false; $('#pWait').hidden=true; PL.paused=true; PL.pausedAt=target; PL.rsWaiting=true; if(PL.media) PL.media.pause();
+  const box=$('#pCnt'); box.hidden=false; box.classList.add('wait'); let n=wait;
+  const tick=()=>{ if(!PL.running||!PL.rsWaiting) return;
+    if(n<=0){ box.classList.remove('wait'); seek(target,1); return }
+    box.innerHTML=''; box.append(h('small',{text:'Respira · retomamos en'}),h('span',{text:String(n)})); n--; PL.rsT=setTimeout(tick,1000) };
+  tick();
 }
 /* progresión inteligente: al cerrar cada vuelta, si acertaste lo suficiente, sube la velocidad */
 function progressCheck(){
@@ -2891,6 +2902,7 @@ function drawHighway(t){
 function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath() }
 /* controles */
 $('#pPause').addEventListener('click',()=>{ if(!PL.running) return;
+  if(PL.rsWaiting){ clearTimeout(PL.rsT); PL.rsWaiting=false; $('#pCnt').hidden=true; $('#pPause').textContent='Seguir'; return }
   if(!PL.paused){ PL.pausedAt=songTime(); PL.paused=true; if(PL.media) PL.media.pause(); $('#pPause').textContent='Seguir' }
   else { PL.paused=false; seek(PL.pausedAt,1); $('#pPause').textContent='Pausa' } });
 $('#pRestart').addEventListener('click',()=>{ if(!PL.running){ if(PL.song) startPlayer(getSong(PL.song.id)); return }
@@ -2907,7 +2919,7 @@ $('#pSpeed').addEventListener('input',e=>{ if(!PL.running||PL.mode!=='practice')
   let sp=v; if(PL.media&&PL.media.rates){ sp=PL.media.rates.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a,1) }
   PL.speed=sp; PL.cfg.speed=Math.round(sp*100); PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.setRate(sp); $('#pSpeedV').textContent=Math.round(sp*100)+'%' });
 $('#pSpeed').addEventListener('change',()=>{ if(PL.running){ PL.song.play=PL.cfg; saveSongMeta(PL.song) } });
-function stopPlayer(){ PL.running=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
+function stopPlayer(){ PL.running=false; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
 function timingSummary(){
   const C=PL.cats||{}, parts=[['perfect','Perfecto'],['great','Bien'],['early','Un poco antes'],['late','Un poco tarde'],['tooEarly','Aún no'],['tooLate','Tarde']].filter(([k])=>C[k]).map(([k,n])=>h('span',{class:'tm '+k},h('b',{text:String(C[k])}),' '+n));
   if(!parts.length) return null;
