@@ -654,6 +654,20 @@ a.btn.primary{color:var(--accent-ink)}
 
 /* iOS acerca la página al tocar un campo con letra menor a 16 px y no la vuelve a alejar */
 @media (pointer:coarse){input,select,textarea{font-size:16px!important}}
+/* carpetas */
+.songtools{display:flex;gap:8px;align-items:center;margin-top:14px}
+.songtools input{flex:1;min-width:0}
+.sgroup{margin-top:16px}
+.sgroup>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:8px 4px;border-bottom:1px solid var(--line);font-family:var(--display)}
+.sgroup>summary::-webkit-details-marker{display:none}
+.sgroup>summary::before{content:'▸';color:var(--accent);transition:transform .15s}
+.sgroup[open]>summary::before{transform:rotate(90deg)}
+.sgroup>summary b{font-size:1.05rem}
+.sgroup>summary span{font-size:.75rem;color:var(--muted);padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+.sgroup .songlist{margin-top:10px}
+.foldman{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.foldman .row input{flex:1;min-width:120px}
+.pcount.wait{background:color-mix(in oklab,var(--surface) 18%,transparent);text-shadow:0 2px 14px rgba(0,0,0,.8)}
 
 </style>
 
@@ -943,6 +957,10 @@ a.btn.primary{color:var(--accent-ink)}
       </div>
     </div>
     <div class="panel" style="margin-top:16px">
+      <span class="lab">Tus datos y respaldo</span>
+      <div id="dataBackup"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
       <span class="lab">Datos</span>
       <p class="hint" style="margin-top:0">Restaurar agrega de vuelta los mazos de ejemplo que hayas borrado, sin tocar los tuyos.</p>
       <div class="toolbar" id="dataTools"></div>
@@ -984,7 +1002,7 @@ a.btn.primary{color:var(--accent-ink)}
       </div>
       <div id="importPreview"></div>
     </div>
-    <div class="songlist" id="songList"></div>
+    <div id="songList"></div>
   </section>
 
   <!-- FICHA DE CANCIÓN -->
@@ -1008,6 +1026,7 @@ a.btn.primary{color:var(--accent-ink)}
           <div class="speedrow"><label for="sSpeed">Velocidad</label><input type="range" id="sSpeed" min="40" max="125" step="5"><b id="sSpeedV" class="mono">100%</b></div>
           <div class="seg" style="margin-top:8px" id="sSpeedQuick"></div>
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sLoop">Repetir las secciones elegidas en bucle</label>
+          <div class="speedrow" style="margin-top:8px"><label for="sLoopWait">Espera entre vueltas</label><input type="range" id="sLoopWait" min="0" max="10" step="1"><b id="sLoopWaitV" class="mono">0 s</b></div>
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sWait">Nota por nota: si no la tocas a tiempo, la canción te espera</label>
           <label class="check" style="margin-top:8px"><input type="checkbox" id="sWaitJump">Al acertar, saltar al instante a la siguiente nota</label>
           <label class="check" style="margin-top:12px"><input type="checkbox" id="sProg">Progresión inteligente: subir la velocidad cuando me sale bien</label>
@@ -1309,8 +1328,18 @@ const DEFAULT_PREFS={theme:'system',accent:'nacar',wood:'rosewood',hand:'right',
 const DEFAULT_SET={deck:'noh-mac',order:'random',end:'none',n:20,secs:60,adv:'mic',bpm:70,beats:4,click:true,hint:'always',sens:'normal',showNext:true};
 
 /* ---------- almacenamiento ---------- */
-const S={get(k,d){try{const v=localStorage.getItem('trastero.'+k);return v?JSON.parse(v):d}catch(e){return d}},
-         set(k,v){try{localStorage.setItem('trastero.'+k,JSON.stringify(v))}catch(e){}}};
+/* Todo se guarda en localStorage con el prefijo "trastero.". Si un valor está dañado no se pierde: se aparta en
+   "trastero.__corrupt.<clave>" y se usa el valor por defecto. Si no se puede guardar (espacio lleno, modo privado) se avisa una vez. */
+const S={
+  ok:(()=>{ try{ const k='trastero.__t'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true }catch(e){ return false } })(),
+  get(k,d){ let v=null; try{ v=localStorage.getItem('trastero.'+k) }catch(e){ return d } if(v==null) return d;
+    try{ const o=JSON.parse(v); if(d!=null&&typeof d==='object'&&(o===null||typeof o!=='object'||Array.isArray(d)!==Array.isArray(o))) throw new Error('tipo'); return o }
+    catch(e){ try{ localStorage.setItem('trastero.__corrupt.'+k,v) }catch(_){} return d } },
+  set(k,v){ try{ localStorage.setItem('trastero.'+k,JSON.stringify(v)); return true }catch(e){ S.warn(e); return false } },
+  warn(e){ if(S._warned) return; S._warned=true; const full=e&&(e.name==='QuotaExceededError'||e.code===22||e.code===1014);
+    setTimeout(()=>{ try{ toast(full?'No pude guardar: el espacio está lleno. Descarga un respaldo en Ajustes y borra canciones que no uses.':'Este navegador no me deja guardar (¿modo privado?). Tu progreso no quedará grabado.') }catch(_){} },300) }
+};
+try{ navigator.storage&&navigator.storage.persisted&&navigator.storage.persisted().then(p=>{ if(!p&&navigator.storage.persist) navigator.storage.persist() }).catch(()=>{}) }catch(e){}
 let custom=S.get('custom',[]);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const storedDecks=S.get('decks',null);
@@ -1899,6 +1928,7 @@ function renderSettings(){
     h('button',{class:'btn ghost',onclick:()=>{ prefs=Object.assign({},DEFAULT_PREFS); savePrefs(); applyPrefs(); buildChroma(); renderSettings(); toast('Ajustes por defecto') }},'Volver a los ajustes por defecto'));
   const wipe=h('span',{}); const ask=()=>{ wipe.innerHTML=''; wipe.append(h('span',{class:'confirm'},'¿Borrar mazos, acordes propios e historial?',h('button',{class:'btn danger',onclick:()=>{ ['decks','custom','history','settings','seenDefaults'].forEach(k=>{try{localStorage.removeItem('trastero.'+k)}catch(e){}}); location.reload() }},'Sí, borrar todo'),h('button',{class:'btn ghost',onclick:renderSettings},'No'))) };
   wipe.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar todos los datos')); dt.append(wipe);
+  renderBackup();
 }
 document.querySelectorAll('#v-ajustes input[type=radio]').forEach(r=>r.addEventListener('change',()=>{ const k={pTheme:'theme',pWood:'wood',pHand:'hand',pNotes:'notes',pSize:'size'}[r.name]; prefs[k]=r.value; savePrefs(); applyPrefs(); if(k==='notes') buildChroma(); renderSettings() }));
 $('#pCount').addEventListener('change',e=>{prefs.countdown=e.target.checked;savePrefs()});
@@ -2347,7 +2377,7 @@ function buildSong(song){
 let songs=S.get('songs',[]);
 const saveSongs=()=>S.set('songs',songs);
 const DEMOS=[
-{id:'demo-penta',cat:'riff',text:`Calentamiento pentatónico en Am
+{id:'demo-penta',cat:'ejercicio',text:`Calentamiento pentatónico en Am
 80 BPM · Standard tuning (E A D G B E)
 
 [SUBIDA]
@@ -2407,6 +2437,17 @@ G|-2---2---2---2---2---2---2---2---0---0---0---0---0---0---0---0---|
 D|-2---2---2---2---3---3---3---3---2---2---2---2---0---0---0---0---|
 A|-0---0---0---0---3---3---3---3---3---3---3---3---2---2---2---2---|
 E|-x---x---x---x---1---1---1---1---x---x---x---x---3---3---3---3---|`}
+,
+/* ejercicios incluidos (generados con el mismo formato de Fretline) */
+{id:"ej-arana",cat:"ejercicio",cpb:8,text:"Araña cromática 1-2-3-4\n70 BPM · Standard tuning (E A D G B E)\n\n[SUBIDA]\ne|---------------------------------------------------------------------------------1---2---3---4-----|\nB|-----------------------------------------------------------------1---2---3---4---------------------|\nG|-------------------------------------------------1---2---3---4-------------------------------------|\nD|---------------------------------1---2---3---4-----------------------------------------------------|\nA|-----------------1---2---3---4---------------------------------------------------------------------|\nE|-1---2---3---4-------------------------------------------------------------------------------------|\n\n[BAJADA]\ne|-4---3---2---1-------------------------------------------------------------------------------------|\nB|-----------------4---3---2---1---------------------------------------------------------------------|\nG|---------------------------------4---3---2---1-----------------------------------------------------|\nD|-------------------------------------------------4---3---2---1-------------------------------------|\nA|-----------------------------------------------------------------4---3---2---1---------------------|\nE|---------------------------------------------------------------------------------4---3---2---1-----|"},
+{id:"ej-mayor-c",cat:"ejercicio",cpb:8,text:"Escala mayor de C (posición abierta)\n72 BPM · Standard tuning (E A D G B E)\n\n[SUBIDA]\ne|-------------------------------------0---1---3-----|\nB|-------------------------0---1---3-----------------|\nG|-----------------0---2-----------------------------|\nD|-----0---2---3-------------------------------------|\nA|-3-------------------------------------------------|\nE|---------------------------------------------------|\n\n[BAJADA]\ne|-3---1---0-----------------------------------------|\nB|-------------3---1---0-----------------------------|\nG|-------------------------2---0---------------------|\nD|---------------------------------3---2---0---------|\nA|---------------------------------------------3-----|\nE|---------------------------------------------------|"},
+{id:"ej-penta-full",cat:"ejercicio",cpb:8,text:"Pentatónica de Am completa (posición 5)\n80 BPM · Standard tuning (E A D G B E)\n\n[SUBIDA]\ne|-----------------------------------------5---8-----|\nB|---------------------------------5---8-------------|\nG|-------------------------5---7---------------------|\nD|-----------------5---7-----------------------------|\nA|---------5---7-------------------------------------|\nE|-5---8---------------------------------------------|\n\n[BAJADA]\ne|-8---5---------------------------------------------|\nB|---------8---5-------------------------------------|\nG|-----------------7---5-----------------------------|\nD|-------------------------7---5---------------------|\nA|---------------------------------7---5-------------|\nE|-----------------------------------------8---5-----|"},
+{id:"ej-menor-a",cat:"ejercicio",cpb:8,text:"Escala menor natural de Am (posición 5)\n72 BPM · Standard tuning (E A D G B E)\n\n[SUBIDA]\ne|---------------------------------------------------------5---7---8-----|\nB|---------------------------------------------5---6---8-----------------|\nG|-------------------------------------5---7-----------------------------|\nD|-------------------------5---7---9-------------------------------------|\nA|-------------5---7---8-------------------------------------------------|\nE|-5---7---8-------------------------------------------------------------|\n\n[BAJADA]\ne|-8---7---5-------------------------------------------------------------|\nB|-------------8---6---5-------------------------------------------------|\nG|-------------------------7---5-----------------------------------------|\nD|---------------------------------9---7---5-----------------------------|\nA|---------------------------------------------8---7---5-----------------|\nE|---------------------------------------------------------8---7---5-----|"},
+{id:"ej-legato",cat:"ejercicio",cpb:8,text:"Hammer-ons y pull-offs\n66 BPM · Standard tuning (E A D G B E)\n\n[HAMMER-ON]\ne|-----------------5h8---------------------------|\nB|---------5h8-----------------------------------|\nG|-5h7-------------------------------------------|\nD|-------------------------5h7-------------------|\nA|---------------------------------5h7-----------|\nE|-----------------------------------------5h8---|\n\n[PULL-OFF]\ne|-----------------8p5---------------------------|\nB|---------8p5-----------------------------------|\nG|-7p5-------------------------------------------|\nD|-------------------------7p5-------------------|\nA|---------------------------------7p5-----------|\nE|-----------------------------------------8p5---|"},
+{id:"ej-bends",cat:"ejercicio",cpb:8,text:"Bends de un tono\n60 BPM · Standard tuning (E A D G B E)\n\n[BENDS]\ne|-----------------------------------------5---------------------|\nB|-----------------8b------5-----------------------8b------------|\nG|-7b------5-----------------------7b----------------------7-----|\nD|---------------------------------------------------------------|\nA|---------------------------------------------------------------|\nE|---------------------------------------------------------------|"},
+{id:"ej-arpegios",cat:"ejercicio",cpb:8,text:"Arpegios de acordes abiertos\n70 BPM · Standard tuning (E A D G B E)\n\n[C Y AM]\n   C                               Am\n\ne|-----------------0-------------------------------0-----------------|\nB|-------------1-------1-----------------------1-------1-------------|\nG|---------0---------------0---------------2---------------2---------|\nD|-----2-----------------------2-------2-----------------------2-----|\nA|-3-------------------------------0---------------------------------|\nE|-------------------------------------------------------------------|\n\n[EM Y G]\n   Em                              G\n\ne|-----------------------------------------------------3-------------|\nB|-----------------0-------------------------------0-------0---------|\nG|-------------0-------0-----------------------0---------------0-----|\nD|---------2---------------2---------------0-------------------------|\nA|-----2-----------------------2-------2-----------------------------|\nE|-0-------------------------------3---------------------------------|"},
+{id:"ej-cambios",cat:"ejercicio",cpb:8,text:"Cambios de acordes G, C, D y Em\n76 BPM · Standard tuning (E A D G B E)\n\n[CAMBIOS]\n   G                               C                               D                               Em\n   ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓       ↓\ne|-3-------3-------3-------3-------0-------0-------0-------0-------2-------2-------2-------2-------0-------0-------0-------0-----|\nB|-0-------0-------0-------0-------1-------1-------1-------1-------3-------3-------3-------3-------0-------0-------0-------0-----|\nG|-0-------0-------0-------0-------0-------0-------0-------0-------2-------2-------2-------2-------0-------0-------0-------0-----|\nD|-0-------0-------0-------0-------2-------2-------2-------2-------0-------0-------0-------0-------2-------2-------2-------2-----|\nA|-2-------2-------2-------2-------3-------3-------3-------3---------------------------------------2-------2-------2-------2-----|\nE|-3-------3-------3-------3-----------------------------------------------------------------------0-------0-------0-------0-----|"},
+{id:"ej-rasgueo",cat:"ejercicio",cpb:8,text:"Rasgueo D DU UDU en Am, F, C y G\n80 BPM · Standard tuning (E A D G B E)\n\n[RASGUEO]\n   Am                              F                               C                               G\n   ↓       ↓   ↑       ↑   ↓   ↑   ↓       ↓   ↑       ↑   ↓   ↑   ↓       ↓   ↑       ↑   ↓   ↑   ↓       ↓   ↑       ↑   ↓   ↑\ne|-0-------0---0-------0---0---0---1-------1---1-------1---1---1---0-------0---0-------0---0---0---3-------3---3-------3---3---3-----|\nB|-1-------1---1-------1---1---1---1-------1---1-------1---1---1---1-------1---1-------1---1---1---0-------0---0-------0---0---0-----|\nG|-2-------2---2-------2---2---2---2-------2---2-------2---2---2---0-------0---0-------0---0---0---0-------0---0-------0---0---0-----|\nD|-2-------2---2-------2---2---2---3-------3---3-------3---3---3---2-------2---2-------2---2---2---0-------0---0-------0---0---0-----|\nA|-0-------0---0-------0---0---0---3-------3---3-------3---3---3---3-------3---3-------3---3---3---2-------2---2-------2---2---2-----|\nE|---------------------------------1-------1---1-------1---1---1-----------------------------------3-------3---3-------3---3---3-----|"}
 ];
 function songFromText(text,extra={}){
   const raw=parseFretline(text);
@@ -2414,10 +2455,10 @@ function songFromText(text,extra={}){
   s.cpb=extra.cpb||guessCpb(raw);
   return s;
 }
-function allSongs(){ return DEMOS.map(d=>Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true}),S.get('songmeta',{})[d.id]||{})).concat(songs) }
+function allSongs(){ return DEMOS.map(d=>Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true,cpb:d.cpb}),S.get('songmeta',{})[d.id]||{})).concat(songs) }
 function getSong(id){ return allSongs().find(s=>s.id===id) }
 function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importadas, todo
-  if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play}; if(song.edited) Object.assign(m[song.id],{raw:song.raw,raw0:song.raw0,edited:true}); S.set('songmeta',m) }
+  if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder}; if(song.edited) Object.assign(m[song.id],{raw:song.raw,raw0:song.raw0,edited:true}); S.set('songmeta',m) }
   else { const i=songs.findIndex(x=>x.id===song.id); if(i>=0) songs[i]=song; else songs.push(song); saveSongs() }
 }
 
@@ -2454,24 +2495,63 @@ const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait
 const playCfg=s=>{ const c=Object.assign({},PLAY_DEF,s.play||{}); if(c.lat===140&&!c.latUser) c.lat=120; return c };
 function openSong(id){ curSongId=id; if(location.hash==='#cancion') renderSongDetail(); else location.hash='cancion' }
 
+/* carpetas: las del usuario + Sin carpeta + Ejercicios + Ejemplos (las incluidas) */
+let folders=S.get('folders',[]); if(!Array.isArray(folders)) folders=[];
+const saveFolders=()=>S.set('folders',folders);
+const CAT_N={cancion:'Canción',riff:'Riff',ejercicio:'Ejercicio'};
+const folderOf=s=>s.folder||(s.demo?(s.cat==='ejercicio'?'Ejercicios':'Ejemplos'):'Sin carpeta');
+const allFolders=()=>{ const used=songs.map(x=>x.folder).concat(Object.values(S.get('songmeta',{})).map(v=>v&&v.folder)).filter(Boolean);
+  return [...folders,...used,'Sin carpeta','Ejercicios','Ejemplos'].filter((x,i,a)=>typeof x==='string'&&a.indexOf(x)===i) };
+let songQuery='', foldOpen=false;
+function folderSelect(cur,onpick,id){
+  const sel=h('select',{id:id||null,style:'width:auto;max-width:100%','aria-label':'Carpeta'},allFolders().map(f=>h('option',{value:f,selected:f===cur?true:null},f)),h('option',{value:'__new'},'＋ Nueva carpeta…'));
+  sel.onchange=()=>{ let v=sel.value; if(v==='__new'){ v=(prompt('Nombre de la carpeta nueva:')||'').trim(); if(!v){ sel.value=cur; return } if(!folders.includes(v)&&!allFolders().includes(v)){ folders.push(v); saveFolders() } } onpick(v) };
+  return sel }
 /* lista de canciones */
 function renderSongs(){
   const f=$('#songFilters'); f.innerHTML='';
-  [['all','Todo'],['cancion','Canciones'],['riff','Riffs']].forEach(([k,t])=>f.append(h('button',{class:'fchip','aria-pressed':String(songFilter===k),onclick:()=>{songFilter=k;renderSongs()}},t)));
+  [['all','Todo'],['cancion','Canciones'],['riff','Riffs'],['ejercicio','Ejercicios']].forEach(([k,t])=>f.append(h('button',{class:'fchip','aria-pressed':String(songFilter===k),onclick:()=>{songFilter=k;renderSongs()}},t)));
   const box=$('#songList'); box.innerHTML='';
-  const recs=S.get('songrec',{});
-  const list=allSongs().filter(s=>songFilter==='all'||s.cat===songFilter);
-  if(!list.length){ box.append(h('p',{class:'empty',text:'Todavía no hay nada aquí. Importa una canción de Fretline con el botón de arriba.'})); return }
-  list.forEach(s=>{ const tl=buildSong(s), best=Object.entries(recs).filter(([k])=>k.startsWith(s.id+'|')).reduce((a,[,v])=>Math.max(a,v.score||0),0);
-    const card=h('a',{class:'songcard',href:'#cancion',onclick:e=>{e.preventDefault();openSong(s.id)}},
-      h('span',{class:'scat',text:s.cat==='riff'?'Riff':'Canción'}),
-      h('b',{text:s.title}),
-      h('span',{class:'tdesc',text:`${s.bpm} BPM · ${tl.sections.length} ${tl.sections.length===1?'sección':'secciones'} · ${fmtClock(tl.len*1000)}`+(s.media&&s.media.src&&s.media.src!=='none'?` · ${s.media.src==='yt'?'YouTube':'Spotify'}`:'')}),
-      h('span',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
-      best?h('span',{class:'sbest',text:'Récord '+fmtN(best)}):null,
-      s.demo?h('span',{class:'sdemo',text:'Ejemplo'}):null);
-    box.append(card) });
+  const tools=h('div',{class:'songtools'},
+    h('input',{type:'text',enterkeyhint:'search',id:'songSearch',placeholder:'Buscar…','aria-label':'Buscar canciones',value:songQuery,oninput:e=>{ songQuery=e.target.value; renderSongGroups(); }}),
+    h('button',{class:'btn ghost',onclick:()=>{ foldOpen=!foldOpen; renderSongs() }},foldOpen?'Cerrar carpetas':'Carpetas'));
+  box.append(tools);
+  if(foldOpen) box.append(folderManager());
+  box.append(h('div',{id:'songGroups'})); renderSongGroups();
 }
+function renderSongGroups(){
+  const box=$('#songGroups'); if(!box) return; box.innerHTML='';
+  const recs=S.get('songrec',{}), q=songQuery.trim().toLowerCase(), closed=prefs.foldClosed||[];
+  const list=allSongs().filter(s=>(songFilter==='all'||s.cat===songFilter)&&(!q||s.title.toLowerCase().includes(q)||folderOf(s).toLowerCase().includes(q)));
+  if(!list.length){ box.append(h('p',{class:'empty',text:q?'Nada coincide con tu búsqueda.':'Todavía no hay nada aquí. Importa una canción de Fretline con el botón de arriba.'})); return }
+  allFolders().forEach(fd=>{ const items=list.filter(s=>folderOf(s)===fd); if(!items.length&&(q||!folders.includes(fd))) return;
+    const det=h('details',{class:'sgroup',open:closed.includes(fd)?null:true},h('summary',{},h('b',{text:fd}),h('span',{class:'mono',text:String(items.length)})));
+    det.addEventListener('toggle',()=>{ const c=new Set(prefs.foldClosed||[]); det.open?c.delete(fd):c.add(fd); prefs.foldClosed=[...c]; savePrefs() });
+    const grid=h('div',{class:'songlist'}); det.append(grid);
+    if(!items.length) grid.append(h('p',{class:'empty',text:'Carpeta vacía. Mueve canciones aquí desde su ficha.'}));
+    items.forEach(s=>{ const tl=buildSong(s), best=Object.entries(recs).filter(([k])=>k.startsWith(s.id+'|')).reduce((a,[,v])=>Math.max(a,v.score||0),0);
+      grid.append(h('a',{class:'songcard',href:'#cancion',onclick:e=>{e.preventDefault();openSong(s.id)}},
+        h('span',{class:'scat',text:CAT_N[s.cat]||'Canción'}),
+        h('b',{text:s.title}),
+        h('span',{class:'tdesc',text:`${s.bpm} BPM · ${tl.sections.length} ${tl.sections.length===1?'sección':'secciones'} · ${fmtClock(tl.len*1000)}`+(s.media&&s.media.src&&s.media.src!=='none'?` · ${s.media.src==='yt'?'YouTube':'Spotify'}`:'')}),
+        h('span',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
+        best?h('span',{class:'sbest',text:'Récord '+fmtN(best)}):null,
+        s.edited?h('span',{class:'sdemo',text:'Editada'}):s.demo?h('span',{class:'sdemo',text:'Incluida'}):null)) });
+    box.append(det) });
+}
+function folderManager(){
+  const wrap=h('div',{class:'panel foldman'},h('span',{class:'lab',text:'Tus carpetas'}));
+  const moveAll=(from,to)=>{ songs.forEach(x=>{ if(x.folder===from) x.folder=to||undefined }); saveSongs();
+    const m=S.get('songmeta',{}); Object.values(m).forEach(v=>{ if(v.folder===from){ if(to) v.folder=to; else delete v.folder } }); S.set('songmeta',m) };
+  if(!folders.length) wrap.append(h('p',{class:'hint',text:'Aún no creas carpetas. "Sin carpeta", "Ejercicios" y "Ejemplos" siempre existen.'}));
+  folders.forEach((fd,i)=>{ const inp=h('input',{type:'text',value:fd,'aria-label':'Nombre de la carpeta'});
+    wrap.append(h('div',{class:'row'},inp,
+      h('button',{class:'btn ghost',title:'Subir',disabled:i===0?true:null,onclick:()=>{ [folders[i-1],folders[i]]=[folders[i],folders[i-1]]; saveFolders(); renderSongs() }},'↑'),
+      h('button',{class:'btn',onclick:()=>{ const v=inp.value.trim(); if(!v||v===fd) return; if(allFolders().includes(v)){ toast('Ya existe una carpeta con ese nombre'); return } folders[i]=v; saveFolders(); moveAll(fd,v); toast('Carpeta renombrada'); renderSongs() }},'Renombrar'),
+      h('button',{class:'btn ghost danger',onclick:()=>{ folders.splice(i,1); saveFolders(); moveAll(fd,null); toast('Carpeta borrada; sus canciones quedaron en "Sin carpeta"'); renderSongs() }},'Borrar'))) });
+  const nw=h('input',{type:'text',placeholder:'Nueva carpeta','aria-label':'Nueva carpeta'});
+  wrap.append(h('div',{class:'row'},nw,h('button',{class:'btn primary',onclick:()=>{ const v=nw.value.trim(); if(!v) return; if(allFolders().includes(v)){ toast('Ya existe'); return } folders.push(v); saveFolders(); renderSongs() }},'Crear')));
+  return wrap }
 /* importar */
 let importDraft=null;
 $('#importOpen').addEventListener('click',()=>{ $('#importBox').hidden=false; $('#importTxt').focus() });
@@ -2485,14 +2565,15 @@ function importParse(){
   importDraft=s; const tl=buildSong(s);
   const chords=[...new Map(tl.strums.map(x=>[x.chord.id,x.chord])).values()];
   const name=h('input',{type:'text',id:'importName',value:s.title,'aria-label':'Nombre'});
-  const cat=h('select',{id:'importCat',style:'width:auto'},h('option',{value:'cancion',text:'Canción'}),h('option',{value:'riff',text:'Riff'}));
+  const cat=h('select',{id:'importCat',style:'width:auto'},h('option',{value:'cancion',text:'Canción'}),h('option',{value:'riff',text:'Riff'}),h('option',{value:'ejercicio',text:'Ejercicio'}));
+  let impFolder=folders[0]||'Sin carpeta'; const fsel=folderSelect(impFolder,v=>{ impFolder=v; },'importFolder');
   box.append(h('div',{class:'impprev'},
-    h('div',{class:'row'},h('div',{style:'flex:1;min-width:180px'},h('label',{class:'lab',for:'importName',text:'Nombre'}),name),h('div',{},h('label',{class:'lab',for:'importCat',text:'Tipo'}),cat)),
+    h('div',{class:'row'},h('div',{style:'flex:1;min-width:180px'},h('label',{class:'lab',for:'importName',text:'Nombre'}),name),h('div',{},h('label',{class:'lab',for:'importCat',text:'Tipo'}),cat),h('div',{},h('label',{class:'lab',for:'importFolder',text:'Carpeta'}),fsel)),
     h('p',{class:'hint',text:`${s.bpm} BPM · ${tl.sections.length} secciones · ${tl.notes.length} notas · ${tl.strums.length} rasgueos · dura ${fmtClock(tl.len*1000)} (cada columna = 1/${s.cpb} de tiempo)`}),
     h('div',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
     chords.length?h('p',{class:'hint'},'Acordes: ',chords.map((c,i)=>h('span',{class:'mono'},(i?', ':'')+c.name+(c.id.startsWith('f:')?' (nuevo)':'')))):null,
     s.raw.warnings.length?h('p',{class:'err',text:s.raw.warnings.join(' · ')}):null,
-    h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ importDraft.title=name.value.trim()||importDraft.title; importDraft.cat=cat.value; songs.push(importDraft); saveSongs(); toast('Canción importada'); $('#importBox').hidden=true; $('#importTxt').value=''; box.innerHTML=''; openSong(importDraft.id) }},'Guardar y abrir'))));
+    h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ importDraft.title=name.value.trim()||importDraft.title; importDraft.cat=cat.value; if(impFolder&&impFolder!=='Sin carpeta') importDraft.folder=impFolder; songs.push(importDraft); saveSongs(); toast('Canción importada'); $('#importBox').hidden=true; $('#importTxt').value=''; box.innerHTML=''; openSong(importDraft.id) }},'Guardar y abrir'))));
 }
 
 /* ficha */
@@ -2502,9 +2583,10 @@ function renderSongDetail(){
   const tl=buildSong(s), cfg=playCfg(s); if(!cfg.sel||cfg.sel.some(i=>i>=tl.sections.length)) cfg.sel=tl.sections.map((x,i)=>i);
   const hd=$('#songHead'); hd.innerHTML='';
   const recs=S.get('songrec',{}), rk=recs[s.id+'|'+cfg.sel.join(',')];
-  hd.append(h('p',{class:'eyebrow',text:s.cat==='riff'?'Riff':'Canción'}),h('h1',{class:'h1',text:s.title}),
+  hd.append(h('p',{class:'eyebrow',text:CAT_N[s.cat]||'Canción'}),h('h1',{class:'h1',text:s.title}),
     h('p',{class:'sub',text:`${s.bpm} BPM · ${fmtClock(tl.len*1000)} · ${tl.notes.length} notas y ${tl.blocks.length} cambios de acorde`+(rk?` · récord ${fmtN(rk.score)} (${rk.acc}%)`:'')}));
   const save=()=>{ s.play=cfg; saveSongMeta(s) };
+  hd.append(h('div',{class:'row',style:'margin-top:8px'},h('span',{class:'lab',style:'margin:0',text:'Carpeta'}),folderSelect(folderOf(s),v=>{ s.folder=v; saveSongMeta(s); toast('Movida a '+v) })));
   document.querySelectorAll('input[name=sMode]').forEach(r=>{ r.checked=r.value===cfg.mode; r.onchange=()=>{ cfg.mode=r.value; save(); renderSongDetail() } });
   $('#sModeHint').textContent=cfg.mode==='test'?'Prueba: velocidad original y sin pausas. Cuenta para tu récord y tu XP.':'Práctica: elige secciones, baja la velocidad y repite en bucle. Suma XP, pero no récord.';
   $('#sPracOpts').hidden=cfg.mode!=='practice';
@@ -2515,6 +2597,8 @@ function renderSongDetail(){
   $('#sSpeed').value=cfg.speed; $('#sSpeedV').textContent=cfg.speed+'%';
   $('#sSpeed').oninput=e=>{ cfg.speed=+e.target.value; $('#sSpeedV').textContent=cfg.speed+'%' }; $('#sSpeed').onchange=save;
   const q=$('#sSpeedQuick'); q.innerHTML=''; [50,75,90,100].forEach(v=>q.append(h('label',{},h('input',{type:'radio',name:'sSpQ',checked:cfg.speed===v?true:null,onchange:()=>{cfg.speed=v;save();renderSongDetail()}}),h('span',{text:v+'%'}))));
+  const lwv=()=>cfg.loopWait!=null?cfg.loopWait:(cfg.delay||0);
+  $('#sLoopWait').value=lwv(); $('#sLoopWaitV').textContent=lwv()+' s'; $('#sLoopWait').oninput=e=>{ cfg.loopWait=+e.target.value; $('#sLoopWaitV').textContent=cfg.loopWait+' s' }; $('#sLoopWait').onchange=save;
   $('#sLoop').checked=cfg.loop; $('#sLoop').onchange=e=>{cfg.loop=e.target.checked;save()};
   document.querySelectorAll('input[name=sMarg]').forEach(r=>{ r.checked=r.value===(cfg.margin||'normal'); r.onchange=()=>{ cfg.margin=r.value; save(); margHint(cfg) } }); margHint(cfg);
   $('#sClick').checked=cfg.click; $('#sClick').onchange=e=>{cfg.click=e.target.checked;save()};
@@ -2641,7 +2725,7 @@ function playerLoop(){
   const g=PL.segs[PL.k];
   if(!PL.paused&&!PL.hold&&g&&t>=g.b){
     if(PL.k+1<PL.segs.length){ PL.k++; seek(PL.segs[PL.k].a,1) }
-    else if(PL.mode==='practice'&&PL.cfg.loop){ PL.passes++; const up=progressCheck(); resetMarks(); seek(PL.segs[0].a,1); if(!up) banner('Vuelta '+(PL.passes+1)) }
+    else if(PL.mode==='practice'&&PL.cfg.loop){ PL.passes++; const up=progressCheck(); resetMarks(); PL.lostAt=null; const lw=PL.cfg.loopWait!=null?PL.cfg.loopWait:(PL.cfg.delay||0); if(lw>0) freezeAt(PL.segs[0].a,lw,'Vuelta '+(PL.passes+1)+' en'); else seek(PL.segs[0].a,1); if(!up) banner('Vuelta '+(PL.passes+1)) }
     else { finishPlayer(); return }
   }
   // tras un salto (vuelta, sección), el resto de este cuadro usaría el tiempo viejo: se juzgaría todo como fallo
@@ -2671,13 +2755,16 @@ function rescue(first){
   PL.notes.forEach(n=>ghost(n.t,n)); PL.blocks.forEach(b=>ghost(b.t0,b));
   PL.recent=[]; PL.pitches=[]; PL.combo=0; PL.lastMult=1; PL.rescues=(PL.rescues||0)+1;
   banner('Anti-colapso'); feed(`Volvemos ${c.rsBack} s`,'good');
-  const wait=Math.round(c.rsWait||0); if(wait<=0){ seek(target,1); return }
-  // pausa de verdad: la autopista queda quieta en el punto de regreso mientras corre la cuenta
+  PL.lostAt=first; freezeAt(target,c.rsWait||0,'Respira · retomamos en');
+}
+/* pausa de verdad: la autopista queda quieta en "target" mientras corre una cuenta; luego sigue con un tiempo de clic */
+function freezeAt(target,secs,label){
+  const wait=Math.round(secs||0); if(wait<=0){ seek(target,1); return }
   PL.jumped=true; PL.k=Math.max(0,PL.segs.findIndex(g=>target<g.b)); PL.hold=false; $('#pWait').hidden=true; PL.paused=true; PL.pausedAt=target; PL.rsWaiting=true; if(PL.media) PL.media.pause();
   const box=$('#pCnt'); box.hidden=false; box.classList.add('wait'); let n=wait;
   const tick=()=>{ if(!PL.running||!PL.rsWaiting) return;
     if(n<=0){ box.classList.remove('wait'); seek(target,1); return }
-    box.innerHTML=''; box.append(h('small',{text:'Respira · retomamos en'}),h('span',{text:String(n)})); n--; PL.rsT=setTimeout(tick,1000) };
+    box.innerHTML=''; box.append(h('small',{text:label}),h('span',{text:String(n)})); n--; PL.rsT=setTimeout(tick,1000) };
   tick();
 }
 /* progresión inteligente: al cerrar cada vuelta, si acertaste lo suficiente, sube la velocidad */
@@ -2833,7 +2920,7 @@ function drawHighway(t){
   // bloques de acordes: un bloque de color por acorde con su nombre grande arriba
   const fsz=Math.round(hh*.62), by0=top-rN-hh-2, by1=bot+rN+4;
   for(const g of PL.csegs){ if(g.t1<tmin||g.t0>tmax) continue; const x0=x(g.t0)+1.5, x1=x(g.t1)-1.5, w=Math.max(8,x1-x0), st=g.blk?g.blk.st:0, col=g.col, rr=Math.min(12,w/2);
-    if(st===2){ c.globalAlpha=.12; c.strokeStyle=col; c.lineWidth=2; roundRect(c,x0,by0,w,by1-by0,rr); c.stroke(); c.globalAlpha=1; continue }
+    if(st===2){ c.globalAlpha=.4; c.setLineDash([6,4]); c.strokeStyle=col; c.lineWidth=2; roundRect(c,x0,by0,w,by1-by0,rr); c.stroke(); c.setLineDash([]); c.fillStyle=col; c.font=`900 ${Math.round(hh*.55)}px ${fam}`; c.textBaseline='middle'; c.fillText(g.name,Math.max(x0+8,hx+8),by0+hh/2); c.textBaseline='alphabetic'; c.globalAlpha=1; continue }
     const fill=c.createLinearGradient(0,by0,0,by1); fill.addColorStop(0,col); fill.addColorStop(1,'transparent');
     c.globalAlpha=st===1?.34:st===-1?.1:.2; c.fillStyle=fill; roundRect(c,x0,by0,w,by1-by0,rr); c.fill(); c.globalAlpha=1;
     c.lineWidth=st===1?3:2; c.strokeStyle=st===-1?C.bad:col; if(st===1){ c.shadowColor=col; c.shadowBlur=18 } c.globalAlpha=st===-1?.9:st===1?1:.75;
@@ -2853,7 +2940,7 @@ function drawHighway(t){
   for(const r of PL.strums){ if(r.t<tmin||r.t>tmax) continue; c.fillStyle=C.muted; c.globalAlpha=r.t<t?.3:.9; c.fillText(r.dir==='u'?'↑':r.dir==='d'?'↓':'•',x(r.t),bot-4) } c.globalAlpha=1;
   for(const k of PL.chucks){ if(k.t<tmin||k.t>tmax) continue; c.fillStyle=C.muted; c.fillText('×',x(k.t),y(2.5)+4) }
   // notas: discos de neón (núcleo oscuro, aro brillante, reflejo); crecen y brillan al acercarse
-  for(const n of PL.notes){ if(n.t<tmin||n.t>tmax) continue; if(n.st===2){ c.globalAlpha=.13; c.strokeStyle=C.str[n.s]; c.lineWidth=2; c.beginPath(); c.arc(x(n.t),y(n.s),rN*.8,0,Math.PI*2); c.stroke(); c.globalAlpha=1; continue }
+  for(const n of PL.notes){ if(n.t<tmin||n.t>tmax) continue; if(n.st===2){ const gx=x(n.t),gy=y(n.s); c.globalAlpha=.55; c.fillStyle='#0b0714'; c.beginPath(); c.arc(gx,gy,rN*.9,0,Math.PI*2); c.fill(); c.setLineDash([4,3]); c.strokeStyle=C.str[n.s]; c.lineWidth=2.5; c.stroke(); c.setLineDash([]); c.fillStyle='#fff'; c.font=`800 ${Math.round(rN*.9)}px system-ui`; c.textBaseline='middle'; c.fillText(String(n.f),gx,gy+1); c.textBaseline='alphabetic'; c.globalAlpha=1; continue }
     const xx=x(n.t),yy=y(n.s), near=Math.max(0,1-Math.abs(n.t-t)/1.2), r=rN*(1+(n.st===0?near*.25:0)), col=C.str[n.s];
     if(n.st===0&&n.t>t){ const tail=c.createLinearGradient(xx,0,xx+r*3.4,0); tail.addColorStop(0,col); tail.addColorStop(1,'transparent'); c.fillStyle=tail; c.globalAlpha=.4; c.fillRect(xx,yy-r*.3,r*3.4,r*.6); c.globalAlpha=1 }
     const ring=n.st===-1?C.bad:col;
@@ -2879,6 +2966,8 @@ function drawHighway(t){
     if(n.st===-1){ const bx=xx+r*.75, byy=yy-r*.75, br=Math.max(6,r*.42); c.fillStyle=C.bad; c.beginPath(); c.arc(bx,byy,br,0,Math.PI*2); c.fill(); c.fillStyle='#fff'; c.font=`900 ${Math.round(br*1.3)}px system-ui`; c.textBaseline='middle'; c.fillText('✕',bx,byy+1); c.textBaseline='alphabetic' }
     if(n.tech){ c.fillStyle=C.fg; c.font=`700 ${Math.round(r*.75)}px system-ui`; c.fillText(n.tech.replace('b','↗').replace('/','⟋').replace('\\','⟍'),xx+r+8,yy-r+4) } }
   c.textAlign='left';
+  // anti-colapso: dónde te perdiste
+  if(PL.lostAt!=null){ if(t>PL.lostAt+1.5) PL.lostAt=null; else { const lx=x(PL.lostAt); c.setLineDash([6,5]); c.strokeStyle=C.bad; c.lineWidth=2; c.beginPath(); c.moveTo(lx,top-rN); c.lineTo(lx,bot+rN); c.stroke(); c.setLineDash([]); c.fillStyle=C.bad; c.font=`800 11px system-ui`; c.fillText('aquí te perdiste',lx+5,bot+rN-2) } }
   // línea de golpe: late con el pulso, brilla al acertar, se enrojece al fallar
   const hg=PL.hitGlow, mg=PL.missGlow, pw=3+hg*5+PL.beatPulse*1.5;
   c.strokeStyle=mg>.2?C.bad:C.acc; c.lineWidth=pw; c.shadowColor=mg>.2?C.bad:C.acc; c.shadowBlur=14+hg*30;
@@ -2936,7 +3025,7 @@ function finishPlayer(){
   let rec=null,newBest=false;
   if(mic&&hits>0){
     const lvBefore=levelOf(totalXP()).L;
-    rec={at:Date.now(),deck:(s.cat==='riff'?'Riff: ':'Canción: ')+s.title,order:'sequence',end:'none',adv:'song',done:hits,skips:tot-hits,dur,avg:null,score:Math.round(PL.score/4),songScore:PL.score,per:{}};
+    rec={at:Date.now(),deck:(CAT_N[s.cat]||'Canción')+': '+s.title,order:'sequence',end:'none',adv:'song',done:hits,skips:tot-hits,dur,avg:null,score:Math.round(PL.score/4),songScore:PL.score,per:{}};
     history.unshift(rec); history=history.slice(0,300); saveHist();
     rec.xp=xpOfRec(rec); const lvAfter=levelOf(totalXP()).L; if(lvAfter>lvBefore) rec.levelUp=lvAfter;
     if(mode==='test'){ const recs=S.get('songrec',{}), key=s.id+'|'+cfg.sel.join(','); if(!recs[key]||PL.score>recs[key].score){ newBest=!!recs[key]; recs[key]={score:PL.score,acc,at:Date.now()}; S.set('songrec',recs) } }
@@ -3352,6 +3441,76 @@ function startEditor(s,t){
   cancelAnimationFrame(PL.raf); PL.raf=requestAnimationFrame(playerLoop);
 }
 $('#pEdit').addEventListener('click',()=>{ if(!PL.running||PL.edit) return; const s=PL.song, t=PL.t; startEditor(s,t) });
+
+/* ---------- tus datos: respaldo completo, importar y cuidado entre pestañas ---------- */
+const BK_SKIP=/^trastero\.(spotify|spver|__)/;   // las sesiones de Spotify no viajan en el respaldo
+function bkKeys(){ const ks=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith('trastero.')) ks.push(k) } }catch(e){} return ks }
+function bkMake(){ const data={}; bkKeys().filter(k=>!BK_SKIP.test(k)&&k!=='trastero.lastBackup').forEach(k=>{ try{ data[k.slice(9)]=localStorage.getItem(k) }catch(e){} });
+  return {app:'trastero',v:1,at:Date.now(),data} }
+function bkSize(){ let n=0; bkKeys().forEach(k=>{ try{ n+=(k.length+(localStorage.getItem(k)||'').length)*2 }catch(e){} }); return n }
+function bkSummary(data){ const P=(k,d)=>{ try{ return data[k]!=null?JSON.parse(data[k]):d }catch(e){ return d } };
+  const parts=[]; const so=P('songs',[]), hi=P('history',[]), de=P('decks',[]), cu=P('custom',[]), fo=P('folders',[]);
+  parts.push(`${so.length} ${so.length===1?'canción importada':'canciones importadas'}`, `${hi.length} sesiones en el historial`, `${de.length} mazos`);
+  if(cu.length) parts.push(`${cu.length} acordes propios`); if(fo.length) parts.push(`${fo.length} ${fo.length===1?'carpeta':'carpetas'}`);
+  return parts.join(' · ') }
+const fmtKB=n=>n<1024*1024?Math.round(n/1024)+' KB':(n/1024/1024).toFixed(1)+' MB';
+async function bkDownload(){
+  const txt=JSON.stringify(bkMake()), d=new Date(), name=`trastero-respaldo-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
+  const file=new File([txt],name,{type:'application/json'});
+  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Respaldo de Trastero'}); S.set('lastBackup',Date.now()); renderBackup(); return } }catch(e){ if(e&&e.name==='AbortError') return }
+  const a=h('a',{href:URL.createObjectURL(file),download:name}); document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() },1500);
+  S.set('lastBackup',Date.now()); toast('Respaldo descargado'); renderBackup() }
+function bkCopy(){ const txt=JSON.stringify(bkMake());
+  const ok=()=>{ S.set('lastBackup',Date.now()); toast('Respaldo copiado: pégalo en tus notas o en el otro dispositivo'); renderBackup() };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok,()=>{ const t=$('#bkTxt'); t.value=txt; t.select(); toast('Selecciona y copia el texto') }); else { const t=$('#bkTxt'); t.value=txt; t.select() } }
+function bkParse(txt){ let o; try{ o=JSON.parse(String(txt||'').trim()) }catch(e){ throw new Error('Ese texto no es un respaldo válido. Pega el texto completo, desde la primera llave { hasta la última }.') }
+  if(!o||o.app!=='trastero'||!o.data||typeof o.data!=='object') throw new Error('Eso no parece un respaldo de Trastero.');
+  for(const v of Object.values(o.data)){ if(typeof v!=='string') throw new Error('El respaldo está incompleto o dañado.'); JSON.parse(v) }
+  return o }
+/* combinar: no se pierde nada de ninguno de los dos lados */
+function bkMerge(k,mine,theirs){
+  const byId=(a,b)=>{ const m=new Map(); b.forEach(x=>x&&m.set(x.id,x)); a.forEach(x=>x&&m.set(x.id,x)); return [...m.values()] };   // lo de aquí manda
+  if(Array.isArray(mine)&&Array.isArray(theirs)){
+    if(k==='history'){ const m=new Map(); theirs.concat(mine).forEach(r=>r&&m.set(r.at,r)); return [...m.values()].sort((a,b)=>b.at-a.at).slice(0,300) }
+    if(mine.concat(theirs).every(x=>x&&typeof x==='object'&&'id' in x)) return byId(mine,theirs);
+    return [...new Set(mine.concat(theirs))] }
+  if(mine&&theirs&&typeof mine==='object'&&typeof theirs==='object'){
+    if(k==='records'||k==='songrec'){ const o=Object.assign({},theirs); for(const [kk,v] of Object.entries(mine)){ const sv=x=>typeof x==='number'?x:(x&&x.score)||0; if(!(kk in o)||sv(v)>=sv(o[kk])) o[kk]=v } return o }
+    if(k==='songmeta') return Object.assign({},theirs,mine);
+    return mine }
+  return mine==null?theirs:mine }
+function bkApply(o,mode){
+  try{ if(mode==='replace'){ bkKeys().filter(k=>!/^trastero\.(spotify|spver)/.test(k)).forEach(k=>localStorage.removeItem(k)); for(const [k,v] of Object.entries(o.data)) localStorage.setItem('trastero.'+k,v) }
+    else for(const [k,v] of Object.entries(o.data)){ const cur=localStorage.getItem('trastero.'+k); if(cur==null){ localStorage.setItem('trastero.'+k,v); continue }
+      let a,b; try{ a=JSON.parse(cur); b=JSON.parse(v) }catch(e){ continue } localStorage.setItem('trastero.'+k,JSON.stringify(bkMerge(k,a,b))) }
+    localStorage.setItem('trastero.lastBackup',JSON.stringify(Date.now()));
+    toast('Respaldo cargado'); setTimeout(()=>location.reload(),600) }
+  catch(e){ toast(e&&e.name==='QuotaExceededError'?'No cupo todo: el espacio está lleno.':'No pude cargar el respaldo.') } }
+function renderBackup(){
+  const box=$('#dataBackup'); if(!box) return; box.innerHTML='';
+  const last=S.get('lastBackup',0), days=last?Math.floor((Date.now()-last)/864e5):null;
+  box.append(
+    h('p',{class:'hint',style:'margin-top:0'},'Tu progreso vive solo en este dispositivo y en este navegador (la app instalada y Safari guardan por separado). ',
+      S.ok?`Ocupas ${fmtKB(bkSize())} de unos 5 MB. `:h('b',{text:'Este navegador no está guardando nada (¿modo privado?). '}),
+      last?`Último respaldo: ${days===0?'hoy':days===1?'ayer':'hace '+days+' días'}.`:'Aún no haces un respaldo.'),
+    h('p',{class:'hint'},bkSummary(bkMake().data)+'.'),
+    h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:bkDownload},'Descargar respaldo'),h('button',{class:'btn',onclick:bkCopy},'Copiar como texto'),
+      h('label',{class:'btn',for:'bkFile'},'Cargar archivo'),h('input',{type:'file',id:'bkFile',accept:'.json,application/json,text/plain',hidden:true,onchange:e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $('#bkTxt').value=r.result; bkPreview() }; r.readAsText(f) }})),
+    h('textarea',{id:'bkTxt',style:'margin-top:10px;min-height:90px','aria-label':'Pegar respaldo',placeholder:'…o pega aquí un respaldo copiado',oninput:()=>bkPreview()}),
+    h('div',{id:'bkPrev'}));
+  if(days!=null&&days>=14||!last&&history.length>20) box.prepend(h('p',{class:'pill',text:'Te conviene descargar un respaldo'}));
+}
+function bkPreview(){ const pv=$('#bkPrev'); pv.innerHTML=''; const txt=$('#bkTxt').value; if(!txt.trim()) return;
+  let o; try{ o=bkParse(txt) }catch(e){ pv.append(h('p',{class:'err',text:e.message})); return }
+  pv.append(h('p',{class:'hint'},h('b',{text:'Respaldo del '+new Date(o.at).toLocaleString()+': '}),bkSummary(o.data)+'.'),
+    h('div',{class:'toolbar'},
+      h('button',{class:'btn primary',onclick:()=>bkApply(o,'merge')},'Combinar con lo que tengo'),
+      h('button',{class:'btn danger',onclick:()=>{ pv.lastChild.replaceWith(h('span',{class:'confirm'},'¿Reemplazar todo lo de este dispositivo por el respaldo?',h('button',{class:'btn danger',onclick:()=>bkApply(o,'replace')},'Sí, reemplazar'),h('button',{class:'btn ghost',onclick:bkPreview},'No'))) }},'Reemplazar todo')),
+    h('p',{class:'hint',text:'Combinar suma canciones, historial, récords y mazos de ambos lados sin borrar nada. Reemplazar deja este dispositivo igual al respaldo.'})) }
+/* si otra pestaña o la app instalada cambia los datos, no los pisamos con una copia vieja */
+window.addEventListener('storage',e=>{ if(!e.key||!e.key.startsWith('trastero.')||e.key.startsWith('trastero.__')) return;
+  if(Sess.running||PL.running){ S.stale=true; return } toast('Tus datos cambiaron en otra ventana: recargando'); setTimeout(()=>location.reload(),800) });
+window.addEventListener('hashchange',()=>{ if(S.stale&&!Sess.running&&!PL.running){ S.stale=false; location.reload() } });
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
