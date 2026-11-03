@@ -1258,15 +1258,19 @@ const Ear=(()=>{
         if(!gate||settleAt) return {sm,gate};
         hist=hist.filter(h=>now-h.t<400);
         if(!o.live){hist.push({t:now,ok:false,dt});return {sm,gate:true,quiet:true,best}}
-        const s=score(sm,t,bv);
-        let blocked=null;for(const c of cands){const cs=score(sm,c,bv).pct;if(cs>=s.pct+S.margin&&cs>=S.thr-4){blocked=c;break}}
-        let bassBad=false;if(t.bass!=null){let bm=0,bi=-1;for(let i=0;i<12;i++) if(bv[i]>bm){bm=bv[i];bi=i}if(bm>.6&&bi!==t.bass&&!t.pcs.includes(bi)) bassBad=true;if(bm>.6&&bi!==t.bass&&cands.some(c=>c.bass===bi&&score(sm,c,bv).pct>=s.pct-3)) bassBad=true}
-        const minPur=.45+Math.max(0,s.n-3)*.04, ok=s.pct>=S.thr&&s.purity>=minPur&&!blocked&&!bassBad&&allowMiss(S,s);
-        hist.push({t:now,ok,dt,pct:s.pct});
+        // un objetivo puede traer una versión alternativa (t.alt): con "6.ª libre" vale tocar el acorde con o sin la E grave
+        const evalT=tt=>{const s=score(sm,tt,bv);
+          let blocked=null;for(const c of cands){const cs=score(sm,c,bv).pct;if(cs>=s.pct+S.margin&&cs>=S.thr-4){blocked=c;break}}
+          let bassBad=false;if(tt.bass!=null){let bm=0,bi=-1;for(let i=0;i<12;i++) if(bv[i]>bm){bm=bv[i];bi=i}if(bm>.6&&bi!==tt.bass&&!tt.pcs.includes(bi)) bassBad=true;if(bm>.6&&bi!==tt.bass&&cands.some(c=>c.bass===bi&&score(sm,c,bv).pct>=s.pct-3)) bassBad=true}
+          const minPur=.45+Math.max(0,s.n-3)*.04;return {s,blocked,bassBad,ok:s.pct>=S.thr&&s.purity>=minPur&&!blocked&&!bassBad&&allowMiss(S,s)}};
+        let R=evalT(t),full=false;
+        if(t.alt){const R2=evalT(t.alt);if((R2.ok&&!R.ok)||(R2.ok===R.ok&&R2.s.pct>R.s.pct)){R=R2;full=true}}
+        const s=R.s,blocked=R.blocked,ok=R.ok;
+        hist.push({t:now,ok,dt,pct:s.pct,full});
         if(!best||s.pct>best.pct) best=s;
         for(let i=0;i<12;i++) miss[i]*=.97; s.missing.forEach(pc=>miss[pc]+=.03);
         let okT=0;for(const h of hist) if(h.ok) okT+=h.dt;
-        if(okT>=S.hold){const ps=hist.filter(h=>h.ok).map(h=>h.pct).sort((a,b)=>a-b);gate=false;hist=[];return {sm,pass:true,pct:ps[ps.length>>1],score:s}}
+        if(okT>=S.hold){const oks=hist.filter(h=>h.ok),ps=oks.map(h=>h.pct).sort((a,b)=>a-b),fullOk=t.alt?oks.filter(h=>h.full).length*2>=oks.length:true;gate=false;hist=[];return {sm,pass:true,pct:ps[ps.length>>1],score:s,full:fullOk}}
         return {sm,gate:true,live:s,blocked,best,miss};
       },
       reset(){t=null;sm.fill(0)}
@@ -1535,9 +1539,10 @@ const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.na
   if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
   let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
   // 6.ª libre: si el acorde usa la E grave, se ignora esa cuerda (el juego descuenta puntos)
-  if(prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
-  const ms=notes.map(n=>n.m);
-  return {key:id,notes,pcs:[...new Set(ms.map(x=>x%12))],bass:ms[0]%12,root} };
+  const mk=ns=>{ const ms=ns.map(n=>n.m); return {key:id,notes:ns,pcs:[...new Set(ms.map(x=>x%12))],bass:ms[0]%12,root} };
+  // con la E grave libre, el objetivo es el acorde sin ella, pero el acorde completo también vale (y da todos los puntos)
+  if(prefs.skip6&&notes.length>2&&notes[0].s===0){ const t=mk(notes.slice(1)); t.alt=mk(notes); return t }
+  return mk(notes) };
 const uses6=id=>LIB[id]&&LIB[id].frets[0]>=0&&LIB[id].frets.filter(f=>f>=0).length>2;
 const STR=['6.ª','5.ª','4.ª','3.ª','2.ª','1.ª'];
 function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
@@ -1555,7 +1560,7 @@ function micFrame(fc){
   const r=Mic.judge.frame(o,now,st.sens), S=Ear.SENS[st.sens]||Ear.SENS.soft;
   const chips=document.querySelectorAll('#cNotes span');
   chips.forEach(el=>el.classList.toggle('on',r.sm[+el.dataset.pc]>=.2&&o.live));
-  if(r.pass){ Sess.lastPct=r.pct; advance('ok'); return }
+  if(r.pass){ Sess.lastPct=r.pct; Sess.lastFull=r.full!==false; advance('ok'); return }
   // precisión en vivo: sube rápido al sonar, baja suave hasta 0 cuando el sonido se va
   const tgt=(r.live&&o.live)?r.live.pct:0;
   Mic.pctShow=tgt>Mic.pctShow?Mic.pctShow*.4+tgt*.6:Mic.pctShow*.9+tgt*.1;
@@ -1823,7 +1828,7 @@ function gameHit(ms,pct){
   Sess.grades[g]++;
   if(g==='late'){ if(Sess.combo>=5) toast(`Combo de ${Sess.combo} perdido`); Sess.combo=0 } else Sess.combo++;
   Sess.maxCombo=Math.max(Sess.maxCombo,Sess.combo);
-  const pen=prefs.skip6&&uses6(Sess.cur)?.8:1;
+  const pen=prefs.skip6&&uses6(Sess.cur)&&Sess.adv==='mic'&&!Sess.lastFull?.8:1;
   const pts=Math.round(GRADES[g].pts*multOf(Sess.combo)*(Sess.fever?2:1)*pen); Sess.score+=pts;
   Sess.energy=Math.max(0,Math.min(1,Sess.energy+GRADES[g].en));
   if(!Sess.fever&&Sess.energy>=1){ Sess.fever=true; $('#session').classList.add('fever'); if(prefs.sound) feverSound() }
@@ -2636,8 +2641,8 @@ const PL={running:false};
 const CHCOL={rock:['#ff2fb3','#22e7ff','#ffd23f','#9b5cff','#ff7b54','#3dffb0','#ff4d6d','#5cc8ff'],country:['#e0a24a','#7fb0a8','#d0643a','#b9c46a','#c99adb','#e6cf8b','#8fb3d9','#d98a8a'],estudio:['#6ab0de','#e5a65b','#78c99a','#b48ead','#e06c75','#d9c86a','#5fc4c0','#e39ac4']};
 const STRCOL={rock:['#ff4d6d','#ff9f1c','#ffd23f','#22e7ff','#7b61ff','#ff2fb3'],country:['#c0532f','#d9822b','#e8b04b','#9fae5a','#6d9eb0','#c99adb'],estudio:['#e06c75','#e5a65b','#d9c86a','#78c99a','#6ab0de','#b48ead']};
 const beatSec=()=>60/(PL.song.bpm||90);
-function candFrets(c){ let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
-  if(prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
+function candFrets(c,full){ let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
+  if(!full&&prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
   const mt=/^([A-G])([#b])?/.exec(c.name||''); let root=null; if(mt){ root=(ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0)+12)%12 }
   return {key:c.id,notes,pcs:[...new Set(notes.map(n=>n.m%12))],bass:notes[0].m%12,root} }
 /* tramos que se tocan: en prueba, las secciones elegidas (las contiguas se unen); en práctica, el loop [A, B] */
@@ -2660,7 +2665,7 @@ function plColors(){
 function plLoad(tl){
   PL.tl=tl;
   PL.notes=tl.notes.map(n=>Object.assign({},n,{st:0}));
-  PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.map(c=>candFrets(c))}));
+  PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.flatMap(c=>prefs.skip6&&c.frets[0]>=0&&c.frets.filter(f=>f>=0).length>2?[candFrets(c),candFrets(c,true)]:[candFrets(c)])}));
   PL.strums=tl.strums; PL.chucks=tl.chucks;
   // tramos de acorde con color fijo por acorde y referencia al bloque que los puntúa
   const pal=CHCOL[prefs.style]||CHCOL.estudio, cmap={}; let ci=0;
