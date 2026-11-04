@@ -673,6 +673,8 @@ a.btn.primary{color:var(--accent-ink)}
 .pcount .cnext{font-size:clamp(1.6rem,7vw,2.6rem);color:var(--accent);text-align:center}
 .pcount.confirm .btn{font-size:.85rem;font-family:var(--body,inherit);font-weight:600;padding:6px 12px;min-height:34px}
 .player:not(.editing) .hw{cursor:pointer;touch-action:pan-y}
+.gpctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin-bottom:10px}
+.gpctl:empty{display:none}
 
 </style>
 
@@ -998,11 +1000,11 @@ a.btn.primary{color:var(--accent-ink)}
     </div>
     <div class="panel" id="importBox" style="margin-top:14px" hidden>
       <span class="lab">Importar desde Fretline</span>
-      <p class="hint" style="margin-top:0">En Fretline exporta como texto y pégalo aquí completo, desde el título hasta la última línea de tablatura. También puedes subir el archivo .txt.</p>
+      <p class="hint" style="margin-top:0">En Fretline exporta como texto y pégalo aquí completo, desde el título hasta la última línea de tablatura. También puedes subir el archivo .txt, o una tablatura de Guitar Pro en formato .gp5.</p>
       <textarea id="importTxt" style="min-height:180px" aria-label="Texto de la canción" placeholder="Título&#10;90 BPM · Standard tuning (E A D G B E) · length 0:30&#10;&#10;[INTRO]&#10;e|-----…"></textarea>
       <div class="toolbar">
         <button class="btn primary" id="importParse">Analizar</button>
-        <label class="btn" for="importFile">Subir .txt</label><input type="file" id="importFile" accept=".txt,text/plain" hidden>
+        <label class="btn" for="importFile">Subir archivo (.txt o .gp5)</label><input type="file" id="importFile" accept=".txt,.gp5,.gp4,.gp3,.gp,.gpx,text/plain,application/octet-stream" hidden>
         <button class="btn ghost" id="importClose">Cancelar</button>
       </div>
       <div id="importPreview"></div>
@@ -2086,8 +2088,8 @@ $('#libSearch').addEventListener('input',e=>{libQ=e.target.value;renderLib()});
 const QUAL=[['',[0,4,7]],['m',[0,3,7]],['7',[0,4,7,10]],['maj7',[0,4,7,11]],['m7',[0,3,7,10]],['6',[0,4,7,9]],['m6',[0,3,7,9]],['sus2',[0,2,7]],['sus4',[0,5,7]],
   ['add9',[0,2,4,7]],['m(add9)',[0,2,3,7]],['7sus4',[0,5,7,10]],['9',[0,2,4,7,10]],['m9',[0,2,3,7,10]],['maj9',[0,2,4,7,11]],['m11',[0,3,5,7,10]],['m11',[0,2,3,5,7,10]],
   ['6/9',[0,2,4,7,9]],['dim',[0,3,6]],['dim7',[0,3,6,9]],['aug',[0,4,8]],['m7b5',[0,3,6,10]],['5',[0,7]],['maj7#11',[0,4,6,7,11]],['7#9',[0,3,4,7,10]]];
-function guessName(fr){
-  const ns=fr.map((f,i)=>f<0?null:OPEN[i]+f).filter(v=>v!=null); if(ns.length<2) return null;
+function guessName(fr,tune){
+  const TU=tune||OPEN, ns=fr.map((f,i)=>f<0?null:TU[i]+f).filter(v=>v!=null); if(ns.length<2) return null;
   const set=[...new Set(ns.map(m=>m%12))], bass=ns[0]%12; let best=null;
   for(const r of set){ const iv=new Set(set.map(p=>(p-r+12)%12));
     QUAL.forEach(([q,f],qi)=>{ const fs=new Set(f); let sc=0;
@@ -2357,20 +2359,21 @@ function guessCpb(raw){
   return 4;
 }
 const fkey=fr=>fr.map(f=>f<0?'x':f).join('.');
-function chordForFrets(fr,label){
-  const k=fkey(fr);for(const c of Object.values(LIB)) if(fkey(c.frets)===k) return {id:c.id,name:c.name,frets:c.frets};
-  const g=guessName(fr);return {id:'f:'+k,name:(label&&label.replace(/\s+/g,' '))||g||fretStr(fr),frets:fr.slice(),guess:g};
+function chordForFrets(fr,label,tune){
+  const k=fkey(fr), std=!tune||tune.every((m,i)=>m===OPEN[i]);
+  if(std) for(const c of Object.values(LIB)) if(fkey(c.frets)===k) return {id:c.id,name:c.name,frets:c.frets};
+  const g=guessName(fr,tune);return {id:'f:'+k+(std?'':'@'+tune.join('.')),name:(label&&label.replace(/\s+/g,' '))||g||fretStr(fr),frets:fr.slice(),guess:g};
 }
 /* convierte el resultado del parser en una canción con tiempos en segundos (a velocidad 1) */
 function buildSong(song){
-  const bpm=song.bpm||90,cpb=song.cpb||4,spc=60/(bpm*cpb);let t=0;const sections=[],notes=[],blocks=[],strums=[],chucks=[],csegs=[];
+  const bpm=song.bpm||90,cpb=song.cpb||4,spc=60/(bpm*cpb),TU=song.tune||OPEN;let t=0;const sections=[],notes=[],blocks=[],strums=[],chucks=[],csegs=[];
   song.raw.sections.forEach((s,si)=>{
     const t0=t,dur=s.cols*spc;sections.push({i:si,name:s.name,start:t0,end:t0+dur});
     const segs=[];
     s.events.forEach(e=>{const et=t0+e.col*spc;
-      if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:OPEN[e.s]+e.f,tech:e.tech||'',sec:si,col:e.col});
+      if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:TU[e.s]+e.f,tech:e.tech||'',sec:si,col:e.col});
       else if(e.type==='chuck') chucks.push({t:et,sec:si,col:e.col,strings:e.strings});
-      else {const c=chordForFrets(e.frets,e.label);strums.push({t:et,dir:e.dir||'',chord:c,sec:si,col:e.col,frets:e.frets});
+      else {const c=chordForFrets(e.frets,e.label,song.tune);strums.push({t:et,dir:e.dir||'',chord:c,sec:si,col:e.col,frets:e.frets});
         const last=segs[segs.length-1];if(last&&last.chord.id===c.id) last.t1=et+spc*2;else segs.push({t0:et,t1:et+spc*2,chord:c,sec:si})}});
     // bloques de evaluación: cambios muy rápidos (D↔D6) se agrupan hasta ~0,8 s y aceptan cualquiera de sus acordes
     let cur=null;
@@ -2381,7 +2384,7 @@ function buildSong(song){
     if(cur) blocks.push(cur);
     t+=dur;
   });
-  return {sections,notes,blocks,strums,chucks,csegs,len:t,spc};
+  return {sections,notes,blocks,strums,chucks,csegs,len:t,spc,tune:TU};
 }
 
 /* almacenamiento: canciones importadas + demos originales */
@@ -2476,7 +2479,7 @@ function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importad
 /* de vuelta a texto de Fretline (para copiar las correcciones a Fretline o a otro equipo) */
 function rawToText(song){
   const raw=song.raw, spc=60/((song.bpm||90)*(song.cpb||4)), cols=raw.sections.reduce((a,x)=>a+x.cols,0), secs=Math.round(cols*spc);
-  const out=[song.title,`${song.bpm} BPM · Standard tuning (${raw.tuning||'E A D G B E'}) · length ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`,''];
+  const out=[song.title,`${song.bpm} BPM · ${song.tune?'Tuning':'Standard tuning'} (${raw.tuning||'E A D G B E'}) · length ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`,''];
   const SN=['E','A','D','G','B','e'];
   for(const sec of raw.sections){
     const evs=sec.events.slice().sort((a,b)=>a.col-b.col);
@@ -2489,7 +2492,7 @@ function rawToText(song){
       else if(e.type==='chuck') (e.strings||[0,1,2,3,4,5]).forEach(s=>put(s,e.col,'x'));
       else { hasCh=true; e.frets.forEach((f,s)=>{ if(f>=0) put(s,e.col,String(f)) });
         if(e.dir) ar[e.col+2]=e.dir==='u'?'↑':'↓';
-        const name=(e.label||chordForFrets(e.frets).name).replace(/\s+/g,' '), key=fkey(e.frets)+'|'+name;
+        const name=(e.label||chordForFrets(e.frets,null,song.tune).name).replace(/\s+/g,' '), key=fkey(e.frets)+'|'+name;
         if(key!==last){ const at=e.col+2, free=[...Array(name.length+3).keys()].map(i=>at-1+i).every(j=>j<0||j>=nm.length||nm[j]===' ');
           if(free&&/^[A-G]/.test(name)){ for(let i=0;i<name.length;i++){ if(at+i>=nm.length) nm.push(' '); nm[at+i]=name[i] } last=key } } } }
     out.push(`[${sec.name}]`);
@@ -2567,12 +2570,34 @@ function folderManager(){
 let importDraft=null;
 $('#importOpen').addEventListener('click',()=>{ $('#importBox').hidden=false; $('#importTxt').focus() });
 $('#importClose').addEventListener('click',()=>{ $('#importBox').hidden=true; $('#importPreview').innerHTML=''; importDraft=null });
-$('#importFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $('#importTxt').value=r.result; importParse() }; r.readAsText(f) });
+$('#importFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; e.target.value='';
+  if(/\.(gp5|gp4|gp3|gpx|gp)$/i.test(f.name)){ const r=new FileReader(); r.onload=()=>gpImport(r.result,f.name); r.readAsArrayBuffer(f); return }
+  const r=new FileReader(); r.onload=()=>{ $('#importTxt').value=r.result; importParse() }; r.readAsText(f) });
+/* Guitar Pro: elegir pista y si seguir las repeticiones, luego la misma vista previa */
+function gpImport(buf,name){
+  const box=$('#importPreview'); box.innerHTML='';
+  if(/\.(gpx|gp)$/i.test(name)){ box.append(h('p',{class:'err',text:'Los archivos .gp/.gpx de Guitar Pro 6, 7 y 8 aún no los leo. En Guitar Pro o TuxGuitar usa Archivo → Exportar → GP5.'})); return }
+  let gp; try{ gp=readGP5(buf) }catch(err){ box.append(h('p',{class:'err',text:err.message||'No pude leer el archivo.'})); return }
+  const tr=gpTracks(gp), ok=tr.filter(x=>x.ok&&x.notes>0);
+  if(!ok.length){ box.append(h('p',{class:'err',text:'El archivo no tiene una pista de guitarra de 6 cuerdas con notas.'})); return }
+  const repOk=gpRepeatsOk(gp.headers), hasRep=gp.headers.some(x=>x.close>1);
+  const st={ti:ok.sort((a,b)=>b.notes-a.notes)[0].i,rep:repOk};
+  const ctl=h('div',{class:'gpctl'});
+  const draw=()=>{ ctl.innerHTML='';
+    if(tr.length>1) ctl.append(h('div',{},h('label',{class:'lab',for:'gpTrack',text:'Pista'}),(()=>{ const sel=h('select',{id:'gpTrack',style:'width:auto'},tr.map(x=>h('option',{value:x.i,disabled:x.ok&&x.notes?null:true,selected:x.i===st.ti?true:null},`${x.name} · ${x.notes} notas`+(x.ok?'':' (no es guitarra de 6 cuerdas)'))));
+      sel.onchange=()=>{ st.ti=+sel.value; build() }; return sel })()));
+    if(hasRep) ctl.append(h('label',{class:'check'},h('input',{type:'checkbox',checked:st.rep?true:null,onchange:e=>{ st.rep=e.target.checked; build() }}),'Seguir las repeticiones del archivo'),
+      repOk?null:h('p',{class:'hint',style:'margin:0',text:'Las marcas de repetición de este archivo no cierran bien (algunos compases nunca sonarían), así que por defecto lo leo tal cual está escrito.'})) };
+  const build=()=>{ draw(); const s=gpToSong(gp,st.ti,{repeats:st.rep,fileName:name}); showDraft(s,ctl) };
+  build() }
 $('#importParse').addEventListener('click',importParse);
 function importParse(){
   const box=$('#importPreview'); box.innerHTML='';
   const s=songFromText($('#importTxt').value);
   if(!s.raw.sections.length){ box.append(h('p',{class:'err',text:s.raw.warnings[0]||'No pude leer la tablatura.'})); importDraft=null; return }
+  showDraft(s) }
+function showDraft(s,extra){
+  const box=$('#importPreview'); box.innerHTML=''; if(extra) box.append(extra);
   importDraft=s; const tl=buildSong(s);
   const chords=[...new Map(tl.strums.map(x=>[x.chord.id,x.chord])).values()];
   const name=h('input',{type:'text',id:'importName',value:s.title,'aria-label':'Nombre'});
@@ -2581,6 +2606,7 @@ function importParse(){
   box.append(h('div',{class:'impprev'},
     h('div',{class:'row'},h('div',{style:'flex:1;min-width:180px'},h('label',{class:'lab',for:'importName',text:'Nombre'}),name),h('div',{},h('label',{class:'lab',for:'importCat',text:'Tipo'}),cat),h('div',{},h('label',{class:'lab',for:'importFolder',text:'Carpeta'}),fsel)),
     h('p',{class:'hint',text:`${s.bpm} BPM · ${tl.sections.length} secciones · ${tl.notes.length} notas · ${tl.strums.length} rasgueos · dura ${fmtClock(tl.len*1000)} (cada columna = 1/${s.cpb} de tiempo)`}),
+    s.src==='gp5'?h('p',{class:'hint',text:[s.artist?'De '+s.artist:'',s.gpTrack?'pista '+s.gpTrack:'',s.tune?'afinación '+s.raw.tuning:'afinación estándar',s.capo?'cejilla '+s.capo:'',s.repInfo||''].filter(Boolean).join(' · ')}):null,
     h('div',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
     chords.length?h('p',{class:'hint'},'Acordes: ',chords.map((c,i)=>h('span',{class:'mono'},(i?', ':'')+c.name+(c.id.startsWith('f:')?' (nuevo)':'')))):null,
     s.raw.warnings.length?h('p',{class:'err',text:s.raw.warnings.join(' · ')}):null,
@@ -2595,7 +2621,7 @@ function renderSongDetail(){
   const hd=$('#songHead'); hd.innerHTML='';
   const recs=S.get('songrec',{}), rk=recs[s.id+'|'+cfg.sel.join(',')];
   hd.append(h('p',{class:'eyebrow',text:CAT_N[s.cat]||'Canción'}),h('h1',{class:'h1',text:s.title}),
-    h('p',{class:'sub',text:`${s.bpm} BPM · ${fmtClock(tl.len*1000)} · ${tl.notes.length} notas y ${tl.blocks.length} cambios de acorde`+(rk?` · récord ${fmtN(rk.score)} (${rk.acc}%)`:'')}));
+    h('p',{class:'sub',text:`${s.bpm} BPM · ${fmtClock(tl.len*1000)} · ${tl.notes.length} notas y ${tl.blocks.length} cambios de acorde`+(s.tune?` · afinación ${s.raw.tuning}`:'')+(s.capo?` · cejilla ${s.capo}`:'')+(rk?` · récord ${fmtN(rk.score)} (${rk.acc}%)`:'')}));
   const save=()=>{ s.play=cfg; saveSongMeta(s) };
   hd.append(h('div',{class:'row',style:'margin-top:8px'},h('span',{class:'lab',style:'margin:0',text:'Carpeta'}),folderSelect(folderOf(s),v=>{ s.folder=v; saveSongMeta(s); toast('Movida a '+v) })));
   document.querySelectorAll('input[name=sMode]').forEach(r=>{ r.checked=r.value===cfg.mode; r.onchange=()=>{ cfg.mode=r.value; save(); renderSongDetail() } });
@@ -2641,7 +2667,7 @@ const PL={running:false};
 const CHCOL={rock:['#ff2fb3','#22e7ff','#ffd23f','#9b5cff','#ff7b54','#3dffb0','#ff4d6d','#5cc8ff'],country:['#e0a24a','#7fb0a8','#d0643a','#b9c46a','#c99adb','#e6cf8b','#8fb3d9','#d98a8a'],estudio:['#6ab0de','#e5a65b','#78c99a','#b48ead','#e06c75','#d9c86a','#5fc4c0','#e39ac4']};
 const STRCOL={rock:['#ff4d6d','#ff9f1c','#ffd23f','#22e7ff','#7b61ff','#ff2fb3'],country:['#c0532f','#d9822b','#e8b04b','#9fae5a','#6d9eb0','#c99adb'],estudio:['#e06c75','#e5a65b','#d9c86a','#78c99a','#6ab0de','#b48ead']};
 const beatSec=()=>60/(PL.song.bpm||90);
-function candFrets(c,full){ let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
+function candFrets(c,full){ const TU=PL.tune||OPEN; let notes=c.frets.map((f,s)=>f<0?null:{s,m:TU[s]+f}).filter(Boolean);
   if(!full&&prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
   const mt=/^([A-G])([#b])?/.exec(c.name||''); let root=null; if(mt){ root=(ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0)+12)%12 }
   return {key:c.id,notes,pcs:[...new Set(notes.map(n=>n.m%12))],bass:notes[0].m%12,root} }
@@ -2663,7 +2689,7 @@ function plColors(){
 }
 /* carga la línea de tiempo en el motor (también lo usa el editor tras cada cambio) */
 function plLoad(tl){
-  PL.tl=tl;
+  PL.tl=tl; PL.tune=tl.tune||OPEN;
   PL.notes=tl.notes.map(n=>Object.assign({},n,{st:0}));
   PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.flatMap(c=>prefs.skip6&&c.frets[0]>=0&&c.frets.filter(f=>f>=0).length>2?[candFrets(c),candFrets(c,true)]:[candFrets(c)])}));
   PL.strums=tl.strums; PL.chucks=tl.chucks;
@@ -2842,6 +2868,14 @@ function playerAudio(o,now){
   if(!PL.running||PL.paused||!PL.mic||PL.stall) return;
   const t=songTime()-lagT(), waiting=PL.hold;
   if(o.onset) PL.lastOn={t,used:false};
+  // respaldo polifónico: con cuerdas sonando a la vez (arpegios), el tono dominante tapa la nota nueva. Tras cada
+  // ataque se mira qué clases de nota subieron en el croma; sirven solo si el detector de tono no encontró la nota.
+  if(o.live){ (PL.chH=PL.chH||[]).push({rt:now,ch:Float32Array.from(o.ch)}); while(PL.chH.length&&now-PL.chH[0].rt>400) PL.chH.shift() }
+  if(o.onset&&o.live){ const base=(PL.chH||[]).find(x=>now-x.rt<=90&&now-x.rt>=40)||PL.chH[0]; (PL.pendOn=PL.pendOn||[]).push({t,rt:now,base:base?base.ch:new Float32Array(12)}) }
+  if(PL.pendOn&&PL.pendOn.length&&o.live){ PL.pendOn=PL.pendOn.filter(q=>{ if(now-q.rt<90) return true;
+      const rise=[...o.ch].map((v,pc)=>({pc,r:v-q.base[pc],v})).filter(x=>x.r>.22&&x.v>=.3).sort((a,b)=>b.r-a.r).slice(0,2);
+      rise.forEach(x=>(PL.cev=PL.cev||[]).push({t:q.t,pc:x.pc,rt:now,used:false})); return false }) }
+  if(PL.cev) PL.cev=PL.cev.filter(c=>now-c.rt<1500);
   if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
       if(o.onset||PL.lastM==null||Math.abs(m-PL.lastM)>.6){
         // el tono se reconoce un poco después del ataque: la nota se fecha en el ataque que la originó
@@ -2857,7 +2891,9 @@ function playerAudio(o,now){
   else { const we=winE(), wl=winL();
     for(const n of PL.notes){ if(n.st!==0||!inSegs(n.t)||n.t>t+we||n.t<t-wl-.3) continue;
       const hit=PL.pitches.find(p=>!p.used&&p.t>=n.t-we&&p.t<=n.t+wl&&match(p,n));
-      if(hit){ hit.used=true; n.st=1; award(100,hit.t-n.t,'',n.s,false,n); track(n.t,true); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+      let ht=hit?hit.t:null; if(hit) hit.used=true;
+      else if(PL.cev&&!/[b\/\\]/.test(n.tech)){ const c=PL.cev.find(c=>!c.used&&c.pc===((n.m%12)+12)%12&&c.t>=n.t-we&&c.t<=n.t+wl); if(c){ c.used=true; ht=c.t } }
+      if(ht!=null){ n.st=1; award(100,ht-n.t,'',n.s,false,n); track(n.t,true); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
     // fuera del margen: "¡Aún no!" si se adelantó mucho, "¡Tarde!" si ya pasó (una vez por nota)
     if(!PL.cfg.wait||PL.mode!=='practice') for(const p of PL.pitches){ if(p.used||p.cl) continue; p.cl=1; if(!p.on||PL.notes.some(n=>n.st===1&&Math.abs(p.t-n.t)<.6*PL.speed&&match(p,n))) continue;
       let best=null; for(const n of PL.notes){ if(n.st===1||n.fb||!inSegs(n.t)||!match(p,n)) continue; const d=p.t-n.t;
@@ -3383,7 +3419,7 @@ function edJump(d){ // al evento anterior o siguiente
   if(c){ const ev=edEv(c.si,c.col); edGo(c.si,c.col,ev&&ev.type==='note'?ev.s:null) } }
 /* operaciones */
 function edSetFret(f){ edDo(()=>{ const c=cellOf(edEv(ED.si,ED.col));
-  c.notes[ED.s]={f,tech:(c.notes[ED.s]||{}).tech||''}; c.mutes=c.mutes.filter(x=>x!==ED.s); writeCell(ED.si,ED.col,c,false) }); pluck(OPEN[ED.s]+f) }
+  c.notes[ED.s]={f,tech:(c.notes[ED.s]||{}).tech||''}; c.mutes=c.mutes.filter(x=>x!==ED.s); writeCell(ED.si,ED.col,c,false) }); pluck((PL.tune||OPEN)[ED.s]+f) }
 function edMute(){ edDo(()=>{ const c=cellOf(edEv(ED.si,ED.col)); delete c.notes[ED.s]; if(!Object.keys(c.notes).length&&!c.mutes.includes(ED.s)) c.mutes.push(ED.s); writeCell(ED.si,ED.col,c,false) }) }
 function edTech(t){ const ev=edEv(ED.si,ED.col); if(!ev||ev.type!=='note'){ toast('Las técnicas van en notas sueltas'); return }
   edDo(()=>{ ev.tech=ev.tech===t?'':t }) }
@@ -3406,7 +3442,7 @@ function edMoveNote(si,col,s,tc,ts){ // arrastre de una nota a otro tiempo o cue
     const d=cellOf(edEv(si,tc)); d.notes[ts]=n; d.mutes=d.mutes.filter(x=>x!==ts); writeCell(si,tc,d,false) }); edGo(si,tc,ts) }
 /* sonido de vista previa */
 function pluck(m,at){ const a=ctx(); if(!a) return; const g=a.createGain(); g.gain.value=.28; g.connect(a.destination); const s=a.createBufferSource(); s.buffer=ksBuffer(midiHz(m)); s.connect(g); s.start(at||a.currentTime+.01) }
-function pluckFrets(fr){ const a=ctx(); if(!a) return; let i=0; fr.forEach((f,s)=>{ if(f>=0) pluck(OPEN[s]+f,a.currentTime+.01+(i++)*.025) }) }
+function pluckFrets(fr){ const a=ctx(); if(!a) return; let i=0; fr.forEach((f,s)=>{ if(f>=0) pluck((PL.tune||OPEN)[s]+f,a.currentTime+.01+(i++)*.025) }) }
 function edPreview(){
   if(ED.playing){ edStopPreview(); return }
   ctx(); ED.playing=true; PL.paused=false; PL.speed=1; PL.base=edTime(ED.si,ED.col)-.05; PL.t0=performance.now(); ED.last=PL.base; edPanel() }
@@ -3599,6 +3635,165 @@ function bkPreview(){ const pv=$('#bkPrev'); pv.innerHTML=''; const txt=$('#bkTx
 window.addEventListener('storage',e=>{ if(!e.key||!e.key.startsWith('trastero.')||e.key.startsWith('trastero.__')) return;
   if(Sess.running||PL.running){ S.stale=true; return } toast('Tus datos cambiaron en otra ventana: recargando'); setTimeout(()=>location.reload(),800) });
 window.addEventListener('hashchange',()=>{ if(S.stale&&!Sess.running&&!PL.running){ S.stale=false; location.reload() } });
+
+/* ---------- importar Guitar Pro 5 (.gp5) ----------
+   Lector binario portado del formato que documenta PyGuitarPro (gp3/gp4/gp5). Lee la canción completa y luego
+   gpToSong() la convierte al formato interno (secciones con eventos por columna, igual que el texto de Fretline). */
+/* GP5-START */
+function readGP5(buf){
+  const dv=new DataView(buf), u8a=new Uint8Array(buf); let p=0;
+  const dec=new TextDecoder('windows-1252');
+  const need=n=>{ if(p+n>buf.byteLength) throw new Error('El archivo se corta antes de tiempo (¿está dañado?).') };
+  const u8=()=>{ need(1); return dv.getUint8(p++) }, i8=()=>{ need(1); return dv.getInt8(p++) };
+  const i16=()=>{ need(2); const v=dv.getInt16(p,true); p+=2; return v }, i32=()=>{ need(4); const v=dv.getInt32(p,true); p+=4; return v };
+  const f64=()=>{ need(8); p+=8 }, skip=n=>{ need(n); p+=n }, bool=()=>u8()!==0;
+  const bytes=n=>{ need(n); const b=u8a.subarray(p,p+n); p+=n; return b };
+  const bss=count=>{ const size=u8(); const b=bytes(count); return dec.decode(b.subarray(0,Math.min(size,count))) };
+  const ibss=()=>{ const c=i32(); return c>0?bss(c-1):'' };
+  const iss=()=>{ const c=i32(); return c>0?dec.decode(bytes(c)):'' };
+  const version=bss(30), mv=/v(\d)\.(\d)(\d)/.exec(version);
+  if(!mv) throw new Error('No reconozco este archivo como Guitar Pro.');
+  if(mv[1]!=='5') throw new Error(`Es un archivo de Guitar Pro ${mv[1]}. Por ahora leo solo .gp5: ábrelo en Guitar Pro o TuxGuitar y guárdalo como GP5.`);
+  const v500=mv[2]==='0'&&mv[3]==='0';
+  const song={version,title:ibss(),subtitle:ibss(),artist:ibss(),album:ibss()};
+  ibss(); ibss(); ibss(); ibss(); ibss();                       // letra, música, copyright, transcripción, instrucciones
+  { const n=i32(); for(let i=0;i<n;i++) ibss() }               // notas
+  i32(); for(let i=0;i<5;i++){ i32(); iss() }                  // letras
+  if(!v500){ i32(); i32(); skip(11) }                          // efecto maestro RSE
+  skip(4*7+2); for(let i=0;i<10;i++) ibss();                   // página
+  ibss(); song.tempo=i32(); if(!v500) bool(); i8(); i32();     // nombre de tempo, tempo, ocultar, tono, octava
+  skip(64*12);                                                 // canales MIDI
+  skip(19*2); i32();                                           // direcciones y reverb
+  const measureCount=i32(), trackCount=i32();
+  if(measureCount<=0||measureCount>5000||trackCount<=0||trackCount>64) throw new Error('El archivo tiene datos que no entiendo.');
+  const headers=[]; let prev=null;
+  for(let i=0;i<measureCount;i++){
+    if(i>0) skip(1);
+    const fl=u8(), h={num:prev?prev.num:4,den:prev?prev.den:4,open:!!(fl&4),close:0,alt:0,marker:null};
+    if(fl&1) h.num=i8(); if(fl&2) h.den=i8();
+    if(fl&8) h.close=i8();                                     // veces que se toca (GP5 guarda el total)
+    if(fl&0x20){ h.marker=ibss(); skip(4) }
+    if(fl&0x40){ i8(); i8() }
+    if(fl&0x10) h.alt=u8();
+    if(fl&3) skip(4);
+    if(!(fl&0x10)) skip(1);
+    u8();                                                      // swing
+    h.len=h.num*3840/h.den; headers.push(h); prev=h }
+  const tracks=[];
+  for(let i=0;i<trackCount;i++){
+    if(i===0||v500) skip(1);
+    const fl=u8(), t={percussion:!!(fl&1),name:bss(40).trim(),strings:[],measures:[]};
+    const sc=i32(); for(let k=0;k<7;k++){ const tu=i32(); if(k<sc) t.strings.push(tu) }
+    i32(); const ch=i32(); i32(); if(ch-1===9) t.percussion=true;
+    t.frets=i32(); t.capo=i32(); skip(4); i16(); u8(); u8(); u8(); i32(); i32(); i32(); skip(12);
+    i32(); i32(); i32(); if(v500){ i16(); skip(1) } else i32();
+    if(!v500){ skip(4); ibss(); ibss() }
+    tracks.push(t) }
+  skip(v500?2:1);
+  const readBend=()=>{ i8(); i32(); const n=i32(); for(let k=0;k<n;k++){ i32(); i32(); bool() } return true };
+  const readBeat=(track,start)=>{
+    const fl=u8(), b={start,status:1,notes:[]};
+    if(fl&0x40) b.status=u8();
+    const dv0=i8(); let dur=3840/Math.pow(2,dv0+2); if(fl&1) dur*=1.5;
+    if(fl&0x20){ const tp=i32(), TU={3:[3,2],5:[5,4],6:[6,4],7:[7,4],9:[9,8],10:[10,8],11:[11,8],12:[12,8],13:[13,8]}[tp]; if(TU) dur=dur*TU[1]/TU[0] }
+    if(fl&2){ // diagrama de acorde
+      if(!bool()){ b.chord=ibss(); if(i32()) skip(24) }
+      else { bool(); skip(3); u8(); u8(); u8(); i32(); i32(); bool(); b.chord=bss(22).trim(); u8(); u8(); u8(); i32(); skip(28); u8(); skip(15); skip(7); skip(1); skip(7); bool() } }
+    if(fl&4) b.text=ibss();
+    if(fl&8){ const f1=i8(), f2=i8(); if(f1&0x20) i8(); if(f2&4) readBend(); if(f1&0x40){ const a=i8(), c=i8(); b.stroke=c>0?'d':a>0?'u':'' } if(f2&2){ const ps=i8(); if(!b.stroke) b.stroke=ps===1?'u':ps===2?'d':'' } }
+    if(fl&0x10){ // cambio de mezcla (aquí viene el tempo)
+      const ins=i8(); i32(); i32(); i32(); if(v500){ i16(); skip(1) } else i32(); if(v500) skip(1);
+      const vals=[i8(),i8(),i8(),i8(),i8(),i8()]; ibss(); const tempo=i32();
+      vals.forEach(x=>{ if(x>=0) i8() }); if(tempo>=0){ i8(); if(!v500) bool() } i8(); i8(); if(!v500){ ibss(); ibss() }
+      if(tempo>0) b.tempo=tempo; void ins }
+    const sf=u8();
+    for(let num=1;num<=track.strings.length;num++) if(sf&(1<<(7-num))){
+      const nf=u8(), n={str:num,type:1,fret:0};
+      if(nf&0x20) n.type=u8(); if(nf&0x10) i8(); if(nf&0x20) n.fret=i8(); if(nf&0x80){ i8(); i8() } if(nf&1) f64(); u8();
+      if(nf&8){ const f1=i8(), f2=i8(); n.hammer=!!(f1&2); n.pm=!!(f2&2);
+        if(f1&1) n.bend=readBend(); if(f1&0x10) skip(5); if(f2&4) i8();
+        if(f2&8){ const sl=u8(); n.slide=sl&3?'to':sl&4?'down':sl&8?'up':'' }
+        if(f2&0x10){ const ht=i8(); n.harm=ht; if(ht===2) skip(3); else if(ht===3) skip(1) }
+        if(f2&0x20) skip(2) }
+      b.notes.push(n) }
+    const f2=i16(); if(f2&0x800) u8();
+    b.dur=b.status===0?0:dur; return b };
+  let mstart=0;
+  for(let mi=0;mi<measureCount;mi++){ for(const t of tracks){ const m={voices:[]};
+      for(let v=0;v<2;v++){ const n=i32(); if(n<0||n>512) throw new Error('El archivo tiene un compás que no entiendo (compás '+(mi+1)+').'); const beats=[]; let st=0; for(let k=0;k<n;k++){ const b=readBeat(t,st); st+=b.dur; beats.push(b) } m.voices.push(beats) }
+      if(p<buf.byteLength) u8(); t.measures.push(m) }
+    headers[mi].start=mstart; mstart+=headers[mi].len }
+  song.headers=headers; song.tracks=tracks; return song;
+}
+/* GP5-END */
+/* orden en que se tocan los compases, siguiendo repeticiones y finales alternativos */
+function gpOrder(H,useRepeats){
+  if(!useRepeats) return H.map((h,i)=>i);
+  const out=[], cnt={}; let start=0, pass=1, i=0, back=false, guard=0;
+  while(i<H.length&&guard++<H.length*20){ const h=H[i];
+    if(h.open&&!back){ start=i; pass=1 } back=false;
+    if(h.alt&&!(h.alt&(1<<(pass-1)))){ i++; continue }     // final alternativo que no toca en esta vuelta
+    out.push(i);
+    if(h.close>1){ const c=cnt[i]||0; if(c<h.close-1){ cnt[i]=c+1; pass++; i=start; back=true; continue } cnt[i]=0; pass=1; start=i+1 }
+    i++ }
+  return out }
+/* si siguiendo las repeticiones algún compás nunca suena, las marcas del archivo son inconsistentes */
+const gpRepeatsOk=H=>{ if(!H.some(h=>h.close>1)) return false; const o=new Set(gpOrder(H,true)); return H.every((h,i)=>o.has(i)) };
+function gpTracks(gp){ return gp.tracks.map((t,i)=>({i,name:t.name||('Pista '+(i+1)),ok:!t.percussion&&t.strings.length===6,notes:t.measures.reduce((a,m)=>a+m.voices.reduce((b,v)=>b+v.reduce((c,x)=>c+x.notes.length,0),0),0)})) }
+function gpToSong(gp,ti,{repeats=true,fileName=''}={}){
+  const t=gp.tracks[ti], H=gp.headers, warnings=[];
+  const tune=t.strings.slice().reverse().map(m=>m+(t.capo||0));   // de la E grave a la e aguda, con cejilla
+  const order=gpOrder(H,repeats);
+  // tempo: el del archivo o el primer cambio de mezcla al inicio
+  const tempos=[]; t.measures.forEach((m,mi)=>m.voices.forEach(v=>v.forEach(b=>{ if(b.tempo) tempos.push({mi,st:b.start,t:b.tempo}) })));
+  let bpm=gp.tempo>0?gp.tempo:120; const t0=tempos.find(x=>x.mi===0&&x.st===0); if(t0) bpm=t0.t;
+  if(tempos.some(x=>Math.abs(x.t-bpm)>.5)) warnings.push(`La canción cambia de tempo; uso ${bpm} BPM para toda la canción.`);
+  // eventos por tiempo, en el orden en que se tocan
+  const groups=[]; let tick=0; const mStarts=[];
+  order.forEach(mi=>{ mStarts.push(tick); const m=t.measures[mi];
+    const at=new Map();
+    m.voices.forEach(v=>v.forEach(b=>{ if(b.status!==1||!b.notes.length) return; const k=tick+b.start; const g=at.get(k)||{tick:k,notes:{},dead:[],chord:null,stroke:''};
+      b.notes.forEach(n=>{ const s=6-n.str; if(n.type===2) return; if(n.type===3){ g.dead.push(s); return } if(!g.notes[s]) g.notes[s]=n });
+      if(b.chord) g.chord=b.chord; if(b.stroke) g.stroke=b.stroke; at.set(k,g) }));
+    [...at.values()].sort((a,b)=>a.tick-b.tick).forEach(g=>groups.push(g));
+    tick+=H[mi].len });
+  // columnas por tiempo: la grilla más gruesa que respeta todos los ataques
+  let cpb=16; for(const c of [2,4,8,12,16,24]){ const tpc=960/c; if(groups.every(g=>Math.abs(g.tick/tpc-Math.round(g.tick/tpc))<1e-6)&&H.every(h=>Math.abs(h.len/tpc-Math.round(h.len/tpc))<1e-6)){ cpb=c; break } }
+  const tpc=960/cpb;
+  if(cpb===16&&groups.some(g=>Math.abs(g.tick/tpc-Math.round(g.tick/tpc))>1e-6)) warnings.push('Hay ritmos muy finos que redondeé a semifusas.');
+  // secciones: marcadores del archivo o bloques de compases
+  const per=order.length>48?8:4, secs=[]; let cur=null;
+  order.forEach((mi,k)=>{ const mk=H[mi].marker;
+    if(!cur||mk||(!H.some(h=>h.marker)&&k%per===0)){ cur={name:mk||'',from:mi+1,to:mi+1,startTick:mStarts[k],cols:0,events:[]}; secs.push(cur) }
+    cur.to=mi+1; cur.cols+=Math.round(H[mi].len/tpc) });
+  const seen={}; secs.forEach(s=>{ let n=s.name||(s.from===s.to?`Compás ${s.from}`:`Compases ${s.from}–${s.to}`); n=n.toUpperCase(); seen[n]=(seen[n]||0)+1; s.name=seen[n]>1?`${n} (${seen[n]})`:n });
+  const secOf=tk=>{ let r=secs[0]; for(const s of secs) if(s.startTick<=tk+1e-6) r=s; return r };
+  // técnica de cada nota según la siguiente en la misma cuerda
+  const nextOn=(gi,s)=>{ for(let j=gi+1;j<groups.length&&j<gi+12;j++) if(groups[j].notes[s]) return groups[j].notes[s]; return null };
+  let ties=0, harm=0;
+  groups.forEach((g,gi)=>{ const sec=secOf(g.tick), col=Math.round((g.tick-sec.startTick)/tpc);
+    const ss=Object.keys(g.notes).map(Number).filter(s=>s>=0&&s<6);
+    if(ss.length>=2){ const fr=[-1,-1,-1,-1,-1,-1]; ss.forEach(s=>fr[s]=g.notes[s].fret); const ev={col,type:'chord',frets:fr,tech:''}; if(g.chord) ev.label=g.chord; if(g.stroke) ev.dir=g.stroke; sec.events.push(ev) }
+    else if(ss.length===1){ const s=ss[0], n=g.notes[s], nx=nextOn(gi,s); let tech='';
+      if(n.bend) tech='b';
+      else if(n.slide) tech=n.slide==='down'?'\\':n.slide==='up'?'/':(nx&&nx.fret<n.fret?'\\':'/');
+      else if(n.hammer) tech=nx&&nx.fret<n.fret?'p':'h';
+      if(n.harm) harm++;
+      sec.events.push({col,type:'note',s,f:n.fret,tech}) }
+    else if(g.dead.length){ const ev={col,type:'chuck',strings:[...new Set(g.dead)].sort()}; if(g.stroke) ev.dir=g.stroke; sec.events.push(ev) } });
+  if(harm) warnings.push(`${harm} armónicos: se juzgan como la nota del traste y pueden costar.`);
+  void ties;
+  const base=(fileName||'').replace(/\.gp5$/i,'').replace(/_/g,' ').trim(), parts=base.split(' - ').map(x=>x.trim()).filter(Boolean);
+  const title=(gp.title||'').trim()||parts[parts.length-1]||'Canción de Guitar Pro';
+  const std=[40,45,50,55,59,64], nonstd=tune.some((m,i)=>m!==std[i]);
+  if(t.capo) warnings.push(`Cejilla en el traste ${t.capo}: los números son relativos a la cejilla.`);
+  const repInfo=order.length!==H.length?`${H.length} compases escritos, ${order.length} tocados con las repeticiones`:'';
+  const s={id:'s'+uid(),title,bpm:Math.round(bpm),cpb,cat:'cancion',media:{},created:Date.now(),src:'gp5',
+    artist:(gp.artist||'').trim()||(parts.length>1?parts[parts.length-2]:''),gpTrack:t.name,
+    raw:{title,bpm:Math.round(bpm),tuning:nonstd?tuneName(tune):'E A D G B E',sections:secs.map(x=>({name:x.name,cols:Math.max(1,x.cols),events:x.events})),warnings}};
+  if(nonstd) s.tune=tune; if(t.capo) s.capo=t.capo; if(repInfo) s.repInfo=repInfo;
+  return s }
+const tuneName=tu=>tu.map(m=>NOTE[m%12]).join(' ');
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
