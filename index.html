@@ -262,6 +262,13 @@ details summary{cursor:pointer;font-weight:600}
 .heatleg{display:flex;align-items:center;gap:4px;font-size:.78rem;color:var(--muted);margin-top:8px}
 .heatleg i{width:11px;height:11px;border-radius:2px}
 @media (max-width:600px){.mic{margin-left:0;flex-basis:100%}.card{min-height:0}.diag{width:min(200px,62%)}.hud .stat{min-width:0;padding:8px 10px}}
+.tInfo{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.tInfo .bad{color:var(--warn)}
+.tTips summary{cursor:pointer;font-size:13px;font-weight:600}
+.tTips ul{margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.45;color:var(--muted)}
+.tTips li{margin:4px 0}
+#tRec:disabled{opacity:.8}
+
 /* juego */
 .stat.score b{color:var(--accent)}
 .energy{position:relative;height:22px;border-radius:999px;background:var(--surface);border:1px solid var(--line);overflow:hidden;margin-top:10px}
@@ -679,6 +686,13 @@ a.btn.primary{color:var(--accent-ink)}
 .cstat.ok{border-color:var(--accent)} .cstat.err{border-color:var(--bad);color:var(--bad)} .cstat.offline{color:var(--warn)}
 .cstat.sync::before{content:'⟳ ';display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* tarjeta del acorde: esquina inferior izquierda, en la zona de lo que ya pasó */
+.pchord{position:absolute;z-index:2;left:6px;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 4px 2px;border-radius:12px;background:color-mix(in oklab,var(--surface) 82%,transparent);border:1px solid var(--accent);pointer-events:none;box-shadow:0 0 18px color-mix(in oklab,var(--accent) 35%,transparent)}
+.pchord.next{border-style:dashed;opacity:.9}
+.pchord .k{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.pchord b{font-family:var(--display);font-size:1rem;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg)}
+.pchord #pChordD{width:100%}
+.pchord svg{display:block;width:100%;height:auto}
 
 </style>
 
@@ -776,6 +790,17 @@ a.btn.primary{color:var(--accent-ink)}
                 <span class="lvl" aria-hidden="true"><i id="tLvl"></i></span>
                 <div class="tuner" aria-live="polite"><b id="tNote">–</b><span id="tCents">Toca una cuerda</span><div class="tneedle"><i id="tNeedle"></i></div></div>
                 <div id="tChroma" class="chroma free"></div>
+                <div id="tInfo" class="tInfo"></div>
+                <div class="row"><button id="tRec" class="btn">Grabar 8 s</button><span class="hint" style="margin:0;flex:1;min-width:160px">Toca algo que te cueste que reconozca y mándame el archivo para revisarlo.</span></div>
+                <p id="tRecInfo" class="hint" hidden></p>
+                <details class="tTips"><summary>Si reconoce mal las notas en este equipo</summary>
+                  <ul>
+                    <li><b>iPad y iPhone:</b> con el micrófono abierto, abre el Centro de control y toca <b>Modo de micrófono</b>. Elige <b>Estándar</b> o <b>Amplio espectro</b>; <b>Aislamiento de voz</b> borra la guitarra porque solo deja pasar voces.</li>
+                    <li>En el iPad los micrófonos están en el borde de arriba (junto a la cámara). Apunta ese borde a la boca de la guitarra, a unos 30–60 cm, y no lo tapes con la funda ni la mano.</li>
+                    <li>Si el nivel aparece «muy bajo», acércalo o toca con más fuerza. Lejos y bajo, las notas sueltas se apagan antes de que las reconozca.</li>
+                    <li>Con audífonos Bluetooth conectados, el sistema usa el micrófono de los audífonos, que es mucho peor: desconéctalos o usa audífonos con cable.</li>
+                  </ul>
+                </details>
               </div>
             </div>
           </fieldset>
@@ -1044,6 +1069,7 @@ a.btn.primary{color:var(--accent-ink)}
           <div class="speedrow" style="margin-top:8px"><label for="sLoopWait">Espera entre vueltas</label><input type="range" id="sLoopWait" min="0" max="10" step="1"><b id="sLoopWaitV" class="mono">0 s</b></div>
           <label class="check" style="margin-top:10px"><input type="checkbox" id="sWait">Nota por nota: si no la tocas a tiempo, la canción te espera</label>
           <label class="check" style="margin-top:8px"><input type="checkbox" id="sWaitJump">Al acertar, saltar al instante a la siguiente nota</label>
+          <label class="check" style="margin-top:10px"><input type="checkbox" id="sChordCard">Mostrar el diagrama del acorde que viene (en la esquina, sobre lo que ya pasó)</label>
           <label class="check" style="margin-top:12px"><input type="checkbox" id="sProg">Progresión inteligente: subir la velocidad cuando me sale bien</label>
           <div class="rescue" id="sProgOpts">
             <p>Si en una vuelta acierto al menos el <input type="number" id="s_progPct" class="nin" min="50" max="100" inputmode="numeric"> %,</p>
@@ -1140,7 +1166,7 @@ a.btn.primary{color:var(--accent-ink)}
       <div class="stat score"><span class="k">Puntaje</span><b id="pScore">0</b></div>
       <div class="stat"><span class="k">Combo</span><b id="pCombo">0</b></div>
       <div class="stat"><span class="k">Acierto</span><b id="pAcc">–</b></div>
-    </div><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div></div>
+    </div><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div><div id="pChord" class="pchord" hidden><span class="k" id="pChordK"></span><b id="pChordN"></b><div id="pChordD"></div></div></div>
     <div class="ptl" id="ptl" aria-label="Línea de tiempo de la canción">
       <div class="ptl-secs" id="ptlSecs"></div>
       <div class="ptl-loop" id="ptlLoop"></div>
@@ -1537,13 +1563,17 @@ function startLoop(){ cancelAnimationFrame(rafId); let fc=0; const loop=()=>{ if
 async function micStart(){
   if(Mic.on) return;
   if(!hasMicApi()){ const e=new Error('noapi'); e.name='NoApi'; throw e }
-  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  // un solo canal: los equipos con varios micrófonos (iPad, notebooks) a veces entregan estéreo, y mezclar dos micrófonos separados unos centímetros borra algunas frecuencias
+  const want={echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:{ideal:1}};
+  let stream; try{ stream=await navigator.mediaDevices.getUserMedia({audio:want}) }catch(e){ if(e&&e.name==='OverconstrainedError'){ delete want.channelCount; stream=await navigator.mediaDevices.getUserMedia({audio:want}) } else throw e }
   const a=ctx(); try{ await a.resume() }catch(e){}
-  const src=a.createMediaStreamSource(stream), an=a.createAnalyser(); an.fftSize=Ear.NFFT; an.smoothingTimeConstant=0; src.connect(an);
-  const tr=stream.getAudioTracks()[0]; if(tr) tr.onended=()=>{ Mic.on=false; if(Sess.running&&Sess.adv==='mic'){ $('#hMic').className='mic off'; $('#hMicTxt').textContent='Micrófono detenido' } if(testOn){ testOn=false; resetTest('El sistema cortó el micrófono. Vuelve a probar.') } };
+  const tr=stream.getAudioTracks()[0], set=tr&&tr.getSettings?tr.getSettings():{};
+  const src=a.createMediaStreamSource(stream), an=a.createAnalyser(); an.fftSize=Ear.NFFT; an.smoothingTimeConstant=0;
+  let split=null; if((set.channelCount||1)>1){ split=a.createChannelSplitter(set.channelCount); src.connect(split); split.connect(an,0) } else src.connect(an);
+  Mic.settings=Object.assign({},set,{ctxRate:a.sampleRate,label:tr&&tr.label||''}); Mic.split=split; if(tr) tr.onended=()=>{ Mic.on=false; if(Sess.running&&Sess.adv==='mic'){ $('#hMic').className='mic off'; $('#hMicTxt').textContent='Micrófono detenido' } if(testOn){ testOn=false; resetTest('El sistema cortó el micrófono. Vuelve a probar.') } };
   Object.assign(Mic,{on:true,stream,an,src,td:new Float32Array(an.fftSize),ear:Ear.create(a.sampleRate),judge:Ear.judge()});
 }
-function micStop(){ if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
+function micStop(){ recStop(true); if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect(); Mic.split&&Mic.split.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
 const ROOTS={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.name); let root=null;
   if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
@@ -1558,11 +1588,12 @@ const STR=['6.ª','5.ª','4.ª','3.ª','2.ª','1.ª'];
 function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
 function micFrame(fc){
   if(!Mic.an) return; Mic.an.getFloatTimeDomainData(Mic.td);
-  const now=performance.now(), o=Mic.ear.process(Mic.td,now); Mic.rms=o.rms;
+  const now=performance.now(), o=Mic.ear.process(Mic.td,now); Mic.rms=o.rms; Mic.noise=o.noise;
   for(let i=0;i<12;i++) Mic.disp[i]=Mic.disp[i]*.6+(o.live?o.ch[i]:0)*.4;
   const lv=Math.min(100,Math.sqrt(o.rms)*260)+'%'; $('#hLvl').style.width=lv; $('#tLvl').style.width=lv;
   drawChroma();
   if(testOn&&fc%3===0) drawTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
+  if(testOn&&fc%15===0) micLevels(o);
   if(tunerOn&&fc%2===0) drawBigTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
   if(LT.on&&o.onset) latOnset(now);
   if(PL.running){ playerAudio(o,now); return }
@@ -1598,7 +1629,8 @@ function detectPitch(buf,sr){
   const W=2048, minL=Math.floor(sr/1000), maxL=Math.min(Math.floor(sr/70),buf.length-W-2);
   if(!cumSq||cumSq.length!==buf.length+1) cumSq=new Float32Array(buf.length+1);
   for(let i=0;i<buf.length;i++) cumSq[i+1]=cumSq[i]+buf[i]*buf[i];
-  const e0=cumSq[W]; if(e0<W*1e-5) return null;
+  // umbral relativo al ruido de fondo (antes era fijo: un micrófono más bajo, como el de algunos iPad, perdía las notas al apagarse)
+  const e0=cumSq[W], fl=Math.max(2.5e-4,(Mic.noise||0)*2.2); if(e0<W*fl*fl) return null;
   const r=new Float32Array(maxL+2); let mx=0;
   for(let L=minL;L<=maxL+1;L++){ let s=0; for(let i=0;i<W;i++) s+=buf[i]*buf[i+L]; const v=2*s/(e0+cumSq[L+W]-cumSq[L]); r[L]=v; if(v>mx) mx=v }
   if(mx<.6) return null;
@@ -1618,12 +1650,48 @@ function resetTest(msg){ $('#tLive').hidden=true; $('#tBtn').textContent='Probar
 async function testToggle(){
   if(testOn){ testOn=false; micStop(); resetTest('Prueba detenida.'); return }
   ctx(); $('#tStatus').textContent='Abriendo micrófono…';
-  try{ await micStart(); micBlocked=null; testOn=true; $('#tLive').hidden=false; $('#tBtn').textContent='Detener'; $('#tStatus').textContent='Funciona. Toca una cuerda al aire para afinar o un acorde para ver sus notas.'; startLoop() }
+  try{ await micStart(); micBlocked=null; testOn=true; $('#tLive').hidden=false; $('#tBtn').textContent='Detener'; $('#tStatus').textContent='Funciona. Toca una cuerda al aire para afinar o un acorde para ver sus notas.'; micInfo(); startLoop() }
   catch(e){ micBlocked=micReason(e); $('#tStatus').textContent=MIC_MSG[micBlocked]; if(micBlocked==='frame'||micBlocked==='noapi') $('#micHelp').open=true }
   renderSetup();
 }
 $('#tBtn').addEventListener('click',testToggle);
 function markChroma(c){ const ex=new Set(pcsOf(c)); document.querySelectorAll('#chroma .cb').forEach((el,i)=>el.classList.toggle('exp',ex.has(i))) }
+
+/* ---------- diagnóstico del micrófono: qué entrega este equipo y una grabación para revisarla ---------- */
+const yesNo=v=>v===false?'no':v===true?'sí':'?';
+function micInfo(){ const st=Mic.settings||{}, el=$('#tInfo'); if(!el) return;
+  const proc=[st.echoCancellation,st.noiseSuppression,st.autoGainControl], bad=proc.some(v=>v===true);
+  el.innerHTML='';
+  el.append(h('span',{},`${Math.round((st.sampleRate||st.ctxRate||0)/100)/10} kHz · ${st.channelCount||1} ${st.channelCount>1?'canales (uso solo el 1.º)':'canal'}`),
+    h('span',{class:bad?'bad':''},`Cancelación de eco: ${yesNo(st.echoCancellation)} · Supresión de ruido: ${yesNo(st.noiseSuppression)} · Ganancia automática: ${yesNo(st.autoGainControl)}`),
+    h('span',{id:'tDb'},'Nivel: –'));
+  if(bad) el.append(h('span',{class:'bad'},'Este equipo está procesando el sonido como si fuera una llamada, y eso borra notas de guitarra. Si tienes Aislamiento de voz activo, cámbialo (abajo).'));
+}
+function micLevels(o){ const el=$('#tDb'); if(!el) return; const db=v=>v>0?Math.round(20*Math.log10(v)):-99;
+  const sig=db(o.rms), nz=db(o.noise), snr=sig-nz;
+  el.textContent=`Nivel: ${sig} dB · ruido de fondo: ${nz} dB`+(o.live?` · ${snr} dB sobre el ruido`:'');
+  el.className=o.live&&o.rms<.0025?'bad':''; if(o.live&&o.rms<.0025) el.textContent+=' · muy bajo: acerca el equipo a la guitarra' }
+const REC={on:false};
+function recStart(){ if(REC.on||!Mic.on) return; const a=actx, src=Mic.split||Mic.src;
+  const sp=a.createScriptProcessor(4096,1,1), z=a.createGain(); z.gain.value=0; const chunks=[];
+  sp.onaudioprocess=e=>{ chunks.push(new Float32Array(e.inputBuffer.getChannelData(0))) };
+  if(Mic.split) Mic.split.connect(sp,0); else Mic.src.connect(sp); sp.connect(z); z.connect(a.destination);
+  Object.assign(REC,{on:true,sp,z,chunks,t0:performance.now()});
+  const b=$('#tRec'); b.textContent='Grabando… 8'; b.disabled=true;
+  REC.iv=setInterval(()=>{ const left=8-Math.floor((performance.now()-REC.t0)/1000); if(left<=0) recStop(); else b.textContent='Grabando… '+left },250) }
+function recStop(cancel){ if(!REC.on) return; clearInterval(REC.iv); REC.on=false;
+  try{ REC.sp.disconnect(); REC.z.disconnect(); (Mic.split||Mic.src).disconnect(REC.sp) }catch(e){}
+  const b=$('#tRec'); if(b){ b.disabled=false; b.textContent='Grabar 8 s' } if(cancel) return;
+  const n=REC.chunks.reduce((k,c)=>k+c.length,0), sr=actx.sampleRate, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const w=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)) };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVEfmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  let o=44; for(const c of REC.chunks) for(let i=0;i<c.length;i++,o+=2) v.setInt16(o,Math.max(-32767,Math.min(32767,Math.round(c[i]*32767))),true);
+  const st=Mic.settings||{}, d=new Date(), name=`trastero-mic-${/iPad/.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent))?'ipad':/iPhone/.test(navigator.userAgent)?'iphone':'equipo'}-${d.getHours()}${String(d.getMinutes()).padStart(2,'0')}.wav`;
+  const file=new File([buf],name,{type:'audio/wav'});
+  $('#tRecInfo').hidden=false; $('#tRecInfo').textContent=`Grabé ${(n/sr).toFixed(1)} s. Datos del micrófono: ${Math.round(sr)} Hz, ${st.channelCount||1} canal(es), eco ${yesNo(st.echoCancellation)}, ruido ${yesNo(st.noiseSuppression)}, ganancia ${yesNo(st.autoGainControl)}.`;
+  (async()=>{ try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Grabación de Trastero'}); return } }catch(e){ if(e&&e.name==='AbortError') return }
+    const a=h('a',{href:URL.createObjectURL(file),download:name}); document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() },1500) })() }
+$('#tRec').addEventListener('click',()=>recStart());
 
 /* ---------- sesión ---------- */
 const Sess={running:false};
@@ -2381,8 +2449,9 @@ function buildSong(song){
     s.events.forEach(e=>{const et=t0+e.col*spc;
       if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:TU[e.s]+e.f,tech:e.tech||'',sec:si,col:e.col});
       else if(e.type==='chuck') chucks.push({t:et,sec:si,col:e.col,strings:e.strings});
+      else if((song.raw.dyadNotes||song.src==='gp5')&&!e.dir&&e.frets.filter(f=>f>=0).length===2) e.frets.forEach((f,s)=>{ if(f>=0) notes.push({t:et,s,f,m:TU[s]+f,tech:'',sec:si,col:e.col,dyad:true}) });
       else {const c=chordForFrets(e.frets,e.label,song.tune);strums.push({t:et,dir:e.dir||'',chord:c,sec:si,col:e.col,frets:e.frets});
-        const last=segs[segs.length-1];if(last&&last.chord.id===c.id) last.t1=et+spc*2;else segs.push({t0:et,t1:et+spc*2,chord:c,sec:si})}});
+        const last=segs[segs.length-1];if(last&&last.chord.id===c.id&&et-last.t1<=6*spc) last.t1=et+spc*2;else segs.push({t0:et,t1:et+spc*2,chord:c,sec:si})}});
     // bloques de evaluación: cambios muy rápidos (D↔D6) se agrupan hasta ~0,8 s y aceptan cualquiera de sus acordes
     let cur=null;
     segs.forEach((g,k)=>{const next=segs[k+1];g.t1=next?Math.min(next.t0,g.t1+8*spc):Math.min(t0+dur,g.t1+4*spc);csegs.push(g);
@@ -2650,6 +2719,7 @@ function renderSongDetail(){
   $('#sLat').value=cfg.lat; $('#sLatV').textContent=cfg.lat+' ms'; $('#sLat').oninput=e=>{cfg.lat=+e.target.value;cfg.latUser=true;$('#sLatV').textContent=cfg.lat+' ms'}; $('#sLat').onchange=save;
   $('#sDelay').value=cfg.delay||0; $('#sDelayV').textContent=(cfg.delay||0)+' s'; $('#sDelay').oninput=e=>{cfg.delay=+e.target.value;$('#sDelayV').textContent=cfg.delay+' s'}; $('#sDelay').onchange=save;
   $('#latBtn').onclick=()=>latStart(cfg,save); $('#latAgain').onclick=()=>latStart(cfg,save);
+  $('#sChordCard').checked=cfg.chordCard!==false; $('#sChordCard').onchange=e=>{ cfg.chordCard=e.target.checked; save() };
   const pg=$('#sProg'); pg.checked=!!cfg.prog; pg.onchange=e=>{ cfg.prog=e.target.checked; save(); $('#sProgOpts').hidden=!cfg.prog }; $('#sProgOpts').hidden=!cfg.prog;
   [['progPct',50,100],['progStep',1,25],['progMax',40,125]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   $('#sRsConfirm').checked=!!cfg.rsConfirm; $('#sRsConfirm').onchange=e=>{ cfg.rsConfirm=e.target.checked; save() };
@@ -2705,7 +2775,7 @@ function plLoad(tl){
   const pal=CHCOL[prefs.style]||CHCOL.estudio, cmap={}; let ci=0;
   const cs0=tl.csegs||tl.blocks.map(b=>({t0:b.t0,t1:b.t1,chord:b.chords[0],sec:b.sec}));
   PL.csegs=cs0.map(g=>{ const id=g.chord.id||g.chord.name; if(!(id in cmap)) cmap[id]=pal[ci++%pal.length];
-    return {t0:g.t0,t1:g.t1,name:g.chord.name,col:cmap[id],blk:PL.blocks.find(b=>g.t0>=b.t0-1e-6&&g.t0<b.t1-1e-6)} });
+    return {t0:g.t0,t1:g.t1,name:g.chord.name,chord:g.chord,col:cmap[id],blk:PL.blocks.find(b=>g.t0>=b.t0-1e-6&&g.t0<b.t1-1e-6)} });
 }
 function startPlayer(s,opts={}){
   const tl=buildSong(s), cfg=playCfg(s); if(!cfg.sel||!cfg.sel.length||cfg.sel.some(i=>i>=tl.sections.length)) cfg.sel=tl.sections.map((x,i)=>i);
@@ -2920,6 +2990,17 @@ function playerAudio(o,now){
 }
 function afterWaitHit(){ if(PL.cfg.waitJump){ PL.hold=false; $('#pWait').hidden=true; const t=PL.holdT; PL.base=t; PL.t0=performance.now(); jumpNext(); if(!PL.hold&&PL.base===t&&PL.media) PL.media.play(t,PL.speed) } else release() }
 const midiName=m=>{ const r=Math.round(m); return nn(r)+(Math.floor(r/12)-1) };
+/* tarjeta con el diagrama del acorde actual o del que viene (solo en Práctica) */
+function chordCard(t){
+  const box=$('#pChord'); if(PL.mode!=='practice'||PL.cfg.chordCard===false||PL.edit||!PL.csegs.length){ box.hidden=true; PL.ccKey=null; return }
+  // el tramo exacto de la autopista (en un bloque D↔D6 muestra el que toca ahora, no el primero)
+  let cur=null,nxt=null; for(const g of PL.csegs){ if(g.t0<=t&&t<g.t1){ cur=g } else if(g.t0>t){ nxt=g; break } }
+  const soon=nxt&&nxt.t0-t<2.5*PL.speed, g=cur&&!(soon&&cur.t1-t<.35*PL.speed)?cur:soon?nxt:null;
+  if(!g){ box.hidden=true; PL.ccKey=null; return }
+  const c=g.chord, key=(c.id||c.name)+'|'+(g===cur?'a':'s');
+  box.hidden=false; box.classList.toggle('next',g!==cur);
+  if(PL.ccKey!==key){ PL.ccKey=key; $('#pChordK').textContent=g===cur?'Ahora':'Sigue'; $('#pChordN').textContent=c.name; $('#pChordD').innerHTML=diagram(c.frets) }
+  const hx=PL.lay&&PL.lay.hx||90; box.style.width=Math.max(70,Math.min(150,hx-12))+'px' }
 function playerHud(t){
   PL.shown+=(PL.score-PL.shown)*.25; if(Math.abs(PL.score-PL.shown)<1) PL.shown=PL.score;
   $('#pScore').textContent=fmtN(PL.shown); $('#pCombo').textContent=PL.combo>=2?PL.combo+' ×'+multOf(PL.combo):PL.combo;
@@ -2931,6 +3012,7 @@ function playerHud(t){
   const cur=PL.blocks.find(b=>t>=b.t0-.05&&t<b.t1), nxt=PL.blocks.find(b=>b.t0>t+.05&&act(b)), nn2=PL.notes.filter(n=>n.t>t-.05&&act(n)).slice(0,4);
   $('#pNow').textContent=cur?cur.chords.map(c=>c.name).join(' / '):(nn2.length&&nn2[0].t-t<1.2?'Riff':'–');
   $('#pNext').textContent=nxt&&(!nn2.length||nxt.t0<nn2[0].t)?nxt.chords.map(c=>c.name).join(' / '):nn2.map(n=>`${'EADGBe'[n.s]}${n.f}${n.tech}`).join(' ')||'–';
+  chordCard(t);
   $('#pEar').textContent=PL.ear!=null?midiName(PL.ear):(PL.mic?'…':'sin mic');
   $('#pPct').textContent=PL.pct!=null?PL.pct+'%':'';
   document.getElementById('hwrap').classList.toggle('fire',PL.combo>=20);
@@ -3798,7 +3880,7 @@ function gpToSong(gp,ti,{repeats=true,fileName=''}={}){
   const repInfo=order.length!==H.length?`${H.length} compases escritos, ${order.length} tocados con las repeticiones`:'';
   const s={id:'s'+uid(),title,bpm:Math.round(bpm),cpb,cat:'cancion',media:{},created:Date.now(),src:'gp5',
     artist:(gp.artist||'').trim()||(parts.length>1?parts[parts.length-2]:''),gpTrack:t.name,
-    raw:{title,bpm:Math.round(bpm),tuning:nonstd?tuneName(tune):'E A D G B E',sections:secs.map(x=>({name:x.name,cols:Math.max(1,x.cols),events:x.events})),warnings}};
+    raw:{dyadNotes:true,title,bpm:Math.round(bpm),tuning:nonstd?tuneName(tune):'E A D G B E',sections:secs.map(x=>({name:x.name,cols:Math.max(1,x.cols),events:x.events})),warnings}};
   if(nonstd) s.tune=tune; if(t.capo) s.capo=t.capo; if(repInfo) s.repInfo=repInfo;
   return s }
 const tuneName=tu=>tu.map(m=>NOTE[m%12]).join(' ');
