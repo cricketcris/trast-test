@@ -70,7 +70,7 @@ main{padding-block:22px 48px}
 .btn.big{font-size:1.05rem;padding:14px 26px;min-height:52px;border-radius:12px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .linkbtn{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font-weight:600}
-select,input[type=text],input[type=number],textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+select,input[type=text],input[type=number],input[type=password],textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
 textarea{font-family:var(--mono);font-size:.82rem;min-height:110px;resize:vertical}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
@@ -675,6 +675,10 @@ a.btn.primary{color:var(--accent-ink)}
 .player:not(.editing) .hw{cursor:pointer;touch-action:pan-y}
 .gpctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin-bottom:10px}
 .gpctl:empty{display:none}
+.cstat{margin:8px 0;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:.9rem}
+.cstat.ok{border-color:var(--accent)} .cstat.err{border-color:var(--bad);color:var(--bad)} .cstat.offline{color:var(--warn)}
+.cstat.sync::before{content:'⟳ ';display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 </style>
 
@@ -962,6 +966,10 @@ a.btn.primary{color:var(--accent-ink)}
           <label class="check" style="margin-top:8px"><input type="checkbox" id="pSound">Sonido al acertar</label>
           <label class="check" style="margin-top:8px"><input type="checkbox" id="pStage">Modo escenario: luces que reaccionan a tu combo</label></fieldset>
       </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <span class="lab">Nube (GitHub)</span>
+      <div id="cloudBox"></div>
     </div>
     <div class="panel" style="margin-top:16px">
       <span class="lab">Tus datos y respaldo</span>
@@ -1347,7 +1355,7 @@ const S={
   get(k,d){ let v=null; try{ v=localStorage.getItem('trastero.'+k) }catch(e){ return d } if(v==null) return d;
     try{ const o=JSON.parse(v); if(d!=null&&typeof d==='object'&&(o===null||typeof o!=='object'||Array.isArray(d)!==Array.isArray(o))) throw new Error('tipo'); return o }
     catch(e){ try{ localStorage.setItem('trastero.__corrupt.'+k,v) }catch(_){} return d } },
-  set(k,v){ try{ localStorage.setItem('trastero.'+k,JSON.stringify(v)); return true }catch(e){ S.warn(e); return false } },
+  set(k,v){ try{ localStorage.setItem('trastero.'+k,JSON.stringify(v)); try{ S.onwrite&&S.onwrite(k) }catch(_){} return true }catch(e){ S.warn(e); return false } },
   warn(e){ if(S._warned) return; S._warned=true; const full=e&&(e.name==='QuotaExceededError'||e.code===22||e.code===1014);
     setTimeout(()=>{ try{ toast(full?'No pude guardar: el espacio está lleno. Descarga un respaldo en Ajustes y borra canciones que no uses.':'Este navegador no me deja guardar (¿modo privado?). Tu progreso no quedará grabado.') }catch(_){} },300) }
 };
@@ -1941,7 +1949,7 @@ function renderSettings(){
     h('button',{class:'btn ghost',onclick:()=>{ prefs=Object.assign({},DEFAULT_PREFS); savePrefs(); applyPrefs(); buildChroma(); renderSettings(); toast('Ajustes por defecto') }},'Volver a los ajustes por defecto'));
   const wipe=h('span',{}); const ask=()=>{ wipe.innerHTML=''; wipe.append(h('span',{class:'confirm'},'¿Borrar mazos, acordes propios e historial?',h('button',{class:'btn danger',onclick:()=>{ ['decks','custom','history','settings','seenDefaults'].forEach(k=>{try{localStorage.removeItem('trastero.'+k)}catch(e){}}); location.reload() }},'Sí, borrar todo'),h('button',{class:'btn ghost',onclick:renderSettings},'No'))) };
   wipe.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar todos los datos')); dt.append(wipe);
-  renderBackup();
+  renderBackup(); renderCloud();
 }
 document.querySelectorAll('#v-ajustes input[type=radio]').forEach(r=>r.addEventListener('change',()=>{ const k={pTheme:'theme',pWood:'wood',pHand:'hand',pNotes:'notes',pSize:'size'}[r.name]; prefs[k]=r.value; savePrefs(); applyPrefs(); if(k==='notes') buildChroma(); renderSettings() }));
 $('#pCount').addEventListener('change',e=>{prefs.countdown=e.target.checked;savePrefs()});
@@ -3567,7 +3575,7 @@ function startEditor(s,t){
 $('#pEdit').addEventListener('click',()=>{ if(!PL.running||PL.edit) return; const s=PL.song, t=PL.t; startEditor(s,t) });
 
 /* ---------- tus datos: respaldo completo, importar y cuidado entre pestañas ---------- */
-const BK_SKIP=/^trastero\.(spotify|spver|__)/;   // las sesiones de Spotify no viajan en el respaldo
+const BK_SKIP=/^trastero\.(spotify|spver|cloud|__)/;   // las sesiones de Spotify no viajan en el respaldo
 function bkKeys(){ const ks=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith('trastero.')) ks.push(k) } }catch(e){} return ks }
 function bkMake(){ const data={}; bkKeys().filter(k=>!BK_SKIP.test(k)&&k!=='trastero.lastBackup').forEach(k=>{ try{ data[k.slice(9)]=localStorage.getItem(k) }catch(e){} });
   return {app:'trastero',v:1,at:Date.now(),data} }
@@ -3604,7 +3612,7 @@ function bkMerge(k,mine,theirs){
     return mine }
   return mine==null?theirs:mine }
 function bkApply(o,mode){
-  try{ if(mode==='replace'){ bkKeys().filter(k=>!/^trastero\.(spotify|spver)/.test(k)).forEach(k=>localStorage.removeItem(k)); for(const [k,v] of Object.entries(o.data)) localStorage.setItem('trastero.'+k,v) }
+  try{ if(mode==='replace'){ bkKeys().filter(k=>!/^trastero\.(spotify|spver|cloud|__cbase)/.test(k)).forEach(k=>localStorage.removeItem(k)); for(const [k,v] of Object.entries(o.data)) localStorage.setItem('trastero.'+k,v) }
     else for(const [k,v] of Object.entries(o.data)){ const cur=localStorage.getItem('trastero.'+k); if(cur==null){ localStorage.setItem('trastero.'+k,v); continue }
       let a,b; try{ a=JSON.parse(cur); b=JSON.parse(v) }catch(e){ continue } localStorage.setItem('trastero.'+k,JSON.stringify(bkMerge(k,a,b))) }
     localStorage.setItem('trastero.lastBackup',JSON.stringify(Date.now()));
@@ -3794,6 +3802,144 @@ function gpToSong(gp,ti,{repeats=true,fileName=''}={}){
   if(nonstd) s.tune=tune; if(t.capo) s.capo=t.capo; if(repInfo) s.repInfo=repInfo;
   return s }
 const tuneName=tu=>tu.map(m=>NOTE[m%12]).join(' ');
+
+/* ---------- nube: sincronizar con un archivo en un repo privado de GitHub ----------
+   Cada dispositivo guarda su propia conexión (repo + token) en "trastero.cloud", que nunca viaja en respaldos.
+   En la nube vive un respaldo igual al de Ajustes ({app,v,at,data}). Para combinar sin perder ni resucitar cosas se
+   usa una fusión de tres vías: "trastero.__cbase" guarda huellas de lo que había en la última sincronización, así se
+   sabe qué cambió de cada lado (incluido lo borrado). */
+const CL={busy:false,timer:null,last:0,err:'',state:'off'};
+const cloudCfg=()=>S.get('cloud',null);
+const CL_SKIP=/^(spotify|spver|cloud|lastBackup|mig\d+|__)/;
+const clHash=s=>{ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(36)+':'+s.length };
+const b64enc=str=>{ const b=new TextEncoder().encode(str); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s) };
+const b64dec=b64=>{ const s=atob(b64.replace(/\s/g,'')), b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return new TextDecoder().decode(b) };
+/* datos locales que se sincronizan: clave → texto */
+function clLocal(){ const o={}; bkKeys().forEach(k=>{ const kk=k.slice(9); if(CL_SKIP.test(kk)) return; try{ o[kk]=localStorage.getItem(k) }catch(e){} }); return o }
+/* cómo se compara cada valor: listas con id (o con fecha "at", como el historial), objetos por propiedad, o valor entero */
+const idOf=x=>x&&typeof x==='object'?(x.id!=null?'i:'+x.id:x.at!=null?'a:'+x.at:null):null;
+function clShape(v){
+  if(Array.isArray(v)&&v.length&&v.every(x=>idOf(x)!=null)) return 'ida';
+  if(Array.isArray(v)&&v.length&&v.every(x=>typeof x==='string'||typeof x==='number')) return 'set';
+  if(v&&typeof v==='object'&&!Array.isArray(v)) return 'obj';
+  return 'val' }
+function clItems(v,shape){ const m=new Map();
+  if(shape==='ida') v.forEach(x=>m.set(idOf(x),x)); else if(shape==='set') v.forEach(x=>m.set('v:'+x,x)); else if(shape==='obj') Object.entries(v).forEach(([k,x])=>m.set(k,x)); return m }
+function clBaseOf(data){ const b={}; for(const [k,txt] of Object.entries(data)){ let v; try{ v=JSON.parse(txt) }catch(e){ continue }
+    const sh=clShape(v); if(sh==='val') b[k]={s:'val',h:clHash(txt),w:clHash(txt)}; else { const h={}; clItems(v,sh).forEach((x,id)=>h[id]=clHash(JSON.stringify(x))); b[k]={s:sh,h,w:clHash(txt)} } } return b }
+/* fusión de tres vías de una clave */
+function clMergeKey(k,lt,rt,base,first){
+  if(lt===rt) return lt;
+  if(lt==null) return base&&!first&&clHash(rt)===base.w?null:rt;   // se borró aquí y allá no cambió
+  if(rt==null) return base&&!first&&clHash(lt)===base.w?null:lt;
+  let L,R; try{ L=JSON.parse(lt); R=JSON.parse(rt) }catch(e){ return lt }
+  const sL=clShape(L), sR=clShape(R), sh=sL===sR?sL:Array.isArray(L)&&Array.isArray(R)&&(sL==='ida'||sR==='ida')?'ida':Array.isArray(L)&&Array.isArray(R)&&(sL==='set'||sR==='set')?'set':'val';
+  const score=x=>typeof x==='number'?x:(x&&(x.score||x.best))||0;
+  if(sh==='val'){ if(!base||first) return k==='history'?lt:rt; return clHash(lt)===base.h?rt:lt }
+  const BH=base&&base.s===sh&&!first?base.h:null, lm=clItems(L,sh), rm=clItems(R,sh), out=new Map();
+  const pick=(id,a,b)=>{ const ha=a!==undefined?clHash(JSON.stringify(a)):null, hb=b!==undefined?clHash(JSON.stringify(b)):null, hB=BH?BH[id]:undefined;
+    if(a!==undefined&&b!==undefined){ if(ha===hb) return a; if(k==='records'||k==='songrec') return score(b)>score(a)?b:a;
+      if(hB!=null&&ha===hB) return b; if(hB!=null&&hb===hB) return a; return first?b:a }
+    if(a!==undefined) return hB!=null&&ha===hB?undefined:a;      // la otra parte lo borró y aquí no cambió
+    return hB!=null&&hb===hB?undefined:b };
+  lm.forEach((a,id)=>{ const v=pick(id,a,rm.get(id)); if(v!==undefined) out.set(id,v) });
+  rm.forEach((b,id)=>{ if(lm.has(id)) return; const v=pick(id,undefined,b); if(v!==undefined) out.set(id,v) });
+  if(sh==='obj') return JSON.stringify(Object.fromEntries(out));
+  if(sh==='set') return JSON.stringify([...out.values()]);
+  let arr=[...out.values()]; if(k==='history') arr=arr.sort((a,b)=>b.at-a.at).slice(0,300);
+  return JSON.stringify(arr) }
+/* GitHub */
+async function ghReq(method,body,raw){ const c=cloudCfg(); if(!c) throw new Error('sin conexión configurada');
+  const url=`https://api.github.com/repos/${c.repo}/contents/${c.path.split('/').map(encodeURIComponent).join('/')}`+(method==='GET'?`?t=${Date.now()}`:'');
+  let r; try{ r=await fetch(url,{method,cache:'no-store',headers:{Authorization:'Bearer '+c.token,Accept:raw?'application/vnd.github.raw+json':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined}) }
+  catch(e){ const er=new Error('Sin conexión a internet'); er.net=true; throw er }
+  return r }
+async function ghPull(){ const r=await ghReq('GET');
+  if(r.status===404){ const c=cloudCfg(); const rr=await fetch(`https://api.github.com/repos/${c.repo}`,{cache:'no-store',headers:{Authorization:'Bearer '+c.token,Accept:'application/vnd.github+json'}}).catch(()=>null);
+    if(rr&&rr.status===200) return {sha:null,doc:null}; throw ghErr(rr||r) }
+  if(!r.ok) throw ghErr(r);
+  const j=await r.json(); let txt;
+  if(j.content&&j.encoding==='base64') txt=b64dec(j.content); else { const r2=await ghReq('GET',null,true); if(!r2.ok) throw ghErr(r2); txt=await r2.text() }
+  let doc; try{ doc=JSON.parse(txt) }catch(e){ throw new Error('El archivo de la nube está dañado: no es un respaldo válido.') }
+  if(!doc||doc.app!=='trastero'||!doc.data) throw new Error('El archivo de la nube no es un respaldo de Trastero.');
+  return {sha:j.sha,doc} }
+function ghErr(r){ const s=r&&r.status; const e=new Error(s===401?'El token no es válido o venció.':s===403?'El token no tiene permiso de escritura en ese repo (o GitHub limitó las peticiones; prueba en unos minutos).':s===404?'No encuentro el repo: revisa el nombre (usuario/repo) y que el token tenga acceso a él.':s===409||s===422?'conflicto':'GitHub respondió '+s); e.status=s; return e }
+async function ghPush(doc,sha){ const c=cloudCfg();
+  const r=await ghReq('PUT',{message:`Trastero · ${c.device||'dispositivo'} · ${new Date().toISOString().slice(0,16).replace('T',' ')}`,content:b64enc(JSON.stringify(doc)),...(sha?{sha}:{})});
+  if(r.status===409||r.status===422){ const e=new Error('conflicto'); e.conflict=true; throw e }
+  if(!r.ok) throw ghErr(r); const j=await r.json(); return j.content&&j.content.sha }
+/* una sincronización completa: bajar, combinar, guardar aquí, subir si hace falta */
+async function cloudSync(why){
+  const c=cloudCfg(); if(!c||!c.on) return; if(CL.busy){ CL.again=true; return } if(!navigator.onLine){ CL.state='offline'; renderCloudStatus(); return }
+  CL.busy=true; CL.state='sync'; renderCloudStatus(); let changedHere=false;
+  try{
+    for(let tries=0;tries<4;tries++){
+      const {sha,doc}=await ghPull(), base=S.get('__cbase',null), first=!base||!c.synced, local=clLocal(), remote=doc?doc.data:{};
+      const keys=new Set([...Object.keys(local),...Object.keys(remote)]), merged={};
+      keys.forEach(k=>{ if(CL_SKIP.test(k)) return; const v=clMergeKey(k,local[k]??null,remote[k]??null,base&&base[k],first); if(v!=null) merged[k]=v });
+      // aplicar aquí
+      for(const [k,v] of Object.entries(merged)) if(local[k]!==v){ localStorage.setItem('trastero.'+k,v); changedHere=true }
+      for(const k of Object.keys(local)) if(!(k in merged)){ localStorage.removeItem('trastero.'+k); changedHere=true }
+      // subir si la nube quedó distinta
+      const same=doc&&Object.keys(merged).length===Object.keys(remote).length&&Object.entries(merged).every(([k,v])=>remote[k]===v);
+      try{ if(!same) await ghPush({app:'trastero',v:1,at:Date.now(),device:c.device||'',data:merged},sha) }
+      catch(e){ if(e.conflict&&tries<3) continue; throw e }
+      localStorage.setItem('trastero.__cbase',JSON.stringify(clBaseOf(merged)));
+      const cc=cloudCfg(); cc.synced=Date.now(); cc.lastDevice=doc&&doc.device||''; localStorage.setItem('trastero.cloud',JSON.stringify(cc));
+      CL.last=Date.now(); CL.err=''; CL.state='ok'; CL.dirty=false; break }
+  }catch(e){ CL.err=e.message||String(e); CL.state=e.net?'offline':'err'; if(!e.net&&why!=='auto') toast('Nube: '+CL.err) }
+  finally{ CL.busy=false; renderCloudStatus() }
+  if(changedHere){ if(Sess.running||PL.running){ S.stale=true; toast('Llegaron cambios de otro dispositivo; se aplican al terminar') } else { toast('Se trajeron cambios de otro dispositivo'); setTimeout(()=>location.reload(),700) } return }
+  if(CL.again){ CL.again=false; cloudSoon(3000) } }
+function cloudSoon(ms=15000){ const c=cloudCfg(); if(!c||!c.on) return; clearTimeout(CL.timer); CL.timer=setTimeout(()=>{ if(Sess.running||PL.running){ cloudSoon(10000); return } cloudSync('auto') },ms) }
+/* cada vez que algo se guarda, se programa una subida */
+S.onwrite=k=>{ if(CL_SKIP.test(k)||CL.applying) return; CL.dirty=true; cloudSoon() };
+document.addEventListener('visibilitychange',()=>{ const c=cloudCfg(); if(!c||!c.on) return;
+  if(document.visibilityState==='visible'){ if(Date.now()-CL.last>30000) cloudSoon(800) }
+  else if(CL.dirty&&!CL.busy) cloudSync('auto') });
+window.addEventListener('online',()=>cloudSoon(1500));
+setInterval(()=>{ if(document.visibilityState==='visible'&&Date.now()-CL.last>5*60000) cloudSoon(500) },60000);
+setTimeout(()=>cloudSoon(1200),0);   // al abrir la app
+/* interfaz en Ajustes */
+function renderCloudStatus(){ const el=$('#cloudStatus'); if(!el) return; const c=cloudCfg();
+  const ago=t=>{ const s=Math.round((Date.now()-t)/1000); return s<60?'hace un momento':s<3600?`hace ${Math.round(s/60)} min`:s<86400?`hace ${Math.round(s/3600)} h`:`hace ${Math.round(s/86400)} días` };
+  el.className='cstat '+CL.state; el.textContent=!c?'Sin conectar':!c.on?'Sincronización en pausa en este dispositivo':CL.state==='sync'?'Sincronizando…':CL.state==='offline'?'Sin internet: sincronizo cuando vuelva la conexión':CL.state==='err'?'Error: '+CL.err:c.synced?'Sincronizado '+ago(c.synced)+(c.lastDevice&&c.lastDevice!==c.device?` · último cambio desde "${c.lastDevice}"`:''):'Conectado, aún sin sincronizar' }
+function renderCloud(){
+  const box=$('#cloudBox'); if(!box) return; box.innerHTML=''; const c=cloudCfg();
+  box.append(h('p',{class:'hint',style:'margin-top:0',text:'Guarda tu progreso en un repositorio privado de tu GitHub y mantenlo igual en el teléfono, la app instalada y el computador. Se sincroniza solo al abrir la app, unos segundos después de cada cambio y al salir.'}));
+  if(!c){
+    const repo=h('input',{type:'text',id:'clRepo',placeholder:'tu-usuario/trastero-datos',autocomplete:'off',autocapitalize:'off',spellcheck:'false'}), tok=h('input',{type:'password',id:'clTok',placeholder:'github_pat_…',autocomplete:'off'}), dev=h('input',{type:'text',id:'clDev',value:/iPhone|iPad/.test(navigator.userAgent)?(navigator.standalone?'iPhone (app)':'iPhone (Safari)'):/Android/.test(navigator.userAgent)?'Android':'Computador'});
+    box.append(h('details',{},h('summary',{},'Cómo crear el repo y el token (5 minutos)'),
+      h('ol',{class:'help-ol'},
+        h('li',{},'En GitHub crea un repositorio nuevo, ',h('b',{text:'privado'}),' y vacío (por ejemplo "trastero-datos").'),
+        h('li',{},'Ve a Settings → Developer settings → Personal access tokens → ',h('b',{text:'Fine-grained tokens'}),' → Generate new token.'),
+        h('li',{},'En "Repository access" elige ',h('b',{text:'Only select repositories'}),' y marca solo ese repo.'),
+        h('li',{},'En "Permissions → Repository permissions" pon ',h('b',{text:'Contents: Read and write'}),'. Nada más.'),
+        h('li',{},'Ponle una fecha de vencimiento larga (por ejemplo un año), genera el token y pégalo aquí. Haz lo mismo en cada dispositivo (puedes usar el mismo token).'))),
+      h('div',{class:'stack',style:'gap:8px;margin-top:10px'},
+        h('div',{},h('label',{class:'lab',for:'clRepo',text:'Repositorio (usuario/nombre)'}),repo),
+        h('div',{},h('label',{class:'lab',for:'clTok',text:'Token'}),tok),
+        h('div',{},h('label',{class:'lab',for:'clDev',text:'Nombre de este dispositivo'}),dev),
+        h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:async e=>{
+          const rp=repo.value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/$/,''), tk=tok.value.trim();
+          if(!/^[\w.-]+\/[\w.-]+$/.test(rp)){ toast('Escribe el repo como usuario/nombre'); return } if(tk.length<20){ toast('Pega el token completo'); return }
+          e.target.disabled=true; e.target.textContent='Probando…';
+          localStorage.setItem('trastero.cloud',JSON.stringify({repo:rp,token:tk,path:'trastero/respaldo.json',device:dev.value.trim()||'dispositivo',on:true}));
+          localStorage.removeItem('trastero.__cbase');
+          try{ const rr=await fetch(`https://api.github.com/repos/${rp}`,{cache:'no-store',headers:{Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'}});
+            if(!rr.ok) throw ghErr(rr); const j=await rr.json(); if(!j.private) toast('Ojo: ese repo es público. Tus datos quedarían a la vista; usa uno privado.');
+            if(j.permissions&&!j.permissions.push) throw new Error('El token no tiene permiso de escritura (Contents: Read and write).');
+            renderCloud(); await cloudSync('connect') }
+          catch(err){ localStorage.removeItem('trastero.cloud'); toast(err.net?'Sin internet':err.message); e.target.disabled=false; e.target.textContent='Conectar' } }},'Conectar'))),
+      h('p',{class:'hint',text:'El token se guarda solo en este dispositivo y nunca va en los respaldos. Si lo pierdes o te lo roban, bórralo en GitHub y crea otro: solo da acceso a ese repo.'}));
+    return }
+  box.append(h('p',{class:'row',style:'margin:0;gap:8px'},h('span',{class:'lab',style:'margin:0',text:'Repo'}),h('span',{class:'mono',text:c.repo}),h('span',{class:'lab',style:'margin:0 0 0 8px',text:'Este dispositivo'}),h('span',{text:c.device||'—'})),
+    h('p',{id:'cloudStatus',class:'cstat'}),
+    h('div',{class:'toolbar'},
+      h('button',{class:'btn primary',onclick:()=>cloudSync('manual')},'Sincronizar ahora'),
+      h('button',{class:'btn',onclick:()=>{ const cc=cloudCfg(); cc.on=!cc.on; localStorage.setItem('trastero.cloud',JSON.stringify(cc)); renderCloud(); if(cc.on) cloudSoon(300) }},c.on?'Pausar en este dispositivo':'Reanudar'),
+      h('button',{class:'btn ghost danger',onclick:e=>{ const sp=e.target.parentNode; sp.replaceChildren(h('span',{class:'confirm'},'¿Desconectar este dispositivo? Tus datos quedan aquí y en la nube.',h('button',{class:'btn danger',onclick:()=>{ localStorage.removeItem('trastero.cloud'); localStorage.removeItem('trastero.__cbase'); CL.state='off'; renderCloud() }},'Sí'),h('button',{class:'btn ghost',onclick:renderCloud},'No'))) }},'Desconectar')));
+  renderCloudStatus() }
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
