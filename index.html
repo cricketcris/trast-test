@@ -693,6 +693,21 @@ a.btn.primary{color:var(--accent-ink)}
 .pchord b{font-family:var(--display);font-size:1rem;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg)}
 .pchord #pChordD{width:100%}
 .pchord svg{display:block;width:100%;height:auto}
+/* Fretline: etiqueta, menú ⋯ y panel */
+.sfl{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.sfl.off{background:none;color:var(--muted);border:1px dashed var(--line)}
+.smore{position:absolute;top:8px;right:8px;width:40px;height:40px;border-radius:12px;border:1px solid transparent;background:none;color:var(--muted);font-size:1.3rem;line-height:1;cursor:pointer}
+.smore:hover,.smore:focus-visible{border-color:var(--line);color:var(--fg);outline:none}
+.songcard:has(.smore) .sdemo{right:54px}
+.flpop{position:absolute;top:50px;right:8px;z-index:20;display:flex;flex-direction:column;min-width:220px;max-width:calc(100% - 16px);padding:6px;border-radius:14px;border:1px solid var(--line);background:var(--surface);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.flpop button{text-align:left;padding:11px 12px;border:0;border-radius:10px;background:none;color:var(--fg);font:inherit;font-size:.92rem;cursor:pointer}
+.flpop button:hover,.flpop button:focus-visible{background:color-mix(in srgb,var(--accent) 14%,transparent);outline:none}
+.flpop .hint{margin:6px 12px}
+.flrow{align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.sfl-box{display:flex;flex-direction:column;gap:6px;margin:10px 0 4px}
+.sfl-box .sfl{vertical-align:middle}
+#flBtn[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+.songcard:has(.flpop){z-index:30}
 
 </style>
 
@@ -1049,6 +1064,7 @@ a.btn.primary{color:var(--accent-ink)}
   <section id="v-cancion" class="view" hidden>
     <a class="backlink" href="#canciones">← Canciones</a>
     <div id="songHead"></div>
+    <div id="sFl" class="sfl-box" hidden></div>
     <div class="grid2" style="margin-top:16px">
       <div class="panel opts">
         <fieldset><legend class="lab">Modo</legend>
@@ -2444,17 +2460,19 @@ function chordForFrets(fr,label,tune){
 function buildSong(song){
   const bpm=song.bpm||90,cpb=song.cpb||4,spc=60/(bpm*cpb),TU=song.tune||OPEN;let t=0;const sections=[],notes=[],blocks=[],strums=[],chucks=[],csegs=[];
   song.raw.sections.forEach((s,si)=>{
-    const t0=t,dur=s.cols*spc;sections.push({i:si,name:s.name,start:t0,end:t0+dur});
+    // BPM propio de la sección (Fretline): proporcional al BPM de la canción, por si lo cambias en la ficha
+    const sp=s.bpm&&song.raw.bpm?spc*song.raw.bpm/s.bpm:spc;
+    const t0=t,dur=s.cols*sp;sections.push({i:si,name:s.name,start:t0,end:t0+dur});
     const segs=[];
-    s.events.forEach(e=>{const et=t0+e.col*spc;
+    s.events.forEach(e=>{const et=t0+e.col*sp;
       if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:TU[e.s]+e.f,tech:e.tech||'',sec:si,col:e.col});
       else if(e.type==='chuck') chucks.push({t:et,sec:si,col:e.col,strings:e.strings});
-      else if((song.raw.dyadNotes||song.src==='gp5')&&!e.dir&&e.frets.filter(f=>f>=0).length===2) e.frets.forEach((f,s)=>{ if(f>=0) notes.push({t:et,s,f,m:TU[s]+f,tech:'',sec:si,col:e.col,dyad:true}) });
+      else if((song.raw.dyadNotes||song.src==='gp5')&&!e.dir&&!e.strum&&e.frets.filter(f=>f>=0).length===2) e.frets.forEach((f,s)=>{ if(f>=0) notes.push({t:et,s,f,m:TU[s]+f,tech:'',sec:si,col:e.col,dyad:true}) });
       else {const c=chordForFrets(e.frets,e.label,song.tune);strums.push({t:et,dir:e.dir||'',chord:c,sec:si,col:e.col,frets:e.frets});
-        const last=segs[segs.length-1];if(last&&last.chord.id===c.id&&et-last.t1<=6*spc) last.t1=et+spc*2;else segs.push({t0:et,t1:et+spc*2,chord:c,sec:si})}});
+        const last=segs[segs.length-1];if(last&&last.chord.id===c.id&&et-last.t1<=6*sp) last.t1=et+sp*2;else segs.push({t0:et,t1:et+sp*2,chord:c,sec:si})}});
     // bloques de evaluación: cambios muy rápidos (D↔D6) se agrupan hasta ~0,8 s y aceptan cualquiera de sus acordes
     let cur=null;
-    segs.forEach((g,k)=>{const next=segs[k+1];g.t1=next?Math.min(next.t0,g.t1+8*spc):Math.min(t0+dur,g.t1+4*spc);csegs.push(g);
+    segs.forEach((g,k)=>{const next=segs[k+1];g.t1=next?Math.min(next.t0,g.t1+8*sp):Math.min(t0+dur,g.t1+4*sp);csegs.push(g);
       if(!cur){cur={t0:g.t0,t1:g.t1,chords:[g.chord],sec:si}}
       else{cur.t1=g.t1;if(!cur.chords.some(c=>c.id===g.chord.id)) cur.chords.push(g.chord)}
       if(cur.t1-cur.t0>=.8||!next||next.t0-cur.t1>.25){blocks.push(cur);cur=null}});
@@ -2546,10 +2564,11 @@ function songFromText(text,extra={}){
   s.cpb=extra.cpb||guessCpb(raw);
   return s;
 }
-function allSongs(){ return DEMOS.map(d=>Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true,cpb:d.cpb}),S.get('songmeta',{})[d.id]||{})).concat(songs) }
+function allSongs(){ return DEMOS.map(d=>Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true,cpb:d.cpb}),S.get('songmeta',{})[d.id]||{})).concat(songs,(()=>{ try{ return flSongs() }catch(e){ return [] } })()) }
 function getSong(id){ return allSongs().find(s=>s.id===id) }
 function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importadas, todo
   if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder}; if(song.edited) Object.assign(m[song.id],{raw:song.raw,raw0:song.raw0,edited:true}); S.set('songmeta',m) }
+  else if(song.flLive){ if(song.edited){ flPause(song,'editada'); toast('Esta canción dejó de sincronizarse con Fretline para no perder tus correcciones') } else flSaveMeta(song) }
   else { const i=songs.findIndex(x=>x.id===song.id); if(i>=0) songs[i]=song; else songs.push(song); saveSongs() }
 }
 
@@ -2590,9 +2609,9 @@ function openSong(id){ curSongId=id; if(location.hash==='#cancion') renderSongDe
 let folders=S.get('folders',[]); if(!Array.isArray(folders)) folders=[];
 const saveFolders=()=>S.set('folders',folders);
 const CAT_N={cancion:'Canción',riff:'Riff',ejercicio:'Ejercicio'};
-const folderOf=s=>s.folder||(s.demo?(s.cat==='ejercicio'?'Ejercicios':'Ejemplos'):'Sin carpeta');
+const folderOf=s=>s.folder||(s.fl?'Fretline':s.demo?(s.cat==='ejercicio'?'Ejercicios':'Ejemplos'):'Sin carpeta');
 const allFolders=()=>{ const used=songs.map(x=>x.folder).concat(Object.values(S.get('songmeta',{})).map(v=>v&&v.folder)).filter(Boolean);
-  return [...folders,...used,'Sin carpeta','Ejercicios','Ejemplos'].filter((x,i,a)=>typeof x==='string'&&a.indexOf(x)===i) };
+  return [...folders,...used,'Fretline','Sin carpeta','Ejercicios','Ejemplos'].filter((x,i,a)=>typeof x==='string'&&a.indexOf(x)===i) };
 let songQuery='', foldOpen=false;
 function folderSelect(cur,onpick,id){
   const sel=h('select',{id:id||null,style:'width:auto;max-width:100%','aria-label':'Carpeta'},allFolders().map(f=>h('option',{value:f,selected:f===cur?true:null},f)),h('option',{value:'__new'},'＋ Nueva carpeta…'));
@@ -2605,9 +2624,11 @@ function renderSongs(){
   const box=$('#songList'); box.innerHTML='';
   const tools=h('div',{class:'songtools'},
     h('input',{type:'text',enterkeyhint:'search',id:'songSearch',placeholder:'Buscar…','aria-label':'Buscar canciones',value:songQuery,oninput:e=>{ songQuery=e.target.value; renderSongGroups(); }}),
-    h('button',{class:'btn ghost',onclick:()=>{ foldOpen=!foldOpen; renderSongs() }},foldOpen?'Cerrar carpetas':'Carpetas'));
+    h('button',{class:'btn ghost',onclick:()=>{ foldOpen=!foldOpen; renderSongs() }},foldOpen?'Cerrar carpetas':'Carpetas'),
+    h('button',{class:'btn ghost',id:'flBtn','aria-pressed':String(flOpen),onclick:()=>{ flOpen=!flOpen; renderSongs() }},'⟳ Fretline'));
   box.append(tools);
   if(foldOpen) box.append(folderManager());
+  if(flOpen) box.append(flManager());
   box.append(h('div',{id:'songGroups'})); renderSongGroups();
 }
 function renderSongGroups(){
@@ -2627,7 +2648,9 @@ function renderSongGroups(){
         h('span',{class:'tdesc',text:`${s.bpm} BPM · ${tl.sections.length} ${tl.sections.length===1?'sección':'secciones'} · ${fmtClock(tl.len*1000)}`+(s.media&&s.media.src&&s.media.src!=='none'?` · ${s.media.src==='yt'?'YouTube':'Spotify'}`:'')}),
         h('span',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
         best?h('span',{class:'sbest',text:'Récord '+fmtN(best)}):null,
-        s.edited?h('span',{class:'sdemo',text:'Editada'}):s.demo?h('span',{class:'sdemo',text:'Incluida'}):null)) });
+        s.edited?h('span',{class:'sdemo',text:'Editada'}):s.demo?h('span',{class:'sdemo',text:'Incluida'}):null,
+        flTag(s),
+        s.fl?h('button',{class:'smore','aria-label':'Opciones de '+s.title,onclick:e=>{ e.preventDefault(); e.stopPropagation(); flMenu(e.currentTarget,s) }},'⋯'):null)) });
     box.append(det) });
 }
 function folderManager(){
@@ -2727,11 +2750,13 @@ function renderSongDetail(){
   [['rsStreak',0,20],['rsWin',0,30],['rsPct',10,95],['rsBack',0,15],['rsWait',0,15]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   $('#sWait').checked=cfg.wait; $('#sWait').onchange=e=>{cfg.wait=e.target.checked;save();$('#sWaitJump').disabled=!cfg.wait};
   $('#sWaitJump').checked=cfg.waitJump; $('#sWaitJump').disabled=!cfg.wait; $('#sWaitJump').onchange=e=>{cfg.waitJump=e.target.checked;save()};
+  if(![...$('#sCpb').options].some(o=>+o.value===+s.cpb)) $('#sCpb').append(h('option',{value:String(s.cpb)},`1/${s.cpb} de tiempo`));
   $('#sCpb').value=String(s.cpb); $('#sCpb').onchange=e=>{ s.cpb=+e.target.value; save(); renderSongDetail() };
   $('#sBpm').value=s.bpm; $('#sBpm').onchange=e=>{ const v=+e.target.value; if(v>=30&&v<=260){ s.bpm=v; save(); renderSongDetail() } };
   renderMediaCfg(s,save);
   const dz=$('#sDangerZone'); dz.innerHTML='';
-  if(!s.demo){ const del=h('span',{}); const ask=()=>{ del.innerHTML=''; del.append(h('span',{class:'confirm'},'¿Borrar esta canción?',h('button',{class:'btn danger',onclick:()=>{ songs=songs.filter(x=>x.id!==s.id); saveSongs(); location.hash='canciones' }},'Borrar'),h('button',{class:'btn ghost',onclick:renderSongDetail},'No'))) };
+  flDetail(s);
+  if(!s.demo&&!s.flLive){ const del=h('span',{}); const ask=()=>{ del.innerHTML=''; del.append(h('span',{class:'confirm'},s.fl?'¿Borrar esta copia? (en Fretline no se borra)':'¿Borrar esta canción?',h('button',{class:'btn danger',onclick:()=>{ songs=songs.filter(x=>x.id!==s.id); saveSongs(); if(s.fl){ const q=flPaused(); q[s.fl.id]={at:Date.now(),title:s.title,hidden:true}; setFlPaused(q) } location.hash='canciones' }},'Borrar'),h('button',{class:'btn ghost',onclick:renderSongDetail},'No'))) };
     del.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar canción')); dz.append(del) }
   $('#sPlay').onclick=()=>startPlayer(s);
   $('#sEdit').onclick=()=>startEditor(s,0);
@@ -3971,9 +3996,11 @@ async function cloudSync(why){
       CL.last=Date.now(); CL.err=''; CL.state='ok'; CL.dirty=false; break }
   }catch(e){ CL.err=e.message||String(e); CL.state=e.net?'offline':'err'; if(!e.net&&why!=='auto') toast('Nube: '+CL.err) }
   finally{ CL.busy=false; renderCloudStatus() }
+  if(CL.state==='ok'&&!changedHere&&CL.after) CL.after();
   if(changedHere){ if(Sess.running||PL.running){ S.stale=true; toast('Llegaron cambios de otro dispositivo; se aplican al terminar') } else { toast('Se trajeron cambios de otro dispositivo'); setTimeout(()=>location.reload(),700) } return }
   if(CL.again){ CL.again=false; cloudSoon(3000) } }
-function cloudSoon(ms=15000){ const c=cloudCfg(); if(!c||!c.on) return; clearTimeout(CL.timer); CL.timer=setTimeout(()=>{ if(Sess.running||PL.running){ cloudSoon(10000); return } cloudSync('auto') },ms) }
+// si ya hay una sincronización programada antes, no la atrasa (al abrir, las escrituras del arranque la empujaban 15 s)
+function cloudSoon(ms=15000){ const c=cloudCfg(); if(!c||!c.on) return; const due=Date.now()+ms; if(CL.timer&&CL.due&&CL.due<=due) return; clearTimeout(CL.timer); CL.due=due; CL.timer=setTimeout(()=>{ CL.timer=null; CL.due=0; if(Sess.running||PL.running){ cloudSoon(10000); return } cloudSync('auto') },ms) }
 /* cada vez que algo se guarda, se programa una subida */
 S.onwrite=k=>{ if(CL_SKIP.test(k)||CL.applying) return; CL.dirty=true; cloudSoon() };
 document.addEventListener('visibilitychange',()=>{ const c=cloudCfg(); if(!c||!c.on) return;
@@ -4022,6 +4049,186 @@ function renderCloud(){
       h('button',{class:'btn',onclick:()=>{ const cc=cloudCfg(); cc.on=!cc.on; localStorage.setItem('trastero.cloud',JSON.stringify(cc)); renderCloud(); if(cc.on) cloudSoon(300) }},c.on?'Pausar en este dispositivo':'Reanudar'),
       h('button',{class:'btn ghost danger',onclick:e=>{ const sp=e.target.parentNode; sp.replaceChildren(h('span',{class:'confirm'},'¿Desconectar este dispositivo? Tus datos quedan aquí y en la nube.',h('button',{class:'btn danger',onclick:()=>{ localStorage.removeItem('trastero.cloud'); localStorage.removeItem('trastero.__cbase'); CL.state='off'; renderCloud() }},'Sí'),h('button',{class:'btn ghost',onclick:renderCloud},'No'))) }},'Desconectar')));
   renderCloudStatus() }
+
+/* ---------- Fretline: sus canciones aparecen solas y se actualizan ----------
+   Fretline guarda fretline/respaldo.json en el mismo repo de la nube. Trastero solo lo LEE (nunca lo escribe).
+   Cada hoja se convierte directo (sin pasar por el texto): compases, recortes, secciones con repeticiones,
+   BPM por sección, afinación, cejilla y video. Lo convertido vive en trastero.__fl (no viaja a la nube:
+   cada equipo lo rehace). Lo que viaja es trastero.flpaused: las que no quieres que se sincronicen. */
+const FL_PATH='fretline/respaldo.json';
+const FL={busy:false,state:'',err:'',checked:0};
+const FL_TUNE={std:[40,45,50,55,59,64],dropD:[38,45,50,55,59,64],eb:[39,44,49,54,58,63],d:[38,43,48,53,57,62],dropC:[36,43,48,53,57,62],openG:[38,43,50,55,59,62],openD:[38,45,50,54,57,62],openE:[40,47,52,56,59,64],dadgad:[38,45,50,55,57,62]};
+const FL_TUNE_N={std:'Standard',dropD:'Drop D',eb:'Half step down (E♭)',d:'Whole step down (D)',dropC:'Drop C',openG:'Open G',openD:'Open D',openE:'Open E',dadgad:'DADGAD'};
+const flId=sid=>'fl_'+sid;
+
+/* hoja de Fretline → canción de Trastero */
+/* FLCONV-START */
+function flToSong(F){
+  if(!F||typeof F!=='object'||!/^s-[a-z0-9]{1,40}$/i.test(F.id)) return null;
+  const C=[8,12,16].includes(+F.cols)?+F.cols:16, notes=F.notes&&typeof F.notes==='object'?F.notes:{}, fx=F.fx||{};
+  const chords=(Array.isArray(F.chords)?F.chords:[]).filter(c=>c&&Array.isArray(c.frets)&&c.frets.length===6&&c.col>=0&&c.len>=1);
+  const joins=F.joins||{}, trimOf=u=>Math.max(0,Math.min(C-1,(F.trim&&+F.trim[u])||0));
+  const secs=(Array.isArray(F.sections)?F.sections:[]).filter(x=>x&&x.start>=0&&x.end>=x.start).slice().sort((a,b)=>a.start-b.start);
+  const isFret=v=>/^\d{1,2}$/.test(String(v));
+  let lc=-1; for(const k in notes){ const c=+k.split(',')[0]; if(c>=0) lc=Math.max(lc,c) } for(const c of chords) lc=Math.max(lc,c.col+c.len-1);
+  if(lc<0) return null;
+  let lastU=Math.floor(lc/C); while(joins[lastU]&&lastU<(F.measures||0)-1) lastU++;
+  const secOf=u=>secs.find(x=>u>=x.start&&u<=x.end);
+  // partes en orden: secciones y los compases sueltos entre ellas
+  const parts=[]; for(let u=0;u<=lastU;){ const x=secOf(u);
+    if(x){ parts.push({name:String(x.name||'Sección'),u0:x.start,u1:x.end,bpm:x.bpm,rep:Math.max(1,Math.min(8,x.repeat|0||1)),at:x.at}); u=x.end+1 }
+    else { let v=u; while(v+1<=lastU&&!secOf(v+1)) v++; parts.push({name:v>u?`Compases ${u+1}–${v+1}`:`Compás ${u+1}`,u0:u,u1:v,rep:1}); u=v+1 } }
+  // qué acorde ocupa cada columna (el acorde manda sobre las notas, igual que en el texto de Fretline)
+  const chAt=new Map(); for(const c of chords) for(let o=0;o<c.len&&o<4096;o++) if(!chAt.has(c.col+o)) chAt.set(c.col+o,c);
+  const nextOn=(col,s)=>{ for(let c=col+1;c<=col+16;c++){ const v=notes[c+','+s]; if(v!==undefined&&!chAt.has(c)) return isFret(v)?+v:null } return null };
+  const TECH={b:'b',br:'b',h:'h',p:'p'};
+  const fr=a=>a.map(f=>isFret(f)?+f:-1);
+  let harm=0, arp=0;
+  const evsOf=p=>{ const ev=[]; let col=0;
+    for(let u=p.u0;u<=p.u1;u++) for(let c=0;c<C-trimOf(u);c++,col++){ const g=u*C+c, ch=chAt.get(g);
+      if(ch){ const o=g-ch.col, st=ch.strum&&ch.strum[o];
+        if(o!==0&&!st) continue;
+        const f=fr(ch.frets); if(ch.mods&&ch.mods.arp) arp++;
+        if(st==='M'||f.every(x=>x<0)){ ev.push({col,type:'chuck',strings:[0,1,2,3,4,5],dir:st==='U'?'u':'d'}); continue }
+        const e={col,type:'chord',frets:f,tech:'',strum:true}; if(ch.name&&ch.name!=='?') e.label=String(ch.name).slice(0,40); if(st==='D') e.dir='d'; else if(st==='U') e.dir='u';
+        ev.push(e); continue }
+      const on=[], mute=[];
+      for(let s=0;s<6;s++){ const v=notes[g+','+s]; if(v===undefined) continue; const ts=5-s;   // Fretline: 0 = e aguda; Trastero: 0 = E grave
+        if(isFret(v)&&+v<=24) on.push({s:ts,f:+v,k:fx[g+','+s],fs:s}); else if(v==='x') mute.push(ts) }
+      if(on.length===1){ const n=on[0]; let tech=TECH[n.k]||'';
+        if(n.k==='s'){ const nx=nextOn(g,n.fs); tech=nx!=null&&nx<n.f?'\\':'/' }
+        if(n.k==='harm') harm++;
+        ev.push({col,type:'note',s:n.s,f:n.f,tech}) }
+      else if(on.length>1){ const f=[-1,-1,-1,-1,-1,-1]; on.forEach(n=>f[n.s]=n.f); ev.push({col,type:'chord',frets:f,tech:''}) }
+      else if(mute.length) ev.push({col,type:'chuck',strings:mute.sort()}) }
+    return {ev,cols:Math.max(1,col)} };
+  const bpm=Math.max(30,Math.min(260,Math.round(+F.bpm)||90)), cpb=C/4;
+  const seen={}, out=[]; let tSong=0, media=null;
+  const ytUrl=F.video&&/^https?:\/\/([a-z0-9-]+\.)*(youtube\.com|youtu\.be)\//i.test(String(F.video))?String(F.video):null;
+  for(const p of parts){ const {ev,cols}=evsOf(p), sbpm=p.bpm&&Math.round(p.bpm)!==bpm?Math.max(30,Math.min(260,Math.round(p.bpm))):null, dur=cols*60/((sbpm||bpm)*cpb);
+    if(ytUrl&&!media&&p.at!=null&&isFinite(+p.at)&&+p.at-tSong>=0) media={src:'yt',url:ytUrl,start:showTime(+p.at-tSong)};
+    for(let r=1;r<=p.rep;r++){ const base=p.name.toUpperCase(); seen[base]=(seen[base]||0)+1;
+      const sec={name:seen[base]>1?`${base} (${seen[base]})`:base,cols,events:r===1?ev:ev.map(e=>Object.assign({},e))}; if(sbpm) sec.bpm=sbpm;
+      out.push(sec); tSong+=dur } }
+  if(ytUrl&&!media) media={src:'yt',url:ytUrl,start:'0:00.0'};
+  const warnings=[]; if(harm) warnings.push(`${harm} armónicos: se juzgan como la nota del traste.`); if(arp) warnings.push('Hay acordes arpegiados: se juzgan como acorde.');
+  const capo=Math.max(0,Math.min(12,F.capo|0)), tk=FL_TUNE[F.tuning]?F.tuning:'std', tune=FL_TUNE[tk].map(m=>m+capo), std=tk==='std'&&!capo;
+  const title=String(F.title||'').trim().slice(0,200)||'Sin título';
+  const s={id:flId(F.id),title,bpm,cpb,cat:'cancion',media:media||{src:'none'},created:+F.createdAt||Date.now(),src:'fretline',
+    fl:{id:F.id,upd:+F.updatedAt||0},
+    raw:{dyadNotes:true,title,bpm,tuning:tk==='std'?'E A D G B E':FL_TUNE_N[tk]+' ('+FL_TUNE[tk].map(m=>NOTE[m%12]).join(' ')+')',sections:out,warnings}};
+  if(!std) s.tune=tune; if(capo) s.capo=capo;
+  return s }
+/* FLCONV-END */
+
+/* almacenamiento */
+let flData=S.get('__fl',null); if(!flData||typeof flData!=='object'||!flData.songs) flData={etag:'',at:0,songs:{},none:false};
+const flPaused=()=>{ const p=S.get('flpaused',{}); return p&&typeof p==='object'&&!Array.isArray(p)?p:{} };
+const setFlPaused=p=>S.set('flpaused',p);
+const flCopy=sid=>songs.find(x=>x.id===flId(sid));
+/* las que se muestran sincronizadas: lo que vino de Fretline + tus ajustes (carpeta, modo, video…) */
+function flSongs(){ const p=flPaused(), meta=S.get('songmeta',{});
+  return Object.values(flData.songs).filter(s=>!p[s.fl.id]&&!flCopy(s.fl.id)).map(s=>{ const c=JSON.parse(JSON.stringify(s)), m=meta[s.id]||{};
+    ['cpb','bpm','play','folder','cat','title'].forEach(k=>{ if(m[k]!=null) c[k]=m[k] }); if(m.media&&m.media.src) c.media=m.media;
+    c.flLive=true; return c }) }
+function flSaveMeta(song){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder,cat:song.cat}; S.set('songmeta',m) }
+/* dejar de sincronizar: queda una copia congelada tal como está (y viaja a tus otros equipos) */
+function flPause(song,why){ const sid=song.fl&&song.fl.id; if(!sid) return;
+  const copy=JSON.parse(JSON.stringify(song)); delete copy.flLive; copy.fl.paused=Date.now();
+  const i=songs.findIndex(x=>x.id===copy.id); if(i>=0) songs[i]=copy; else songs.push(copy); saveSongs();
+  const p=flPaused(); p[sid]={at:Date.now(),title:song.title,why:why||'manual'}; setFlPaused(p);
+  delete song.flLive; song.fl.paused=copy.fl.paused;   // la canción abierta (editor, ficha) sigue como copia
+  return copy }
+function flResume(sid){
+  const copy=flCopy(sid), p=flPaused();
+  if(copy){ flSaveMeta(copy); songs=songs.filter(x=>x!==copy); saveSongs() }   // conserva carpeta, modo y video
+  delete p[sid]; setFlPaused(p) }
+function flHide(song){ const sid=song.fl.id, p=flPaused(); p[sid]={at:Date.now(),title:song.title,hidden:true}; setFlPaused(p);
+  const copy=flCopy(sid); if(copy){ songs=songs.filter(x=>x!==copy); saveSongs() } }
+
+/* leer fretline/respaldo.json (solo lectura; con ETag, si no cambió GitHub responde 304 y no se baja nada) */
+async function flPull(why){
+  const c=cloudCfg(); if(!c||!c.on||!c.repo||!c.token||FL.busy) return; if(!navigator.onLine){ FL.state='offline'; flRenderStatus(); return }
+  FL.busy=true; FL.state='sync'; flRenderStatus();
+  try{
+    const url=`https://api.github.com/repos/${c.repo}/contents/${FL_PATH}?t=${why==='manual'?Date.now():Math.floor(Date.now()/60000)}`;
+    const hd={Authorization:'Bearer '+c.token,Accept:'application/vnd.github.raw+json','X-GitHub-Api-Version':'2022-11-28'};
+    let r; try{ r=await fetch(url,{cache:'no-store',headers:flData.etag&&why!=='manual'?Object.assign({'If-None-Match':flData.etag},hd):hd}) }
+    catch(e){ if(flData.etag){ try{ r=await fetch(url,{cache:'no-store',headers:hd}) }catch(e2){} } if(!r){ const er=new Error('Sin conexión a internet'); er.net=true; throw er } }
+    if(r.status===304){ FL.state='ok'; FL.err=''; FL.checked=Date.now(); return }
+    if(r.status===404){ flData.none=true; flData.at=Date.now(); FL.state='none'; FL.checked=Date.now(); S.set('__fl',flData); return }
+    if(!r.ok) throw ghErr(r);
+    const txt=await r.text(); let doc; try{ doc=JSON.parse(txt) }catch(e){ throw new Error('El archivo de Fretline está dañado.') }
+    if(!doc||doc.app!=='fretline'||!doc.data) throw new Error('fretline/respaldo.json no parece de Fretline.');
+    const res=flApply(doc); flData.etag=r.headers.get('ETag')||''; flData.at=Date.now(); flData.device=String(doc.device||'').slice(0,60); flData.none=false; S.set('__fl',flData);
+    FL.state='ok'; FL.err=''; FL.checked=Date.now();
+    const msg=[res.added&&`${res.added} nueva${res.added>1?'s':''}`,res.updated&&`${res.updated} actualizada${res.updated>1?'s':''}`,res.removed&&`${res.removed} borrada${res.removed>1?'s':''} en Fretline`].filter(Boolean);
+    if(msg.length&&why!=='quiet') toast('Fretline: '+msg.join(', '));
+    if(res.added||res.updated||res.removed) flRefreshViews(res);
+  }catch(e){ FL.err=e.message||String(e); FL.state=e.net?'offline':'err'; if(why==='manual') toast('Fretline: '+FL.err) }
+  finally{ FL.busy=false; flRenderStatus() } }
+function flApply(doc){
+  let list=[]; try{ list=JSON.parse(doc.data.songs||'[]') }catch(e){ throw new Error('Las canciones de Fretline no se pudieron leer.') }
+  if(!Array.isArray(list)) list=[];
+  const next={}, res={added:0,updated:0,removed:0,changed:[]};
+  for(const F of list.slice(0,2000)){ if(!F||F.example) continue; const id=String(F.id||''), old=flData.songs[id];
+    if(old&&old.fl.upd===(+F.updatedAt||0)){ next[id]=old; continue }
+    let s=null; try{ s=flToSong(F) }catch(e){ s=null }
+    if(!s){ if(old) next[id]=old; continue }
+    next[id]=s; if(old){ res.updated++; res.changed.push(s.id) } else res.added++ }
+  for(const id in flData.songs) if(!next[id]){ res.removed++; res.changed.push(flId(id)) }
+  flData.songs=next; return res }
+function flRefreshViews(res){
+  if(PL.running||Sess.running) return;
+  if(location.hash==='#canciones') renderSongs();
+  else if(location.hash==='#cancion'&&res.changed.includes(curSongId)) renderSongDetail() }
+
+/* interfaz: etiqueta, menú ⋯, panel de Fretline y la ficha */
+function flTag(s){ if(!s.fl) return null;
+  return h('span',{class:'sfl'+(s.flLive?'':' off'),title:s.flLive?'Se actualiza sola desde Fretline':'Sin sincronizar: copia congelada'},s.flLive?'⟳ Fretline':'Fretline · pausada') }
+function flMenuItems(s,after){ const sid=s.fl.id, items=[];
+  if(s.flLive){
+    items.push(['No sincronizar esta canción',()=>{ flPause(s,'manual'); toast('Queda tal como está. La encuentras en Fretline → Sin sincronizar para volver a activarla.'); after() }]);
+    items.push(['Ocultar de Trastero',()=>{ flHide(s); toast('Oculta. Puedes mostrarla de nuevo desde el panel Fretline.'); after() }]) }
+  else if(flData.songs[sid]) items.push([s.edited?'Volver a sincronizar (pierdes tus correcciones)':'Volver a sincronizar',()=>{ if(s.edited&&!confirm('Tus correcciones en Trastero se reemplazan por la versión de Fretline. ¿Seguir?')) return; flResume(sid); toast('Sincronizada otra vez'); after() }]);
+  else items.push(['Ya no está en Fretline: sigue como copia',null]);
+  return items }
+function flMenu(btn,s){ document.querySelectorAll('.flpop').forEach(x=>x.remove());
+  const pop=h('div',{class:'flpop',role:'menu'});
+  flMenuItems(s,()=>{ pop.remove(); renderSongs() }).forEach(([t,fn])=>pop.append(fn?h('button',{role:'menuitem',onclick:e=>{ e.preventDefault(); e.stopPropagation(); fn() }},t):h('p',{class:'hint',text:t})));
+  pop.append(h('button',{role:'menuitem',onclick:e=>{ e.preventDefault(); e.stopPropagation(); pop.remove(); openSong(s.id) }},'Abrir ficha'));
+  btn.closest('.songcard').append(pop);
+  setTimeout(()=>document.addEventListener('pointerdown',function f(e){ if(!pop.contains(e.target)&&e.target!==btn){ pop.remove(); document.removeEventListener('pointerdown',f,true) } },true),0) }
+function flRenderStatus(){ const el=$('#flStatus'); if(!el) return; const c=cloudCfg();
+  const n=Object.keys(flData.songs).length, ago=t=>{ const s=Math.round((Date.now()-t)/1000); return s<60?'hace un momento':s<3600?`hace ${Math.round(s/60)} min`:s<86400?`hace ${Math.round(s/3600)} h`:`hace ${Math.round(s/86400)} días` };
+  el.textContent=!c||!c.on?'Para traer tus canciones de Fretline, conecta la nube en Ajustes → Nube (el mismo repo que usa Fretline).'
+    :FL.state==='sync'?'Revisando Fretline…':FL.state==='offline'?'Sin internet: muestro lo último que traje.':FL.state==='err'?'Error: '+FL.err
+    :!flData.at?'Todavía no reviso Fretline; lo hago al sincronizar la nube.'
+    :flData.none?'Fretline todavía no ha guardado canciones en el repo. Actívalo en Fretline → Editor settings → GitHub backup.'
+    :`${n} canci${n===1?'ón':'ones'} en Fretline`+(flData.at?` · revisado ${ago(FL.checked||flData.at)}`:'')+(flData.device?` · último cambio desde ${flData.device}`:'') }
+let flOpen=false;
+function flManager(){
+  const wrap=h('div',{class:'panel foldman flman'},h('span',{class:'lab',text:'Fretline'}),h('p',{class:'hint',id:'flStatus'}),
+    h('p',{class:'hint',text:'Las canciones que escribes en Fretline aparecen aquí solas y se actualizan cuando las cambias allá. Con ⋯ en una canción puedes dejar de sincronizarla: queda congelada tal como está y aparece en esta lista para volver a activarla cuando quieras.'}),
+    h('div',{class:'row'},h('button',{class:'btn',onclick:()=>flPull('manual')},'Revisar ahora')));
+  const p=flPaused(), ids=new Set([...Object.keys(p),...songs.filter(x=>x.fl).map(x=>x.fl.id)]);
+  if(!ids.size) wrap.append(h('p',{class:'hint',text:'Todas tus canciones de Fretline se están sincronizando.'}));
+  else { wrap.append(h('span',{class:'lab',text:'Sin sincronizar'}));
+    for(const sid of ids){ const e=p[sid]||{}, copy=flCopy(sid), live=flData.songs[sid], title=(copy&&copy.title)||(live&&live.title)||e.title||'Canción';
+      const newer=copy&&live&&live.fl.upd>copy.fl.upd;
+      const st=e.hidden?'Oculta':copy&&copy.edited?'Congelada, con tus correcciones':e.why==='editada'?'Congelada al corregirla aquí':'Congelada';
+      wrap.append(h('div',{class:'row flrow'},h('div',{style:'flex:1;min-width:160px'},h('b',{text:title}),h('span',{class:'hint',style:'display:block;margin:0',text:st+(newer?' · hay una versión más nueva en Fretline':'')+(!live?' · ya no está en Fretline':'')})),
+        live?h('button',{class:'btn',onclick:()=>{ if(copy&&copy.edited&&!confirm('Tus correcciones en Trastero se reemplazan por la versión de Fretline. ¿Seguir?')) return; flResume(sid); toast(e.hidden?'Visible y sincronizada':'Sincronizada otra vez'); renderSongs() }},e.hidden?'Mostrar':'Volver a sincronizar'):null,
+        !live&&!copy?h('button',{class:'btn ghost',onclick:()=>{ const q=flPaused(); delete q[sid]; setFlPaused(q); renderSongs() }},'Quitar de la lista'):null)) } }
+  setTimeout(flRenderStatus,0); return wrap }
+/* bloque en la ficha */
+function flDetail(s){ const box=$('#sFl'); if(!box) return; box.innerHTML=''; box.hidden=!s.fl; if(!s.fl) return;
+  const live=flData.songs[s.fl.id], newer=!s.flLive&&live&&live.fl.upd>s.fl.upd;
+  box.append(h('p',{class:'hint',style:'margin:0'},flTag(s),' ',s.flLive?'Se actualiza sola cuando la cambias en Fretline.':'No se sincroniza: es una copia congelada'+(newer?'. En Fretline hay una versión más nueva.':'.')),
+    h('div',{class:'row'},flMenuItems(s,()=>renderSongDetail()).map(([t,fn])=>fn?h('button',{class:'btn ghost',onclick:fn},t):null))) }
+
+/* cuándo revisar: después de cada sincronización de la nube (al abrir, al volver a la app, cada 5 min…) */
+CL.after=()=>flPull('auto');
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
