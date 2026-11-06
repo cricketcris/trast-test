@@ -708,6 +708,56 @@ a.btn.primary{color:var(--accent-ink)}
 .sfl-box .sfl{vertical-align:middle}
 #flBtn[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
 .songcard:has(.flpop){z-index:30}
+/* ambiente por sección: fondo detrás de la autopista (el canvas es transparente) y el nombre grande y tenue */
+.hwrap>.hw{position:relative;z-index:1}
+.hwrap{--h:190;--i:.5;--h2:calc(var(--h) + 40)}
+.pamb{position:absolute;inset:0;z-index:0;pointer-events:none}
+.pamb::before,.pamb .pamb-fx{content:"";position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.pamb[data-kind]::before{opacity:1;background:
+  radial-gradient(120% 90% at 85% 0%,hsl(var(--h) 80% 55% / calc(.10 + .22*var(--i))),transparent 62%),
+  radial-gradient(90% 80% at 0% 100%,hsl(var(--h2) 75% 50% / calc(.06 + .16*var(--i))),transparent 60%)}
+.pamb.swap::before{animation:ambIn .9s ease-out}
+@keyframes ambIn{from{opacity:.15;filter:brightness(1.8)}to{opacity:1;filter:none}}
+.hwrap[data-amb=intro]{--h:215;--i:.35}
+.hwrap[data-amb=verse]{--h:185;--i:.45}
+.hwrap[data-amb=pre]{--h:38;--i:.7}
+.hwrap[data-amb=chorus]{--h:320;--i:1}
+.hwrap[data-amb=bridge]{--h:265;--i:.6}
+.hwrap[data-amb=solo]{--h:8;--i:.95}
+.hwrap[data-amb=break]{--h:205;--i:.25}
+.hwrap[data-amb=outro]{--h:245;--i:.4}
+.hwrap[data-amb=riff]{--h:150;--i:.6}
+.pamb b{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);max-width:94%;overflow:hidden;white-space:nowrap;text-overflow:clip;
+  font-family:var(--display);font-weight:800;font-size:clamp(2.6rem,15vw,9rem);letter-spacing:.04em;text-transform:uppercase;line-height:1;
+  color:hsl(var(--h) 90% 70%);opacity:0;text-shadow:0 0 40px hsl(var(--h) 90% 60% / .6)}
+.pamb.show b{animation:ambName 3.2s ease-out forwards}
+@keyframes ambName{0%{opacity:0;transform:translate(-50%,-50%) scale(1.18)}14%{opacity:.2;transform:translate(-50%,-50%) scale(1)}70%{opacity:.13}100%{opacity:0;transform:translate(-50%,-50%) scale(.98)}}
+/* Rock 80s: haces de luz de neón que barren el escenario; en el coro van más rápido */
+html[data-style=rock] .pamb .pamb-fx{opacity:calc(.25 + .6*var(--i));background:
+  conic-gradient(from 200deg at 20% 110%,transparent 0 8deg,hsl(var(--h) 100% 60% / .22) 12deg,transparent 18deg 40deg,hsl(var(--h2) 100% 60% / .18) 46deg,transparent 52deg),
+  conic-gradient(from 120deg at 85% 115%,transparent 0 10deg,hsl(var(--h2) 100% 62% / .2) 14deg,transparent 20deg 44deg,hsl(var(--h) 100% 60% / .16) 50deg,transparent 56deg);
+  animation:ambBeam 7s ease-in-out infinite alternate}
+html[data-style=rock] .pamb[data-kind=chorus] .pamb-fx,html[data-style=rock] .pamb[data-kind=solo] .pamb-fx{animation-duration:2.6s}
+html[data-style=rock] .pamb:not([data-kind]) .pamb-fx{opacity:0}
+@keyframes ambBeam{from{transform:translateX(-6%) skewX(-6deg)}to{transform:translateX(6%) skewX(6deg)}}
+html[data-style=rock] .pamb b{font-style:italic;color:hsl(var(--h) 100% 72%);text-shadow:0 0 18px hsl(var(--h) 100% 60%),0 0 60px hsl(var(--h2) 100% 55%)}
+/* Country: atardecer cálido sobre vetas de madera */
+html[data-style=country] .hwrap{--h2:calc(var(--h) + 18)}
+html[data-style=country] .hwrap[data-amb=intro]{--h:30} html[data-style=country] .hwrap[data-amb=verse]{--h:24}
+html[data-style=country] .hwrap[data-amb=pre]{--h:40} html[data-style=country] .hwrap[data-amb=chorus]{--h:45}
+html[data-style=country] .hwrap[data-amb=bridge]{--h:12} html[data-style=country] .hwrap[data-amb=solo]{--h:5}
+html[data-style=country] .hwrap[data-amb=break]{--h:28} html[data-style=country] .hwrap[data-amb=outro]{--h:18} html[data-style=country] .hwrap[data-amb=riff]{--h:35}
+html[data-style=country] .pamb[data-kind]::before{background:
+  linear-gradient(180deg,hsl(var(--h) 85% 55% / calc(.08 + .24*var(--i))) 0%,transparent 55%),
+  radial-gradient(70% 55% at 50% 0%,hsl(calc(var(--h) + 10) 95% 62% / calc(.08 + .2*var(--i))),transparent 70%)}
+html[data-style=country] .pamb[data-kind] .pamb-fx{opacity:.5;background:repeating-linear-gradient(176deg,transparent 0 26px,hsl(var(--h) 40% 30% / .07) 27px 29px,transparent 30px 61px)}
+html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 85% 68%);text-shadow:0 3px 0 rgba(0,0,0,.35),0 0 30px hsl(var(--h) 90% 50% / .5)}
+@media (prefers-reduced-motion:reduce){.pamb .pamb-fx{animation:none!important}.pamb.show b{animation-name:ambNameStill}@keyframes ambNameStill{0%,100%{opacity:0}15%,70%{opacity:.16}}}
+/* borde interior del color de la parte, por encima de la autopista: se ve aunque los bloques tapen el fondo, y destella al cambiar */
+.pamb-edge{position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .9s ease,box-shadow .9s ease}
+.hwrap[data-amb] .pamb-edge{opacity:1;box-shadow:inset 0 0 0 2px hsl(var(--h) 90% 60% / calc(.2 + .4*var(--i))),inset 0 0 60px hsl(var(--h) 90% 55% / calc(.14 + .3*var(--i)))}
+.pamb.swap~.pamb-edge{animation:ambEdge 1.1s ease-out}
+@keyframes ambEdge{0%{box-shadow:inset 0 0 0 3px hsl(var(--h) 100% 70% / .95),inset 0 0 110px hsl(var(--h) 100% 60% / .65)}}
 
 </style>
 
@@ -1112,6 +1162,7 @@ a.btn.primary{color:var(--accent-ink)}
         </fieldset>
         <fieldset><legend class="lab">Sonido</legend>
           <label class="check"><input type="checkbox" id="sClick">Clic de metrónomo</label>
+          <label class="check"><input type="checkbox" id="sAmb">Ambiente por sección: al pasar a otra parte (verso, coro, puente…) cambia el fondo y aparece su nombre</label>
           <div class="speedrow" style="margin-top:10px"><label for="sLat">Latencia del micrófono</label><input type="range" id="sLat" min="0" max="400" step="10"><b id="sLatV" class="mono">120 ms</b></div>
           <p class="hint">Si las notas que tocas a tiempo salen "tarde", sube la latencia.</p>
           <button class="btn" id="latBtn" style="margin-top:6px">Medir mi latencia</button>
@@ -1164,6 +1215,7 @@ a.btn.primary{color:var(--accent-ink)}
           <p class="hint">Si la canción va muy rápida o muy lenta comparada con el original, cambia esto. Se deduce de la duración que indica Fretline.</p>
           <div class="row" style="margin-top:8px"><label for="sBpm">BPM</label><input type="number" id="sBpm" min="30" max="260" style="width:96px"></div>
         </details>
+        <div id="sFlSend" class="sfl-box" hidden></div>
         <div class="toolbar" id="sDangerZone"></div>
       </div>
     </div>
@@ -1178,11 +1230,11 @@ a.btn.primary{color:var(--accent-ink)}
       <div class="ptitle"><b id="pTitle"></b><span id="pSec"></span></div>
       <span class="pmode" id="pMode"></span>
     </div>
-    <div class="hwrap" id="hwrap"><div class="phud" id="phud">
+    <div class="hwrap" id="hwrap"><div class="pamb" id="pAmb" aria-hidden="true"><i class="pamb-fx"></i><b id="pAmbT"></b></div><div class="phud" id="phud">
       <div class="stat score"><span class="k">Puntaje</span><b id="pScore">0</b></div>
       <div class="stat"><span class="k">Combo</span><b id="pCombo">0</b></div>
       <div class="stat"><span class="k">Acierto</span><b id="pAcc">–</b></div>
-    </div><canvas id="hw" class="hw"></canvas><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div><div id="pChord" class="pchord" hidden><span class="k" id="pChordK"></span><b id="pChordN"></b><div id="pChordD"></div></div></div>
+    </div><canvas id="hw" class="hw"></canvas><i class="pamb-edge" aria-hidden="true"></i><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div><div id="pChord" class="pchord" hidden><span class="k" id="pChordK"></span><b id="pChordN"></b><div id="pChordD"></div></div></div>
     <div class="ptl" id="ptl" aria-label="Línea de tiempo de la canción">
       <div class="ptl-secs" id="ptlSecs"></div>
       <div class="ptl-loop" id="ptlLoop"></div>
@@ -2739,6 +2791,7 @@ function renderSongDetail(){
   $('#sLoop').checked=cfg.loop; $('#sLoop').onchange=e=>{cfg.loop=e.target.checked;save()};
   document.querySelectorAll('input[name=sMarg]').forEach(r=>{ r.checked=r.value===(cfg.margin||'normal'); r.onchange=()=>{ cfg.margin=r.value; save(); margHint(cfg) } }); margHint(cfg);
   $('#sClick').checked=cfg.click; $('#sClick').onchange=e=>{cfg.click=e.target.checked;save()};
+  $('#sAmb').checked=cfg.amb!==false; $('#sAmb').onchange=e=>{ cfg.amb=e.target.checked; save() };
   $('#sLat').value=cfg.lat; $('#sLatV').textContent=cfg.lat+' ms'; $('#sLat').oninput=e=>{cfg.lat=+e.target.value;cfg.latUser=true;$('#sLatV').textContent=cfg.lat+' ms'}; $('#sLat').onchange=save;
   $('#sDelay').value=cfg.delay||0; $('#sDelayV').textContent=(cfg.delay||0)+' s'; $('#sDelay').oninput=e=>{cfg.delay=+e.target.value;$('#sDelayV').textContent=cfg.delay+' s'}; $('#sDelay').onchange=save;
   $('#latBtn').onclick=()=>latStart(cfg,save); $('#latAgain').onclick=()=>latStart(cfg,save);
@@ -2755,7 +2808,7 @@ function renderSongDetail(){
   $('#sBpm').value=s.bpm; $('#sBpm').onchange=e=>{ const v=+e.target.value; if(v>=30&&v<=260){ s.bpm=v; save(); renderSongDetail() } };
   renderMediaCfg(s,save);
   const dz=$('#sDangerZone'); dz.innerHTML='';
-  flDetail(s);
+  flDetail(s); flSendBox(s);
   if(!s.demo&&!s.flLive){ const del=h('span',{}); const ask=()=>{ del.innerHTML=''; del.append(h('span',{class:'confirm'},s.fl?'¿Borrar esta copia? (en Fretline no se borra)':'¿Borrar esta canción?',h('button',{class:'btn danger',onclick:()=>{ songs=songs.filter(x=>x.id!==s.id); saveSongs(); if(s.fl){ const q=flPaused(); q[s.fl.id]={at:Date.now(),title:s.title,hidden:true}; setFlPaused(q) } location.hash='canciones' }},'Borrar'),h('button',{class:'btn ghost',onclick:renderSongDetail},'No'))) };
     del.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar canción')); dz.append(del) }
   $('#sPlay').onclick=()=>startPlayer(s);
@@ -2807,7 +2860,7 @@ function startPlayer(s,opts={}){
   const mode=cfg.mode, speed=mode==='test'?1:cfg.speed/100;
   Object.assign(PL,{running:true,paused:false,hold:false,song:s,tl,cfg,mode,speed,k:0,
     score:0,shown:0,combo:0,maxCombo:0,passes:0,started:performance.now(),sm:new Float32Array(12),bv:new Float32Array(12),pct:null,media:null,pitches:[],dts:[],
-    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0,progUps:0,speed0:speed});
+    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0,progUps:0,speed0:speed,ambSec:null,ambSeen:{}});
   plColors(); plLoad(tl);
   PL.segs=buildSegs();
   location.hash='tocar';
@@ -3026,6 +3079,23 @@ function chordCard(t){
   box.hidden=false; box.classList.toggle('next',g!==cur);
   if(PL.ccKey!==key){ PL.ccKey=key; $('#pChordK').textContent=g===cur?'Ahora':'Sigue'; $('#pChordN').textContent=c.name; $('#pChordD').innerHTML=diagram(c.frets) }
   const hx=PL.lay&&PL.lay.hx||90; box.style.width=Math.max(70,Math.min(150,hx-12))+'px' }
+/* ambiente por sección: cada parte tiene su fondo (según su tipo y el estilo) y al entrar aparece su nombre, grande y tenue */
+const AMB_KINDS=[['intro',/intro|entrada/i],['pre',/pre|subida|build|levant/i],['chorus',/coro|chorus|estribillo|refr/i],['verse',/verso|verse|estrofa/i],['bridge',/puente|bridge/i],['solo',/solo|lead/i],['break',/bajada|break|interl|calma/i],['outro',/outro|final|fin\b|coda|cierre/i],['riff',/riff|lick/i]];
+const AMB_ORDER=['verse','chorus','bridge','pre','solo','break'];
+function ambKind(name,i){ for(const [k,re] of AMB_KINDS) if(re.test(name)) return k; return AMB_ORDER[i%AMB_ORDER.length] }
+function ambience(si,sec){
+  const box=$('#pAmb'); if(!box) return;
+  const on=PL.cfg&&PL.cfg.amb!==false&&!PL.edit;
+  if(!on){ if(box.dataset.kind){ delete box.dataset.kind; delete $('#hwrap').dataset.amb; box.classList.remove('show') } PL.ambSec=null; return }
+  if(PL.ambSec===si) return;
+  const prev=PL.ambSec; PL.ambSec=si; PL.ambSeen=PL.ambSeen||{};
+  const base=sec.name.replace(/\s*\(\d+\)$/,''), k=ambKind(base,si), now=performance.now();
+  box.dataset.kind=k; $('#hwrap').dataset.amb=k; box.classList.remove('swap'); void box.offsetWidth; box.classList.add('swap');
+  // en loops cortos la misma parte vuelve cada pocos segundos: el nombre solo aparece si no lo viste hace poco
+  const recent=PL.ambSeen[si]&&now-PL.ambSeen[si]<15000; PL.ambSeen[si]=now;
+  if(recent&&prev!=null) return;
+  const rep=/\((\d+)\)$/.exec(sec.name), T=$('#pAmbT');
+  T.textContent=base+(rep?' · '+rep[1]:''); box.classList.remove('show'); void box.offsetWidth; box.classList.add('show') }
 function playerHud(t){
   PL.shown+=(PL.score-PL.shown)*.25; if(Math.abs(PL.score-PL.shown)<1) PL.shown=PL.score;
   $('#pScore').textContent=fmtN(PL.shown); $('#pCombo').textContent=PL.combo>=2?PL.combo+' ×'+multOf(PL.combo):PL.combo;
@@ -3033,6 +3103,7 @@ function playerHud(t){
   const done=PL.notes.filter(n=>(n.st===1||n.st===-1)&&act(n)).length+PL.blocks.filter(b=>(b.st===1||b.st===-1)&&act(b)).length, hits=PL.notes.filter(n=>n.st===1&&act(n)).length+PL.blocks.filter(b=>b.st===1&&act(b)).length;
   $('#pAcc').textContent=done?Math.round(hits/done*100)+'%':'–';
   const secs=PL.tl.sections, sec=secs.find(x=>t>=x.start&&t<x.end)||(t<secs[0].start?secs[0]:secs[secs.length-1]);
+  ambience(secs.indexOf(sec),sec);
   $('#pSec').textContent=sec.name+(PL.mode==='practice'?` · ${Math.round(PL.speed*100)}%`+(PL.passes?` · vuelta ${PL.passes+1}`:''):'');
   const cur=PL.blocks.find(b=>t>=b.t0-.05&&t<b.t1), nxt=PL.blocks.find(b=>b.t0>t+.05&&act(b)), nn2=PL.notes.filter(n=>n.t>t-.05&&act(n)).slice(0,4);
   $('#pNow').textContent=cur?cur.chords.map(c=>c.name).join(' / '):(nn2.length&&nn2[0].t-t<1.2?'Riff':'–');
@@ -4118,7 +4189,62 @@ function flToSong(F){
     fl:{id:F.id,upd:+F.updatedAt||0},
     raw:{dyadNotes:true,title,bpm,tuning:tk==='std'?'E A D G B E':FL_TUNE_N[tk]+' ('+FL_TUNE[tk].map(m=>NOTE[m%12]).join(' ')+')',sections:out,warnings}};
   if(!std) s.tune=tune; if(capo) s.capo=capo;
+  if(F.origin&&F.origin.app==='trastero'&&F.origin.id) s.flOrigin=String(F.origin.id);
   return s }
+/* canción de Trastero → hoja de Fretline (para mandarla a su bandeja). Devuelve {sheet, warnings}. */
+function songToSheet(song,secStarts){
+  const raw=song.raw, cpb=song.cpb||4, bpm=song.bpm||90, warnings=[];
+  const cols=[]; raw.sections.forEach(x=>{ cols.push(x.cols); x.events.forEach(e=>cols.push(e.col)) });
+  const whole=v=>Math.abs(v-Math.round(v))<1e-6;
+  // grilla: G columnas por tiempo en Fretline (16, 12 u 8 por compás); f = columnas de Fretline por columna de Trastero
+  let G=0,f=0,fbpm=bpm;
+  for(const g of [4,3,2]) if(cols.every(c=>whole(c*g/cpb))){ G=g; f=g/cpb; break }
+  // lo importado de texto viene de Fretline (semicorcheas): los desfases son del ancho de los números, así que se redondea.
+  // Lo de Guitar Pro puede tener fusas de verdad: se escribe a más BPM para que suene igual.
+  if(!G&&song.src==='gp5') for(const g of [4,3,2]){ const b=bpm*cpb/g; if(b<=260&&b>=30&&whole(b)){ G=g; f=1; fbpm=Math.round(b); warnings.push(`Tiene ritmos más finos que semicorcheas: en Fretline queda escrita a ${fbpm} BPM (suena igual).`); break } }
+  if(!G){ G=4; f=4/cpb; const moved=cols.filter(c=>!whole(c*f)).length; if(moved) warnings.push(`${moved} ${moved===1?'nota se corre':'notas se corren'} a la semicorchea más cercana.`) }
+  const C=G*4, k=fbpm/bpm;
+  // afinación + cejilla → una de las afinaciones de Fretline
+  let tk='std',capo=0; const tu=song.tune||[40,45,50,55,59,64];
+  found: for(const [key,m] of Object.entries(FL_TUNE)) for(let c=0;c<=12;c++) if(m.every((x,i)=>x+c===tu[i])){ tk=key; capo=c; break found }
+  if(song.tune&&tk==='std'&&!capo&&!tu.every((x,i)=>x===FL_TUNE.std[i])){ warnings.push('Su afinación no existe en Fretline: la dejo en estándar y los trastes quedan iguales.') }
+  const TECH={b:'b','/':'s','\\':'s',h:'h',p:'p'};
+  const notes={}, fx={}, chords=[], sections=[], trim={}; let u=0, clash=0;
+  const media=song.media&&song.media.src==='yt'&&song.media.url?song.media:null, m0=media?parseTime(media.start):0;
+  raw.sections.forEach((sec,si)=>{
+    const fcols=Math.max(1,Math.round(sec.cols*f)), units=Math.ceil(fcols/C), u0=u; u+=units;
+    if(units*C>fcols) trim[u0+units-1]=units*C-fcols;
+    const o={id:uid(),name:String(sec.name||'Sección').slice(0,60),start:u0,end:u0+units-1,color:si%6,repeat:1,collapsed:false};
+    if(sec.bpm) o.bpm=Math.max(30,Math.min(260,Math.round(sec.bpm*k)));
+    if(media&&secStarts&&secStarts[si]!=null) o.at=Math.round((m0+secStarts[si])*10)/10;
+    sections.push(o);
+    const at=c=>u0*C+Math.min(fcols-1,Math.round(c*f));
+    const evs=sec.events.slice().sort((a,b)=>a.col-b.col);
+    const put=(key,v)=>{ if(notes[key]!==undefined) clash++; notes[key]=v };
+    for(let i=0;i<evs.length;i++){ const e=evs[i], g=at(e.col);
+      if(e.type==='note'){ const key=g+','+(5-e.s); put(key,String(e.f)); if(TECH[e.tech]) fx[key]=TECH[e.tech]; continue }
+      if(e.type==='chuck'){ (e.strings&&e.strings.length?e.strings:[0,1,2,3,4,5]).forEach(st=>put(g+','+(5-st),'x')); continue }
+      // díadas sueltas de Guitar Pro (dos cuerdas, sin rasgueo) son notas de un arpegio, no un acorde
+      if((raw.dyadNotes||song.src==='gp5')&&!e.dir&&!e.strum&&e.frets.filter(x=>x>=0).length===2){ e.frets.forEach((x,st)=>{ if(x>=0) put(g+','+(5-st),String(x)) }); continue }
+      // acordes seguidos con la misma digitación (y chucks entre ellos) = un solo acorde de Fretline con su patrón de rasgueo
+      const key=e.frets.join('.'), strum={}; let j=i, last=g;
+      strum[0]=e.dir==='u'?'U':'D';
+      while(j+1<evs.length){ const n=evs[j+1], ng=at(n.col);
+        if(n.type==='chord'&&n.frets.join('.')===key&&ng>last){ strum[ng-g]=n.dir==='u'?'U':'D'; last=ng; j++ }
+        else if(n.type==='chuck'&&n.dir&&ng>last){ strum[ng-g]='M'; last=ng; j++ }
+        else break }
+      const nx=j+1<evs.length?at(evs[j+1].col):u0*C+fcols, len=Math.max(last-g+1,nx-g);
+      const nm=e.label||chordForFrets(e.frets,null,song.tune).name;
+      if(Object.keys(strum).length===1&&!e.dir) delete strum[0];
+      chords.push({id:uid(),col:g,len,name:String(nm||'?').slice(0,40),frets:e.frets.map(x=>x<0?'x':String(x)),hidden:false,strum,mods:{}});
+      i=j }
+  });
+  if(clash) warnings.push(`${clash} notas caían en el mismo lugar al ajustar el ritmo y quedó una.`);
+  const now=Date.now();
+  const sheet={v:2,id:'s-'+now.toString(36)+uid(),title:String(song.title||'Sin título').slice(0,200),bpm:Math.max(30,Math.min(260,Math.round(fbpm))),cols:C,measures:u+1,
+    notes,fx,chords,sections,joins:{},trim,focus:null,tuning:tk,capo,cursor:{col:0,s:0},example:false,createdAt:now,updatedAt:now,origin:{app:'trastero',id:song.id}};
+  if(media) sheet.video=media.url;
+  return {sheet,warnings} }
 /* FLCONV-END */
 
 /* almacenamiento */
@@ -4164,7 +4290,7 @@ async function flPull(why){
     FL.state='ok'; FL.err=''; FL.checked=Date.now();
     const msg=[res.added&&`${res.added} nueva${res.added>1?'s':''}`,res.updated&&`${res.updated} actualizada${res.updated>1?'s':''}`,res.removed&&`${res.removed} borrada${res.removed>1?'s':''} en Fretline`].filter(Boolean);
     if(msg.length&&why!=='quiet') toast('Fretline: '+msg.join(', '));
-    if(res.added||res.updated||res.removed) flRefreshViews(res);
+    if(res.added||res.updated||res.removed||res.moved) flRefreshViews(res);
   }catch(e){ FL.err=e.message||String(e); FL.state=e.net?'offline':'err'; if(why==='manual') toast('Fretline: '+FL.err) }
   finally{ FL.busy=false; flRenderStatus() } }
 function flApply(doc){
@@ -4177,7 +4303,14 @@ function flApply(doc){
     if(!s){ if(old) next[id]=old; continue }
     next[id]=s; if(old){ res.updated++; res.changed.push(s.id) } else res.added++ }
   for(const id in flData.songs) if(!next[id]){ res.removed++; res.changed.push(flId(id)) }
-  flData.songs=next; return res }
+  flData.songs=next;
+  // una canción que mandaste desde Trastero ya está en Fretline: la copia local se reemplaza por la sincronizada (con tus ajustes y récords)
+  for(const s of Object.values(next)){ if(!s.flOrigin) continue; const old=songs.find(x=>x.id===s.flOrigin); if(!old) continue;
+    const m=S.get('songmeta',{}); m[s.id]=Object.assign({},m[s.id]||{},{media:old.media&&old.media.src!=='none'?old.media:undefined,play:old.play,folder:old.folder,cat:old.cat}); S.set('songmeta',m);
+    const recs=S.get('songrec',{}); let mv=false; for(const k of Object.keys(recs)) if(k.startsWith(old.id+'|')){ const nk=s.id+k.slice(old.id.length); if(!recs[nk]||(recs[nk].score||0)<(recs[k].score||0)) recs[nk]=recs[k]; delete recs[k]; mv=true } if(mv) S.set('songrec',recs);
+    songs=songs.filter(x=>x!==old); saveSongs(); if(curSongId===old.id) curSongId=s.id;
+    res.moved=(res.moved||0)+1; res.changed.push(s.id); toast(`“${old.title}” ya está en Fretline: desde ahora se sincroniza sola`) }
+  return res }
 function flRefreshViews(res){
   if(PL.running||Sess.running) return;
   if(location.hash==='#canciones') renderSongs();
@@ -4226,6 +4359,34 @@ function flDetail(s){ const box=$('#sFl'); if(!box) return; box.innerHTML=''; bo
   const live=flData.songs[s.fl.id], newer=!s.flLive&&live&&live.fl.upd>s.fl.upd;
   box.append(h('p',{class:'hint',style:'margin:0'},flTag(s),' ',s.flLive?'Se actualiza sola cuando la cambias en Fretline.':'No se sincroniza: es una copia congelada'+(newer?'. En Fretline hay una versión más nueva.':'.')),
     h('div',{class:'row'},flMenuItems(s,()=>renderSongDetail()).map(([t,fn])=>fn?h('button',{class:'btn ghost',onclick:fn},t):null))) }
+
+/* Enviar a Fretline: la canción va a fretline/inbox.json; Fretline la recoge al sincronizar y la devuelve como canción de Fretline */
+const FL_INBOX='fretline/inbox.json';
+async function flSend(song){
+  const c=cloudCfg(); if(!c||!c.repo||!c.token) throw new Error('Primero conecta la nube en Ajustes → Nube.');
+  const {sheet}=songToSheet(song,buildSong(song).sections.map(x=>x.start));
+  const url=`https://api.github.com/repos/${c.repo}/contents/${FL_INBOX}`, hd={Authorization:'Bearer '+c.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  for(let tries=0;tries<4;tries++){
+    let r; try{ r=await fetch(url+`?t=${Date.now()}`,{cache:'no-store',headers:hd}) }catch(e){ throw new Error('Sin conexión a internet') }
+    let sha=null, doc={app:'inbox',v:1,items:[]};
+    if(r.ok){ const j=await r.json(); sha=j.sha; try{ const d=JSON.parse(b64dec(j.content||'')); if(d&&Array.isArray(d.items)) doc=d }catch(e){} }
+    else if(r.status!==404) throw ghErr(r);
+    doc.items=doc.items.filter(it=>!(it&&it.sheet&&it.sheet.origin&&it.sheet.origin.id===song.id));   // si la mandaste dos veces, vale la última
+    doc.items.push({id:uid()+Date.now().toString(36),at:Date.now(),device:c.device||'',sheet});
+    let pr; try{ pr=await fetch(url,{method:'PUT',cache:'no-store',headers:Object.assign({'Content-Type':'application/json'},hd),body:JSON.stringify({message:`Trastero · ${c.device||'dispositivo'} · a Fretline`,content:b64enc(JSON.stringify(doc)),...(sha?{sha}:{})})}) }catch(e){ throw new Error('Sin conexión a internet') }
+    if(pr.status===409||pr.status===422) continue;
+    if(!pr.ok) throw ghErr(pr);
+    return true }
+  throw new Error('GitHub estaba ocupado; prueba de nuevo.') }
+function flSendBox(s){ const box=$('#sFlSend'); if(!box) return; box.innerHTML=''; box.hidden=!!s.fl||!!s.demo; if(box.hidden) return;
+  const sent=s.flSent, {warnings}=songToSheet(s,null);
+  const btn=h('button',{class:'btn',onclick:async()=>{ btn.disabled=true; btn.textContent='Enviando…';
+    try{ await flSend(s); s.flSent=Date.now(); saveSongMeta(s); toast('Enviada. Aparece en Fretline la próxima vez que se sincronice.'); flSendBox(s) }
+    catch(e){ toast('Fretline: '+(e.message||e)); btn.disabled=false; btn.textContent=sent?'Enviar de nuevo':'Enviar a Fretline' } }},sent?'Enviar de nuevo':'Enviar a Fretline');
+  box.append(h('span',{class:'lab',text:'Fretline'}),
+    h('p',{class:'hint',style:'margin:0',text:sent?`Enviada ${new Date(sent).toLocaleDateString()}. Cuando Fretline la recoja (al abrirlo con la sincronización de GitHub activa), vuelve aquí como canción de Fretline y esta copia se reemplaza, con tus ajustes y récords.`:'Mándala a Fretline para seguir escribiéndola allá. Cuando Fretline la recoja, vuelve aquí sincronizada y esta copia se reemplaza, con tus ajustes y récords.'}),
+    warnings.length?h('p',{class:'hint',style:'margin:0;color:var(--warn)',text:warnings.join(' ')}):null,
+    h('div',{class:'row'},btn)) }
 
 /* cuándo revisar: después de cada sincronización de la nube (al abrir, al volver a la app, cada 5 min…) */
 CL.after=()=>flPull('auto');
