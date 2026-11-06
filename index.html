@@ -2946,7 +2946,8 @@ function playerLoop(){
   if(PL.jumped){ const nt=songTime(); drawHighway(nt); playerHud(nt); updateTimeline(nt); return }
   if(PL.cfg.click&&!PL.paused&&!PL.hold&&t>=PL.countEnd){ const bi=Math.floor((t+1e-6)/beatSec()); if(bi!==PL.lastBeat){ PL.lastBeat=bi; PL.beatPulse=1; const a=ctx(); if(a) click(a.currentTime+.01,bi%4===0) } }
   // fallos (en nota por nota no hay: la canción espera)
-  if(!(PL.mode==='practice'&&PL.cfg.wait)){
+  // ni en pausa (mientras arrastras la autopista el tiempo se mueve, pero no estás tocando) ni esperando al anti-colapso
+  if(!(PL.mode==='practice'&&PL.cfg.wait)&&!PL.paused&&!PL.rsWaiting){
     const lateN=lagT()+winL()+.04;
     for(const n of PL.notes){ if(PL.jumped) break; if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; miss(n.s); track(n.t,false) } }
     for(const b of PL.blocks){ if(PL.jumped) break; if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; miss(-1); track(b.t0,false) } }
@@ -2955,7 +2956,7 @@ function playerLoop(){
 }
 /* anti-colapso (práctica): si se acumulan fallos, vuelve unos segundos antes del primero y espera */
 function track(t,ok){
-  const c=PL.cfg; if(PL.mode!=='practice'||c.wait||!c.rescue) return;
+  const c=PL.cfg; if(PL.mode!=='practice'||c.wait||!c.rescue||!PL.mic) return;   // sin micrófono todo es fallo: no tiene sentido rescatar
   const R=PL.recent||(PL.recent=[]); R.push({t,ok}); if(R.length>60) R.shift();
   let streak=0; while(streak<R.length&&!R[R.length-1-streak].ok) streak++;
   let first=null;
@@ -3337,10 +3338,10 @@ function rewindTo(nt){
   if(nt<from){ // hacia atrás: lo que ya habías tocado desde ahí deja de contar
     let back=0; const undo=o=>{ if(o.st===1||o.st===-1){ if(o.st===1&&o.pts){ back+=o.pts; if(o.tg) PL.cats[o.tg]=Math.max(0,(PL.cats[o.tg]||0)-1) } o.st=0; o.fb=0; o.late=0; o.pts=0; if(o.ok!=null){ o.ok=0; o.best=0 } } else if(o.st===2) o.st=0 };
     PL.notes.forEach(n=>{ if(n.t>=nt-1e-6) undo(n) }); PL.blocks.forEach(b=>{ if(b.t0>=nt-1e-6) undo(b) });
-    PL.score=Math.max(0,PL.score-back); PL.shown=PL.score; PL.recent=(PL.recent||[]).filter(r=>r.t<nt); PL.combo=0; PL.lastMult=1 }
+    PL.score=Math.max(0,PL.score-back); PL.shown=PL.score; PL.combo=0; PL.lastMult=1 }
   else { // hacia adelante: lo que saltaste no cuenta
     PL.notes.forEach(n=>{ if(n.st===0&&n.t>=from&&n.t<nt) n.st=2 }); PL.blocks.forEach(b=>{ if(b.st===0&&b.t0>=from&&b.t0<nt) b.st=2 }) }
-  PL.lostAt=null; PL.pausedAt=nt }
+  PL.recent=[]; PL.lostAt=null; PL.pausedAt=nt }   // te ubicaste a mano: el anti-colapso parte de cero
 (()=>{ const cv=$('#hw'); let d=null;
   cv.addEventListener('pointerdown',e=>{ if(!PL.running||PL.edit||$('#v-tocar').classList.contains('done')||(e.pointerType==='mouse'&&e.button!==0)) return; e.preventDefault(); d={x:e.clientX,moved:false,startT:null}; cv.classList.add('grabbing'); try{ cv.setPointerCapture(e.pointerId) }catch(_){} });
   cv.addEventListener('pointermove',e=>{ if(!d||PL.mode!=='practice'||PL.confirm) return; const dx=e.clientX-d.x; if(!d.moved&&Math.abs(dx)<8) return;
