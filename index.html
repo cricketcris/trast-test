@@ -758,6 +758,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .hwrap[data-amb] .pamb-edge{opacity:1;box-shadow:inset 0 0 0 2px hsl(var(--h) 90% 60% / calc(.2 + .4*var(--i))),inset 0 0 60px hsl(var(--h) 90% 55% / calc(.14 + .3*var(--i)))}
 .pamb.swap~.pamb-edge{animation:ambEdge 1.1s ease-out}
 @keyframes ambEdge{0%{box-shadow:inset 0 0 0 3px hsl(var(--h) 100% 70% / .95),inset 0 0 110px hsl(var(--h) 100% 60% / .65)}}
+.sfl-box .check{font-size:.9rem;line-height:1.4}
 
 </style>
 
@@ -2620,7 +2621,7 @@ function allSongs(){ return DEMOS.map(d=>Object.assign(songFromText(d.text,{id:d
 function getSong(id){ return allSongs().find(s=>s.id===id) }
 function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importadas, todo
   if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder}; if(song.edited) Object.assign(m[song.id],{raw:song.raw,raw0:song.raw0,edited:true}); S.set('songmeta',m) }
-  else if(song.flLive){ if(song.edited){ flPause(song,'editada'); toast('Esta canción dejó de sincronizarse con Fretline para no perder tus correcciones') } else flSaveMeta(song) }
+  else if(song.flLive){ if(song.edited) flEdited(song); else flSaveMeta(song) }
   else { const i=songs.findIndex(x=>x.id===song.id); if(i>=0) songs[i]=song; else songs.push(song); saveSongs() }
 }
 
@@ -3578,9 +3579,9 @@ function cellOf(ev){ const c={notes:{},mutes:[],dir:'',label:null};
   else if(ev.type==='chuck') c.mutes=(ev.strings||[]).slice();
   return c }
 function writeCell(si,col,c,keepLabel){
-  const sec=edSecs()[si]; sec.events=sec.events.filter(e=>e.col!==col);
+  const sec=edSecs()[si], old=sec.events.find(e=>e.col===col); sec.events=sec.events.filter(e=>e.col!==col);
   const ss=Object.keys(c.notes).map(Number); let ev=null;
-  if(ss.length>=2){ const fr=[-1,-1,-1,-1,-1,-1]; ss.forEach(s=>fr[s]=c.notes[s].f); ev={col,type:'chord',frets:fr,tech:''}; if(c.dir) ev.dir=c.dir; if(keepLabel&&c.label) ev.label=c.label }
+  if(ss.length>=2){ const fr=[-1,-1,-1,-1,-1,-1]; ss.forEach(s=>fr[s]=c.notes[s].f); ev={col,type:'chord',frets:fr,tech:''}; if(c.dir) ev.dir=c.dir; if(keepLabel&&c.label) ev.label=c.label; if(old&&old.strum) ev.strum=true }
   else if(ss.length===1){ const s=ss[0]; ev={col,type:'note',s,f:c.notes[s].f,tech:c.notes[s].tech||''} }
   else if(c.mutes.length){ ev={col,type:'chuck',strings:c.mutes.slice().sort()}; if(c.dir) ev.dir=c.dir }
   if(ev){ sec.events.push(ev); sec.events.sort((a,b)=>a.col-b.col); sec.cols=Math.max(sec.cols,col+3) } }
@@ -4155,8 +4156,8 @@ function flToSong(F){
   const TECH={b:'b',br:'b',h:'h',p:'p'};
   const fr=a=>a.map(f=>isFret(f)?+f:-1);
   let harm=0, arp=0;
-  const evsOf=p=>{ const ev=[]; let col=0;
-    for(let u=p.u0;u<=p.u1;u++) for(let c=0;c<C-trimOf(u);c++,col++){ const g=u*C+c, ch=chAt.get(g);
+  const evsOf=p=>{ const ev=[], gc=[]; let col=0;
+    for(let u=p.u0;u<=p.u1;u++) for(let c=0;c<C-trimOf(u);c++,col++){ const g=u*C+c, ch=chAt.get(g); gc.push(g);
       if(ch){ const o=g-ch.col, st=ch.strum&&ch.strum[o];
         if(o!==0&&!st) continue;
         const f=fr(ch.frets); if(ch.mods&&ch.mods.arp) arp++;
@@ -4172,21 +4173,21 @@ function flToSong(F){
         ev.push({col,type:'note',s:n.s,f:n.f,tech}) }
       else if(on.length>1){ const f=[-1,-1,-1,-1,-1,-1]; on.forEach(n=>f[n.s]=n.f); ev.push({col,type:'chord',frets:f,tech:''}) }
       else if(mute.length) ev.push({col,type:'chuck',strings:mute.sort()}) }
-    return {ev,cols:Math.max(1,col)} };
+    return {ev,gc,cols:Math.max(1,col)} };
   const bpm=Math.max(30,Math.min(260,Math.round(+F.bpm)||90)), cpb=C/4;
   const seen={}, out=[]; let tSong=0, media=null;
   const ytUrl=F.video&&/^https?:\/\/([a-z0-9-]+\.)*(youtube\.com|youtu\.be)\//i.test(String(F.video))?String(F.video):null;
-  for(const p of parts){ const {ev,cols}=evsOf(p), sbpm=p.bpm&&Math.round(p.bpm)!==bpm?Math.max(30,Math.min(260,Math.round(p.bpm))):null, dur=cols*60/((sbpm||bpm)*cpb);
+  for(const p of parts){ const {ev,gc,cols}=evsOf(p), sbpm=p.bpm&&Math.round(p.bpm)!==bpm?Math.max(30,Math.min(260,Math.round(p.bpm))):null, dur=cols*60/((sbpm||bpm)*cpb);
     if(ytUrl&&!media&&p.at!=null&&isFinite(+p.at)&&+p.at-tSong>=0) media={src:'yt',url:ytUrl,start:showTime(+p.at-tSong)};
     for(let r=1;r<=p.rep;r++){ const base=p.name.toUpperCase(); seen[base]=(seen[base]||0)+1;
-      const sec={name:seen[base]>1?`${base} (${seen[base]})`:base,cols,events:r===1?ev:ev.map(e=>Object.assign({},e))}; if(sbpm) sec.bpm=sbpm;
+      const sec={name:seen[base]>1?`${base} (${seen[base]})`:base,cols,events:r===1?ev:ev.map(e=>Object.assign({},e)),gc}; if(sbpm) sec.bpm=sbpm;
       out.push(sec); tSong+=dur } }
   if(ytUrl&&!media) media={src:'yt',url:ytUrl,start:'0:00.0'};
   const warnings=[]; if(harm) warnings.push(`${harm} armónicos: se juzgan como la nota del traste.`); if(arp) warnings.push('Hay acordes arpegiados: se juzgan como acorde.');
   const capo=Math.max(0,Math.min(12,F.capo|0)), tk=FL_TUNE[F.tuning]?F.tuning:'std', tune=FL_TUNE[tk].map(m=>m+capo), std=tk==='std'&&!capo;
   const title=String(F.title||'').trim().slice(0,200)||'Sin título';
   const s={id:flId(F.id),title,bpm,cpb,cat:'cancion',media:media||{src:'none'},created:+F.createdAt||Date.now(),src:'fretline',
-    fl:{id:F.id,upd:+F.updatedAt||0},
+    fl:{id:F.id,upd:+F.updatedAt||0,patches:Array.isArray(F.patches)?F.patches.filter(x=>typeof x==='string').slice(-20):[]},
     raw:{dyadNotes:true,title,bpm,tuning:tk==='std'?'E A D G B E':FL_TUNE_N[tk]+' ('+FL_TUNE[tk].map(m=>NOTE[m%12]).join(' ')+')',sections:out,warnings}};
   if(!std) s.tune=tune; if(capo) s.capo=capo;
   if(F.origin&&F.origin.app==='trastero'&&F.origin.id) s.flOrigin=String(F.origin.id);
@@ -4245,6 +4246,26 @@ function songToSheet(song,secStarts){
     notes,fx,chords,sections,joins:{},trim,focus:null,tuning:tk,capo,cursor:{col:0,s:0},example:false,createdAt:now,updatedAt:now,origin:{app:'trastero',id:song.id}};
   if(media) sheet.video=media.url;
   return {sheet,warnings} }
+/* correcciones de Trastero → operaciones sobre la hoja de Fretline: solo lo que cambió, y solo notas y acordes.
+   base y edit son raw de la misma canción (base trae gc: columna de Fretline de cada columna). Devuelve {ops, lost}. */
+function flEditOps(base,edit,tune){
+  const ops=[]; let lost=0;
+  const key=e=>!e?'':e.type==='note'?`n${e.s}:${e.f}:${e.tech||''}`:e.type==='chuck'?`x${(e.strings||[]).join('.')}:${e.dir||''}`:`c${e.frets.join('.')}:${e.dir||''}:${e.label||''}:${e.strum?1:0}`;
+  base.sections.forEach((bs,si)=>{ const es=edit.sections[si]; if(!es||!bs.gc) return;
+    const bm=new Map(bs.events.map(e=>[e.col,e])), em=new Map(es.events.map(e=>[e.col,e]));
+    for(const col of new Set([...bm.keys(),...em.keys()])){ const b=bm.get(col), e=em.get(col); if(key(b)===key(e)) continue;
+      const g=bs.gc[col]; if(g==null){ lost++; continue }
+      const strumChord=x=>x&&x.type==='chord'&&(x.strum||(b&&b.type==='chord'&&b.strum));
+      if(b){ if(b.type==='note'){ if(!(e&&e.type==='note'&&e.s===b.s)) ops.push({op:'delNote',g,s:5-b.s}) }
+        else if(b.type==='chuck') ops.push({op:'delChuck',g});
+        else if(b.strum){ if(!strumChord(e)) ops.push({op:'delStrum',g}) }
+        else b.frets.forEach((f,s)=>{ if(f>=0&&!(e&&e.type==='chord'&&!strumChord(e)&&e.frets[s]>=0)&&!(e&&e.type==='note'&&e.s===s)) ops.push({op:'delNote',g,s:5-s}) }) }
+      if(!e) continue;
+      if(e.type==='note') ops.push({op:'note',g,s:5-e.s,v:e.f,fx:e.tech||''});
+      else if(e.type==='chuck') ops.push({op:'chuck',g,strings:(e.strings&&e.strings.length?e.strings:[0,1,2,3,4,5]).map(s=>5-s)});
+      else if(strumChord(e)) ops.push({op:'chord',g,frets:e.frets.map(f=>f<0?'x':String(f)),dir:e.dir||'',name:e.label||(typeof chordForFrets==='function'?chordForFrets(e.frets,null,tune).name:'')});
+      else e.frets.forEach((f,s)=>{ if(f>=0) ops.push({op:'note',g,s:5-s,v:f,fx:''}) }) } });
+  return {ops,lost} }
 /* FLCONV-END */
 
 /* almacenamiento */
@@ -4256,8 +4277,48 @@ const flCopy=sid=>songs.find(x=>x.id===flId(sid));
 function flSongs(){ const p=flPaused(), meta=S.get('songmeta',{});
   return Object.values(flData.songs).filter(s=>!p[s.fl.id]&&!flCopy(s.fl.id)).map(s=>{ const c=JSON.parse(JSON.stringify(s)), m=meta[s.id]||{};
     ['cpb','bpm','play','folder','cat','title'].forEach(k=>{ if(m[k]!=null) c[k]=m[k] }); if(m.media&&m.media.src) c.media=m.media;
+    // en los dos sentidos: mientras Fretline no aplique tu corrección, se ve la versión corregida
+    if(m.two){ c.flTwo=true; if(m.pend&&!(s.fl.patches||[]).includes(m.pend.pid)){ c.raw=JSON.parse(JSON.stringify(m.pend.raw)); c.flPend=m.pend.at } }
     c.flLive=true; return c }) }
-function flSaveMeta(song){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder,cat:song.cat}; S.set('songmeta',m) }
+function flSaveMeta(song){ const m=S.get('songmeta',{}); m[song.id]=Object.assign({},m[song.id]||{},{media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder,cat:song.cat}); S.set('songmeta',m) }
+const flMeta=id=>(S.get('songmeta',{})[id])||{};
+function flSetMeta(id,fn){ const m=S.get('songmeta',{}); m[id]=m[id]||{}; fn(m[id]); S.set('songmeta',m) }
+/* corregiste una sincronizada en el editor: en los dos sentidos se manda a Fretline; si no, se congela para no perderla */
+const FL_EDT={};
+function flEdited(song){ const sid=song.fl.id, cur=flMeta(song.id);
+  if(!cur.two){ flPause(song,'editada'); toast('Esta canción dejó de sincronizarse con Fretline para no perder tus correcciones'); return }
+  const live=flData.songs[sid]; if(!live) return;
+  const pending=cur.pend&&!(live.fl.patches||[]).includes(cur.pend.pid);
+  flSetMeta(song.id,m=>{ Object.assign(m,{media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder,cat:song.cat});
+    m.pend={pid:'p'+uid()+Date.now().toString(36),baseRaw:pending?cur.pend.baseRaw:JSON.parse(JSON.stringify(live.raw)),raw:JSON.parse(JSON.stringify(song.raw)),at:Date.now(),sent:null} });
+  song.flPend=Date.now();
+  clearTimeout(FL_EDT[sid]); FL_EDT[sid]=setTimeout(()=>flPushEdits(sid),2500) }
+/* manda las correcciones pendientes de una canción a fretline/edits.json (solo notas y acordes) */
+const FL_EDITS='fretline/edits.json';
+async function flPushEdits(sid){
+  const id=flId(sid), pend=flMeta(id).pend, live=flData.songs[sid]; if(!pend||pend.sent===pend.pid) return;
+  const {ops,lost}=flEditOps(pend.baseRaw,pend.raw,live&&live.tune);
+  if(!ops.length){ flSetMeta(id,m=>{ delete m.pend }); return }
+  const c=cloudCfg(); if(!c||!c.on||!c.repo||!c.token) return;
+  const url=`https://api.github.com/repos/${c.repo}/contents/${FL_EDITS}`, hd={Authorization:'Bearer '+c.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  try{
+    for(let tries=0;tries<4;tries++){
+      const r=await fetch(url+`?t=${Date.now()}`,{cache:'no-store',headers:hd});
+      let sha=null, doc={app:'edits',v:1,items:[]};
+      if(r.ok){ const j=await r.json(); sha=j.sha; try{ const d=JSON.parse(b64dec(j.content||'')); if(d&&Array.isArray(d.items)) doc=d }catch(e){} }
+      else if(r.status!==404) throw ghErr(r);
+      doc.items=doc.items.filter(it=>!(it&&it.sheet===sid));      // la última corrección ya incluye las anteriores
+      doc.items.push({id:pend.pid,at:Date.now(),device:c.device||'',sheet:sid,ops});
+      const pr=await fetch(url,{method:'PUT',cache:'no-store',headers:Object.assign({'Content-Type':'application/json'},hd),body:JSON.stringify({message:`Trastero · ${c.device||'dispositivo'} · correcciones`,content:b64enc(JSON.stringify(doc)),...(sha?{sha}:{})})});
+      if(pr.status===409||pr.status===422) continue;
+      if(!pr.ok) throw ghErr(pr);
+      flSetMeta(id,m=>{ if(m.pend&&m.pend.pid===pend.pid) m.pend.sent=pend.pid });
+      if(lost) toast('Fretline: lo que agregaste en espacio nuevo (insertar espacio) no se puede pasar; el resto sí.');
+      return true }
+  }catch(e){ /* sin internet o GitHub ocupado: se reintenta en la próxima sincronización */ } }
+function flTwoToggle(song,on){
+  flSetMeta(song.id,m=>{ if(on) m.two=true; else { delete m.two } });
+  toast(on?'Autosincronización permanente: tus correcciones aquí también llegan a Fretline':'Las correcciones aquí ya no se mandan a Fretline (si corriges, se congela)') }
 /* dejar de sincronizar: queda una copia congelada tal como está (y viaja a tus otros equipos) */
 function flPause(song,why){ const sid=song.fl&&song.fl.id; if(!sid) return;
   const copy=JSON.parse(JSON.stringify(song)); delete copy.flLive; copy.fl.paused=Date.now();
@@ -4306,11 +4367,22 @@ function flApply(doc){
   flData.songs=next;
   // una canción que mandaste desde Trastero ya está en Fretline: la copia local se reemplaza por la sincronizada (con tus ajustes y récords)
   for(const s of Object.values(next)){ if(!s.flOrigin) continue; const old=songs.find(x=>x.id===s.flOrigin); if(!old) continue;
-    const m=S.get('songmeta',{}); m[s.id]=Object.assign({},m[s.id]||{},{media:old.media&&old.media.src!=='none'?old.media:undefined,play:old.play,folder:old.folder,cat:old.cat}); S.set('songmeta',m);
-    const recs=S.get('songrec',{}); let mv=false; for(const k of Object.keys(recs)) if(k.startsWith(old.id+'|')){ const nk=s.id+k.slice(old.id.length); if(!recs[nk]||(recs[nk].score||0)<(recs[k].score||0)) recs[nk]=recs[k]; delete recs[k]; mv=true } if(mv) S.set('songrec',recs);
-    songs=songs.filter(x=>x!==old); saveSongs(); if(curSongId===old.id) curSongId=s.id;
-    res.moved=(res.moved||0)+1; res.changed.push(s.id); toast(`“${old.title}” ya está en Fretline: desde ahora se sincroniza sola`) }
+    flAdopt(old,s); res.moved=(res.moved||0)+1; res.changed.push(s.id); toast(`“${old.title}” ya está en Fretline: desde ahora se sincroniza sola`) }
+  // autosincronización permanente por nombre: una importada con la opción activa se une a la de Fretline que se llame igual
+  for(const old of songs.filter(x=>x.flAuto&&!x.fl)){ const s=flByName(old.title); if(!s) continue;
+    flAdopt(old,s); res.moved=(res.moved||0)+1; res.changed.push(s.id); toast(`“${old.title}” quedó unida a la de Fretline`) }
+  // correcciones ya aplicadas en Fretline: se deja de mostrar la copia pendiente
+  const meta=S.get('songmeta',{}); let mch=false;
+  for(const s of Object.values(next)){ const m=meta[s.id]; if(m&&m.pend&&(s.fl.patches||[]).includes(m.pend.pid)){ delete m.pend; mch=true; res.changed.push(s.id) } }
+  if(mch) S.set('songmeta',meta);
   return res }
+const flNorm=t=>String(t||'').trim().toLowerCase().replace(/\s+/g,' ');
+function flByName(title){ const n=flNorm(title); if(!n) return null; return Object.values(flData.songs).find(s=>flNorm(s.title)===n&&!flCopy(s.fl.id))||null }
+/* la copia de Trastero se reemplaza por la de Fretline: pasan carpeta, modo, video y récords */
+function flAdopt(old,s){
+  flSetMeta(s.id,m=>{ Object.assign(m,{media:old.media&&old.media.src!=='none'?old.media:m.media,play:old.play||m.play,folder:old.folder||m.folder,cat:old.cat||m.cat}); if(old.flAuto) m.two=true });
+  const recs=S.get('songrec',{}); let mv=false; for(const k of Object.keys(recs)) if(k.startsWith(old.id+'|')){ const nk=s.id+k.slice(old.id.length); if(!recs[nk]||(recs[nk].score||0)<(recs[k].score||0)) recs[nk]=recs[k]; delete recs[k]; mv=true } if(mv) S.set('songrec',recs);
+  songs=songs.filter(x=>x!==old); saveSongs(); if(curSongId===old.id) curSongId=s.id }
 function flRefreshViews(res){
   if(PL.running||Sess.running) return;
   if(location.hash==='#canciones') renderSongs();
@@ -4318,7 +4390,7 @@ function flRefreshViews(res){
 
 /* interfaz: etiqueta, menú ⋯, panel de Fretline y la ficha */
 function flTag(s){ if(!s.fl) return null;
-  return h('span',{class:'sfl'+(s.flLive?'':' off'),title:s.flLive?'Se actualiza sola desde Fretline':'Sin sincronizar: copia congelada'},s.flLive?'⟳ Fretline':'Fretline · pausada') }
+  return h('span',{class:'sfl'+(s.flLive?'':' off'),title:s.flLive?(s.flTwo?'Sincronizada en los dos sentidos con Fretline':'Se actualiza sola desde Fretline'):'Sin sincronizar: copia congelada'},s.flLive?(s.flTwo?'⇄ Fretline':'⟳ Fretline'):'Fretline · pausada') }
 function flMenuItems(s,after){ const sid=s.fl.id, items=[];
   if(s.flLive){
     items.push(['No sincronizar esta canción',()=>{ flPause(s,'manual'); toast('Queda tal como está. La encuentras en Fretline → Sin sincronizar para volver a activarla.'); after() }]);
@@ -4357,8 +4429,11 @@ function flManager(){
 /* bloque en la ficha */
 function flDetail(s){ const box=$('#sFl'); if(!box) return; box.innerHTML=''; box.hidden=!s.fl; if(!s.fl) return;
   const live=flData.songs[s.fl.id], newer=!s.flLive&&live&&live.fl.upd>s.fl.upd;
-  box.append(h('p',{class:'hint',style:'margin:0'},flTag(s),' ',s.flLive?'Se actualiza sola cuando la cambias en Fretline.':'No se sincroniza: es una copia congelada'+(newer?'. En Fretline hay una versión más nueva.':'.')),
-    h('div',{class:'row'},flMenuItems(s,()=>renderSongDetail()).map(([t,fn])=>fn?h('button',{class:'btn ghost',onclick:fn},t):null))) }
+  const m=flMeta(s.id), pend=s.flLive&&s.flPend&&m.pend;
+  box.append(...[h('p',{class:'hint',style:'margin:0'},flTag(s),' ',s.flLive?(s.flTwo?'Se sincroniza en los dos sentidos: lo que cambias en Fretline llega aquí, y lo que corriges aquí llega a Fretline.':'Se actualiza sola cuando la cambias en Fretline.'):'No se sincroniza: es una copia congelada'+(newer?'. En Fretline hay una versión más nueva.':'.')),
+    pend?h('p',{class:'hint',style:'margin:0;color:var(--accent)',text:pend.sent===pend.pid?'Tus correcciones van en camino: Fretline las aplica la próxima vez que se sincronice.':'Tus correcciones se mandan a Fretline en unos segundos (o en la próxima sincronización si no hay internet).'}):null,
+    s.flLive?h('label',{class:'check'},h('input',{type:'checkbox',id:'sFlTwo',checked:s.flTwo?true:null,onchange:e=>{ flTwoToggle(s,e.target.checked); renderSongDetail() }}),'Autosincronización permanente: lo que corriges aquí también llega a Fretline. Solo cambian notas y acordes; repeticiones, colores, notas de sección y técnicas como vibrato o palm mute se respetan.'):null,
+    h('div',{class:'row'},flMenuItems(s,()=>renderSongDetail()).map(([t,fn])=>fn?h('button',{class:'btn ghost',onclick:fn},t):null))].filter(Boolean)) }
 
 /* Enviar a Fretline: la canción va a fretline/inbox.json; Fretline la recoge al sincronizar y la devuelve como canción de Fretline */
 const FL_INBOX='fretline/inbox.json';
@@ -4383,13 +4458,23 @@ function flSendBox(s){ const box=$('#sFlSend'); if(!box) return; box.innerHTML='
   const btn=h('button',{class:'btn',onclick:async()=>{ btn.disabled=true; btn.textContent='Enviando…';
     try{ await flSend(s); s.flSent=Date.now(); saveSongMeta(s); toast('Enviada. Aparece en Fretline la próxima vez que se sincronice.'); flSendBox(s) }
     catch(e){ toast('Fretline: '+(e.message||e)); btn.disabled=false; btn.textContent=sent?'Enviar de nuevo':'Enviar a Fretline' } }},sent?'Enviar de nuevo':'Enviar a Fretline');
-  box.append(h('span',{class:'lab',text:'Fretline'}),
+  const twin=flByName(s.title);
+  const auto=h('label',{class:'check'},h('input',{type:'checkbox',id:'sFlAuto',checked:s.flAuto?true:null,onchange:async e=>{
+      const on=e.target.checked;
+      if(on&&twin&&!confirm(`En Fretline ya hay una canción llamada “${twin.title}”. Se unen: Trastero usa la de Fretline (conservas carpeta, modo y récords) y desde ahí se sincronizan en los dos sentidos. ¿Seguir?`)){ e.target.checked=false; return }
+      s.flAuto=on||undefined; saveSongMeta(s);
+      if(on&&twin){ flAdopt(s,twin); toast(`Unida a “${twin.title}” de Fretline`); renderSongDetail(); return }
+      if(on&&!s.flSent){ try{ await flSend(s); s.flSent=Date.now(); saveSongMeta(s); toast('Enviada a Fretline; al llegar queda sincronizada en los dos sentidos') }catch(err){ toast('Fretline: '+(err.message||err)) } }
+      flSendBox(s) }}),'Autosincronización permanente: queda unida a la canción de Fretline con el mismo nombre (o a esta misma cuando Fretline la recoja), y desde ahí se sincronizan solas en los dos sentidos.');
+  box.append(...[h('span',{class:'lab',text:'Fretline'}),
     h('p',{class:'hint',style:'margin:0',text:sent?`Enviada ${new Date(sent).toLocaleDateString()}. Cuando Fretline la recoja (al abrirlo con la sincronización de GitHub activa), vuelve aquí como canción de Fretline y esta copia se reemplaza, con tus ajustes y récords.`:'Mándala a Fretline para seguir escribiéndola allá. Cuando Fretline la recoja, vuelve aquí sincronizada y esta copia se reemplaza, con tus ajustes y récords.'}),
     warnings.length?h('p',{class:'hint',style:'margin:0;color:var(--warn)',text:warnings.join(' ')}):null,
-    h('div',{class:'row'},btn)) }
+    h('div',{class:'row'},btn),auto,
+    twin?h('p',{class:'hint',style:'margin:0',text:`En Fretline hay una canción con el mismo nombre (“${twin.title}”).`}):null].filter(Boolean)) }
 
 /* cuándo revisar: después de cada sincronización de la nube (al abrir, al volver a la app, cada 5 min…) */
-CL.after=()=>flPull('auto');
+CL.after=async()=>{ await flPull('auto');
+  const meta=S.get('songmeta',{}); for(const [id,m] of Object.entries(meta)) if(m&&m.two&&m.pend&&m.pend.sent!==m.pend.pid&&id.startsWith('fl_')) flPushEdits(id.slice(3)) };
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
