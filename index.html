@@ -582,7 +582,7 @@ a.btn.primary{color:var(--accent-ink)}
 @media (orientation:landscape) and (max-height:620px), (orientation:landscape) and (min-width:1000px) and (min-height:480px){
   body.playing .top{display:none}
   body.playing main.wrap{padding-block:6px 6px;max-width:none}
-  .player{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"top hud" "hw hw" "tl spd" "now ctl";gap:6px 10px;align-items:center}
+  .player{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"top hud hud" "hw hw hw" "tl tl tl" "now spd ctl";gap:6px 10px;align-items:center}
   .pmode{display:none}
   .ptop{min-width:0}
   .player>.ptop{grid-area:top} .player>.phud{grid-area:hud} .player>.hwrap{grid-area:hw} .player>.ptl{grid-area:tl}
@@ -606,7 +606,7 @@ a.btn.primary{color:var(--accent-ink)}
   .ytwin.on{position:fixed;right:10px;bottom:10px;width:356px;height:200px;z-index:6;max-width:none;margin:0;box-shadow:0 8px 30px rgba(0,0,0,.6)}
   .player.done{display:block}
 }
-@media (orientation:landscape) and (max-height:620px) and (max-width:760px){.pspeed{display:none}.player{grid-template-areas:"top hud" "hw hw" "tl tl" "now ctl"}}
+@media (orientation:landscape) and (max-height:620px) and (max-width:760px){.pspeed{display:none}}
 .pcount.wait{font-size:3.4rem;display:grid;grid-auto-flow:row;place-content:center;justify-items:center;gap:4px}
 .pcount.wait small{font-family:var(--body,inherit);font-size:.9rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .lattool{margin-top:10px;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
@@ -760,6 +760,11 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 @keyframes ambEdge{0%{box-shadow:inset 0 0 0 3px hsl(var(--h) 100% 70% / .95),inset 0 0 110px hsl(var(--h) 100% 60% / .65)}}
 .sfl-box .check{font-size:.9rem;line-height:1.4}
 .filtnote{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 12px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);color:var(--muted);font-size:.9rem}
+/* la barra de progreso mide lo mismo que la autopista; el recuadro marca lo que se ve en ella ahora */
+.ptl-view{position:absolute;top:2px;bottom:2px;border-radius:7px;border:1.5px solid color-mix(in oklab,var(--accent) 70%,transparent);background:color-mix(in oklab,var(--accent) 10%,transparent);pointer-events:none;transition:width .2s}
+.player.editing .ptl-view{display:none}
+#ptlA{margin-left:0} #ptlB{margin-left:-26px}
+.ptl-secs i:first-child span{left:32px}
 
 </style>
 
@@ -1240,7 +1245,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
     <div class="ptl" id="ptl" aria-label="Línea de tiempo de la canción">
       <div class="ptl-secs" id="ptlSecs"></div>
       <div class="ptl-loop" id="ptlLoop"></div>
-      <div class="ptl-head" id="ptlHead"></div>
+      <div class="ptl-view" id="ptlView" aria-hidden="true"></div><div class="ptl-head" id="ptlHead"></div>
       <button class="ptl-h a" id="ptlA" aria-label="Inicio del loop">[</button>
       <button class="ptl-h b" id="ptlB" aria-label="Fin del loop">]</button>
     </div>
@@ -3127,6 +3132,8 @@ function renderTimeline(){
 function updateTimeline(t){
   const L=PL.tl.len, g0=PL.segs[0], gl=PL.segs[PL.segs.length-1];
   $('#ptlHead').style.left=Math.max(0,Math.min(100,t/L*100))+'%';
+  // lo que se ve ahora en la autopista, marcado en la barra (la línea blanca queda donde está la línea de golpe)
+  const vw=$('#ptlView'); if(vw&&PL.view){ const a=Math.max(0,PL.view[0]), b=Math.min(L,PL.view[1]); vw.style.left=a/L*100+'%'; vw.style.width=Math.max(0,b-a)/L*100+'%' }
   const lp=$('#ptlLoop'); lp.style.left=g0.a/L*100+'%'; lp.style.width=(gl.b-g0.a)/L*100+'%';
   $('#ptlA').style.left=g0.a/L*100+'%'; $('#ptlB').style.left=gl.b/L*100+'%';
   $('#ptlA').hidden=$('#ptlB').hidden=PL.mode!=='practice';
@@ -3159,7 +3166,7 @@ function drawHighway(t){
     hasCh=PL.csegs.length>0, hh=Math.round(Math.max(22,Math.min(38,H*.075))), he=document.getElementById('phud'), hudOn=!PL.edit&&he&&he.offsetHeight, hudH=hudOn?he.offsetTop+he.offsetHeight+4:4, side=hudOn&&he.offsetLeft>140, secB=side?0:15,
     head=hudH+secB+(hasCh?hh+4:0), rN=Math.max(9,Math.min(19,(H-head)/5.8*.4)), top=head+rN+2, bot=H-rN-8, gap=(bot-top)/5, y=s=>top+(5-s)*gap, x=tt=>hx+(tt-t)*pxs;
   PL.lay={hx,top,bot,y,pxs,gap,rN,t,W,H};
-  const tmin=t-hx/pxs-.2, tmax=t+(W-hx)/pxs+.2, bs=beatSec();
+  const tmin=t-hx/pxs-.2, tmax=t+(W-hx)/pxs+.2, bs=beatSec(); PL.view=[t-hx/pxs,t+(W-hx)/pxs];
   PL.beatPulse=(PL.beatPulse||0)*.9; PL.hitGlow*=.88; PL.missGlow*=.85;
   // zona fuera del loop / tramo
   for(const g of [{a:-1e9,b:PL.segs[0].a},{a:PL.segs[PL.segs.length-1].b,b:1e9}]){ const x0=Math.max(0,x(g.a)),x1=Math.min(W,x(g.b)); if(x1>x0){ c.fillStyle='#000'; c.globalAlpha=.35; c.fillRect(x0,0,x1-x0,H); c.globalAlpha=1 } }
