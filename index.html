@@ -765,6 +765,9 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .player.editing .ptl-view{display:none}
 #ptlA{margin-left:0} #ptlB{margin-left:-26px}
 .ptl-secs i:first-child span{left:32px}
+/* la banda del tramo se cierra en sus extremos, con las mismas esquinas que la barra */
+.ptl-loop{border:2px solid var(--accent);border-radius:10px;box-sizing:border-box}
+.player.practice:not(.editing) .hw{cursor:grab} .player.practice:not(.editing) .hw.grabbing{cursor:grabbing}
 
 </style>
 
@@ -3339,14 +3342,22 @@ function rewindTo(nt){
     PL.notes.forEach(n=>{ if(n.st===0&&n.t>=from&&n.t<nt) n.st=2 }); PL.blocks.forEach(b=>{ if(b.st===0&&b.t0>=from&&b.t0<nt) b.st=2 }) }
   PL.lostAt=null; PL.pausedAt=nt }
 (()=>{ const cv=$('#hw'); let d=null;
-  cv.addEventListener('pointerdown',e=>{ if(!PL.running||PL.edit||$('#v-tocar').classList.contains('done')) return; d={x:e.clientX,moved:false,startT:null}; try{ cv.setPointerCapture(e.pointerId) }catch(_){} });
+  cv.addEventListener('pointerdown',e=>{ if(!PL.running||PL.edit||$('#v-tocar').classList.contains('done')||(e.pointerType==='mouse'&&e.button!==0)) return; e.preventDefault(); d={x:e.clientX,moved:false,startT:null}; cv.classList.add('grabbing'); try{ cv.setPointerCapture(e.pointerId) }catch(_){} });
   cv.addEventListener('pointermove',e=>{ if(!d||PL.mode!=='practice'||PL.confirm) return; const dx=e.clientX-d.x; if(!d.moved&&Math.abs(dx)<8) return;
     if(!d.moved){ d.moved=true; if(!PL.paused||PL.rsWaiting) $('#pPause').click(); d.startT=PL.pausedAt; d.x0=e.clientX }
     const L=PL.lay, g=PL.segs[0]; PL.scrubT=Math.max(g.a,Math.min(g.b-.05,d.startT-(e.clientX-d.x0)/L.pxs)); PL.pausedAt=PL.scrubT });
-  const up=()=>{ if(!d) return; const dd=d; d=null;
+  const up=()=>{ cv.classList.remove('grabbing'); if(!d) return; const dd=d; d=null;
     if(dd.moved){ const nt=PL.scrubT; PL.pausedAt=dd.startT; rewindTo(nt); PL.scrubT=null; toast('En pausa: toca la autopista o "Seguir" para continuar desde aquí'); return }
     if(PL.confirm) return; $('#pPause').click() };
-  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',()=>{ if(d&&d.moved){ PL.pausedAt=d.startT; PL.scrubT=null } d=null });
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',()=>{ cv.classList.remove('grabbing'); if(d&&d.moved){ PL.pausedAt=d.startT; PL.scrubT=null } d=null });
+  // con mouse o trackpad: la rueda (o deslizar con dos dedos) mueve la canción igual que arrastrar
+  let w=null;
+  cv.addEventListener('wheel',e=>{ if(!PL.running||PL.edit||PL.mode!=='practice'||PL.confirm||$('#v-tocar').classList.contains('done')) return;
+    const dv=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY; if(!dv) return; e.preventDefault();
+    if(!w){ if(!PL.paused||PL.rsWaiting) $('#pPause').click(); w={startT:PL.pausedAt,t:PL.pausedAt} }
+    const L=PL.lay, g=PL.segs[0], px=e.deltaMode===1?dv*30:dv;
+    w.t=Math.max(g.a,Math.min(g.b-.05,w.t+px/L.pxs)); PL.scrubT=w.t; PL.pausedAt=w.t;
+    clearTimeout(w.tm); w.tm=setTimeout(()=>{ const ww=w; w=null; PL.pausedAt=ww.startT; rewindTo(ww.t); PL.scrubT=null },260) },{passive:false});
 })();
 
 /* ---------- pista de fondo: YouTube y Spotify ---------- */
