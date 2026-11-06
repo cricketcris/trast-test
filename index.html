@@ -759,6 +759,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .pamb.swap~.pamb-edge{animation:ambEdge 1.1s ease-out}
 @keyframes ambEdge{0%{box-shadow:inset 0 0 0 3px hsl(var(--h) 100% 70% / .95),inset 0 0 110px hsl(var(--h) 100% 60% / .65)}}
 .sfl-box .check{font-size:.9rem;line-height:1.4}
+.filtnote{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 12px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);color:var(--muted);font-size:.9rem}
 
 </style>
 
@@ -2688,6 +2689,9 @@ function renderSongGroups(){
   const box=$('#songGroups'); if(!box) return; box.innerHTML='';
   const recs=S.get('songrec',{}), q=songQuery.trim().toLowerCase(), closed=prefs.foldClosed||[];
   const list=allSongs().filter(s=>(songFilter==='all'||s.cat===songFilter)&&(!q||s.title.toLowerCase().includes(q)||folderOf(s).toLowerCase().includes(q)));
+  // con un filtro puesto (p. ej. al entrar desde el botón Canciones del inicio) se avisa cuánto queda oculto
+  if(songFilter!=='all'){ const hid=allSongs().length-allSongs().filter(s=>s.cat===songFilter).length;
+    if(hid) box.append(h('div',{class:'filtnote'},h('span',{text:`Mostrando solo ${({cancion:'canciones',riff:'riffs',ejercicio:'ejercicios'})[songFilter]}: ${hid} ${hid===1?'oculta':'ocultas'} (ejercicios, riffs y demás).`}),h('button',{class:'btn ghost',onclick:()=>{ songFilter='all'; renderSongs() }},'Ver todo'))) }
   if(!list.length){ box.append(h('p',{class:'empty',text:q?'Nada coincide con tu búsqueda.':'Todavía no hay nada aquí. Importa una canción de Fretline con el botón de arriba.'})); return }
   allFolders().forEach(fd=>{ const items=list.filter(s=>folderOf(s)===fd); if(!items.length&&(q||!folders.includes(fd))) return;
     const det=h('details',{class:'sgroup',open:closed.includes(fd)?null:true},h('summary',{},h('b',{text:fd}),h('span',{class:'mono',text:String(items.length)})));
