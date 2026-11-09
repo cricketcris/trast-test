@@ -768,6 +768,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 /* la banda del tramo se cierra en sus extremos, con las mismas esquinas que la barra */
 .ptl-loop{border:2px solid var(--accent);border-radius:10px;box-sizing:border-box}
 .player.practice:not(.editing) .hw{cursor:grab} .player.practice:not(.editing) .hw.grabbing{cursor:grabbing}
+#pWaitT[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:color-mix(in oklab,var(--accent) 14%,transparent)}
 
 </style>
 
@@ -1260,7 +1261,8 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
       <button class="btn" id="pRestart">Reiniciar</button>
       <button class="btn ghost" id="pReset">Resetear</button>
       <button class="btn primary" id="pPause">Pausa</button>
-      <button class="btn" id="pSkipNote" hidden>Saltar nota</button>
+      <button class="btn toggle" id="pWaitT" aria-pressed="false" hidden title="Nota por nota (N): la canción se detiene hasta que toques lo que viene">Nota a nota</button>
+      <button class="btn" id="pSkipNote" hidden title="Saltar lo que está esperando">Saltar</button>
       <button class="btn" id="pEdit">Editar</button>
       <button class="btn ghost" id="pStop">Terminar</button>
     </div>
@@ -1332,7 +1334,7 @@ const Ear=(()=>{
       const out=new Float32Array(12);if(cm>0) for(let i=0;i<12;i++) out[i]=ch[i]/cm;
       let d=0,x2=0,y2=0,npc=0;for(let i=0;i<12;i++){d+=out[i]*prevCh[i];x2+=out[i]*out[i];y2+=prevCh[i]*prevCh[i];if(out[i]>=.2)npc++}
       const stab=x2&&y2?d/Math.sqrt(x2*y2):0;prevCh.set(out);
-      return {rms,live,onset,flux,noise,ch:out,bass,stab,npc};
+      return {rms,live,onset,flux,noise,ch:out,raw:Float32Array.from(ch),bass,stab,npc};   // raw: croma sin normalizar (sirve para ver si una nota volvió a sonar)
     }
     return {process,sampleRate:sr};
   }
@@ -2888,7 +2890,7 @@ function startPlayer(s,opts={}){
   const v=$('#v-tocar'); v.classList.remove('done','editing'); v.classList.toggle('practice',mode==='practice');
   $('#pResults').hidden=true; $('#pTitle').textContent=s.title; $('#pMode').textContent=mode==='test'?'Prueba':(cfg.wait?'Nota por nota':'Práctica');
   $('#pSpeedBox').hidden=mode!=='practice'; $('#pSpeed').value=Math.round(speed*100); $('#pSpeedV').textContent=Math.round(speed*100)+'%';
-  $('#pReset').hidden=mode!=='practice'; $('#pSkipNote').hidden=!(mode==='practice'&&cfg.wait);
+  $('#pReset').hidden=mode!=='practice'; waitBtn();
   $('#pPause').textContent='Pausa'; $('#pMsg').textContent=''; $('#pWait').hidden=true;
   ctx();
   micStart().then(()=>{ PL.mic=true; startLoop() }).catch(e=>{ PL.mic=false; micBlocked=micReason(e); $('#pMsg').textContent='Sin micrófono: la canción avanza igual, pero no puedo puntuar. '+(micBlocked==='frame'?'Ábrela desde la app instalada.':'') });
@@ -3044,14 +3046,29 @@ function playerAudio(o,now){
     return }
   if(!PL.running||PL.paused||!PL.mic||PL.stall) return;
   const t=songTime()-lagT(), waiting=PL.hold;
+  // ¿suena a notas? En el ruido de un golpe (o uñas en la pantalla) el croma queda parejo; en notas reales, concentrado
+  const srtOf=f=>f.srt||(f.srt=[...f.ch].sort((a,b)=>b-a)), tonalOf=f=>{ const r=srtOf(f), tot=r.reduce((a,b)=>a+b,0)||1; return (r[0]+r[1]+r[2])/tot>=.5 };
+  const tonal=o.live&&tonalOf(o), topN=(f,pc,k)=>f.ch[pc]>=srtOf(f)[k-1], top4=pc=>topN(o,pc,4);
+  // una compañera de pellizco vale si está entre las notas fuertes y de verdad volvió a sonar: su energía (croma sin normalizar)
+  // sube al menos 12% (el croma usa la raíz de la amplitud: ~25% de amplitud) respecto de justo antes del ataque, o antes casi no sonaba.
+  // Así una nota que viene sonando no cuenta.
+  // Sin un cuadro justo antes (venía silencio) se exige que la nota esté entre las 3 más fuertes y sea ≥0,4.
+  // f es el cuadro que se juzga (por defecto el actual).
+  const fresh=(pc,pre,k=1.12,f=o)=>{ if(!pre) return f.ch[pc]>=.4&&topN(f,pc,3); if(!f.raw||!pre.raw) return f.ch[pc]>=Math.max(.35,pre.ch[pc]*.95); const mx=Math.max(...pre.raw)||1;
+    return f.ch[pc]>=.35&&(f.raw[pc]>=pre.raw[pc]*k||pre.raw[pc]<mx*.25) };
+  // cuadro de 160–300 ms después de un ataque: ahí se juzga qué sonó con ese ataque (el golpe ya pasó y lo que se toque después no cuenta)
+  const frameAt=rt=>(PL.chH||[]).find(x=>x.rt>=rt+160&&x.rt<=rt+300);
+  const preOf=rt=>(PL.chH||[]).filter(x=>x.rt<=rt-15&&x.rt>=rt-120).pop();
   if(o.onset) PL.lastOn={t,rt:now,used:false};
   // respaldo polifónico: con cuerdas sonando a la vez (arpegios), el tono dominante tapa la nota nueva. Tras cada
   // ataque se mira qué clases de nota subieron en el croma; sirven solo si el detector de tono no encontró la nota.
-  if(o.live){ (PL.chH=PL.chH||[]).push({rt:now,ch:Float32Array.from(o.ch)}); while(PL.chH.length&&now-PL.chH[0].rt>400) PL.chH.shift() }
+  if(o.live){ (PL.chH=PL.chH||[]).push({rt:now,ch:Float32Array.from(o.ch),raw:o.raw?Float32Array.from(o.raw):null}); while(PL.chH.length&&now-PL.chH[0].rt>2000) PL.chH.shift() }
   if(o.onset&&o.live){ const base=(PL.chH||[]).find(x=>now-x.rt<=90&&now-x.rt>=40)||PL.chH[0]; (PL.pendOn=PL.pendOn||[]).push({t,rt:now,base:base?base.ch:new Float32Array(12)}) }
+  // dos pasos: a los 90 ms se ve qué subió; a los 200 ms tiene que seguir sonando (un golpe o ruido se apaga antes)
   if(PL.pendOn&&PL.pendOn.length&&o.live){ PL.pendOn=PL.pendOn.filter(q=>{ if(now-q.rt<90) return true;
-      const rise=[...o.ch].map((v,pc)=>({pc,r:v-q.base[pc],v})).filter(x=>x.r>.22&&x.v>=.3).sort((a,b)=>b.r-a.r).slice(0,2);
-      rise.forEach(x=>(PL.cev=PL.cev||[]).push({t:q.t,pc:x.pc,rt:now,used:false})); return false }) }
+      if(!q.cand){ q.cand=tonal?[...o.ch].map((v,pc)=>({pc,r:v-q.base[pc],v})).filter(x=>x.r>.22&&x.v>=.3).sort((a,b)=>b.r-a.r).slice(0,2):[]; return q.cand.length>0 }
+      if(now-q.rt<200) return true;
+      if(tonal) q.cand.forEach(x=>{ if(o.ch[x.pc]>=.3) (PL.cev=PL.cev||[]).push({t:q.t,pc:x.pc,rt:now,used:false}) }); return false }) }
   if(PL.cev) PL.cev=PL.cev.filter(c=>now-c.rt<1500);
   if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
       if(o.onset||PL.lastM==null||Math.abs(m-PL.lastM)>.6){
@@ -3065,20 +3082,40 @@ function playerAudio(o,now){
   // pellizcos: dos cuerdas a la vez. El detector de tono oye solo la más fuerte; la otra se reconoce por el croma:
   // tras el ataque su clase de nota tiene que estar presente (≥0,35) y no venir apagándose de antes
   const pinchOpen=(n,ort)=>{ const mates=PL.notes.filter(x=>x!==n&&x.st===0&&Math.abs(x.t-n.t)<.02&&!/[b\/\\]/.test(x.tech)); if(!mates.length) return;
-    const pre=(PL.chH||[]).filter(x=>x.rt<=ort-15).pop(), base=pre?pre.ch:new Float32Array(12);
-    (PL.pinch=PL.pinch||[]).push({mates,base,ort,until:ort+450,dt:n.hitDt||0}) };
-  if(PL.pinch&&PL.pinch.length&&o.live) PL.pinch=PL.pinch.filter(q=>{ if(now>q.until) return false; if(now<q.ort+40) return true;
+    const pre=preOf(ort);
+    (PL.pinch=PL.pinch||[]).push({mates,pre,ort,until:ort+450,dt:n.hitDt||0}) };
+  if(PL.pinch&&PL.pinch.length&&o.live) PL.pinch=PL.pinch.filter(q=>{ if(now>q.until) return false; if(now<q.ort+160) return true;   // tiene que seguir sonando, no ser el golpe
       q.mates=q.mates.filter(x=>{ if(x.st!==0) return false; const pc=((x.m%12)+12)%12;
-        if(o.ch[pc]>=Math.max(.35,q.base[pc]*.95)){ x.st=1; award(100,q.dt,'',x.s,false,x); if(!(PL.mode==='practice'&&PL.cfg.wait)) track(x.t,true); return false } return true });
+        if(tonal&&top4(pc)&&fresh(pc,q.pre)){ x.st=1; award(100,q.dt,'',x.s,false,x); if(!(PL.mode==='practice'&&PL.cfg.wait)) track(x.t,true); return false } return true });
       return q.mates.length>0 });
-  if(waiting&&PL.holdEv&&PL.holdEv.m!=null){ // esperando: vale cualquier intento desde que se detuvo, y en un pellizco se esperan todas las notas de ese instante
-    const group=PL.notes.filter(x=>x.st===0&&Math.abs(x.t-PL.holdT)<.02&&inSegs(x.t));
+  if(waiting&&PL.holdEv&&PL.holdEv.m!=null){
+    // Nota por nota: se espera todo lo de ese instante. Cada nota necesita su tono (no basta un golpe ni ruido).
+    // En un pellizco, la que el detector de tono no oye vale por croma, pero solo si llega junto con la otra:
+    // si dentro del margen no suenan las dos, la que habías tocado se apaga y hay que tocarlas juntas.
+    const W=(MARG[PL.cfg.margin]||MARG.normal).l, group=PL.notes.filter(x=>Math.abs(x.t-PL.holdT)<.02&&inSegs(x.t)&&(x.st===0||x.tent));
     for(const n of group){ if(n.st!==0) continue;
-      const hit=PL.pitches.find(p=>!p.used&&p.rt>=PL.holdSince-250&&match(p,n));
-      let ort=null; if(hit){ hit.used=true; ort=hit.ort }
-      else if(PL.cev&&!/[b\/\\]/.test(n.tech)){ const c=PL.cev.find(c=>!c.used&&c.rt>=PL.holdSince-250&&c.pc===((n.m%12)+12)%12); if(c){ c.used=true; ort=c.rt-90 } }
-      if(ort!=null){ n.st=1; n.hitDt=0; award(100,0,'',n.s,false,n); pinchOpen(n,ort) } }
-    if(!PL.notes.some(x=>x.st===0&&Math.abs(x.t-PL.holdT)<.02&&inSegs(x.t))){ PL.pinch=[]; afterWaitHit() } }
+      // en un pellizco cada nota tiene que nacer de un ataque (no de una nota que sigue sonando y vuelve a dominar)
+      const hit=PL.pitches.find(p=>{ if(p.used||p.rt<PL.holdSince-250||!match(p,n)) return false; if(group.length<2) return true;
+        // si esa nota ya sonó en este intento, tiene que subir más (25%): al tocar la otra cuerda el detector puede seguir oyendo la primera
+        if(!p.on) return false; const pc=((n.m%12)+12)%12, k=n.heard&&n.heard>=PL.holdSince-250&&p.ort-n.heard<1500?1.25:1.12, key=pc+'/'+k; p.fr=p.fr||{};
+        if(p.fr[key]==null){ const F=frameAt(p.ort); if(!F) return false; p.fr[key]=fresh(pc,preOf(p.ort),k,F) }   // se decide una vez
+        return p.fr[key] });
+      if(hit){ hit.used=true; n.st=1; n.tent=true; n.ort=n.heard=hit.ort } }
+    // lo tocado hace más que el margen respecto de la última nota no cuenta como "a la vez": se apaga
+    const last=Math.max(-1e9,...group.filter(x=>x.tent).map(x=>x.ort)); let lost=false;
+    group.forEach(x=>{ if(x.tent&&x.ort<last-W){ x.tent=false; x.st=0; lost=true } });
+    if(lost) feed('¡Tócalas juntas!','bad');
+    const ons=group.filter(x=>x.tent).map(x=>x.ort), f0=ons.length?Math.min(...ons):null;
+    // el tono se reconoce hasta ~400 ms después del ataque: se espera eso además del margen
+    const dl=Math.max(f0||0,PL.holdSince)+W+400, F=f0!=null&&frameAt(f0);
+    if(F&&tonalOf(F)){
+      // la compañera vale solo si lo ya tocado también acaba de sonar de nuevo: si venía sonando de antes y lo que
+      // golpeaste es la otra cuerda, el detector de tono puede seguir oyendo la vieja y daría el pellizco por bueno
+      const pre=preOf(f0), pc0=x=>((x.m%12)+12)%12, live=group.filter(x=>x.tent).every(x=>fresh(pc0(x),pre,1.2,F));
+      if(live) for(const n of group){ if(n.st!==0||/[b\/\\]/.test(n.tech)) continue; const pc=pc0(n);
+        if(topN(F,pc,4)&&fresh(pc,pre,1.12,F)){ n.st=1; n.tent=true; n.ort=f0 } } }
+    if(group.length&&group.every(x=>x.tent)){ group.forEach(x=>{ x.tent=false; x.hitDt=0; award(100,0,'',x.s,false,x) }); afterWaitHit() }
+    else if(f0!=null&&now>dl){ group.forEach(x=>{ if(x.tent){ x.tent=false; x.st=0 } }); feed(group.length>1?'¡Tócalas juntas!':'Otra vez','bad') } }
   else { const we=winE(), wl=winL();
     for(const n of PL.notes){ if(n.st!==0||!inSegs(n.t)||n.t>t+we||n.t<t-wl-.3) continue;
       const hit=PL.pitches.find(p=>!p.used&&p.t>=n.t-we&&p.t<=n.t+wl&&match(p,n));
@@ -3295,7 +3332,13 @@ $('#pReset').addEventListener('click',()=>{ if(!PL.running||PL.mode!=='practice'
   const cfg=PL.cfg; cfg.loopA=null; cfg.loopB=null; cfg.sel=PL.tl.sections.map((x,i)=>i); cfg.speed=100; PL.song.play=cfg; saveSongMeta(PL.song);
   PL.speed=1; if(PL.media) PL.media.setRate(1); $('#pSpeed').value=100; $('#pSpeedV').textContent='100%';
   PL.segs=buildSegs(); resetMarks(); PL.passes=0; PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,4); banner('Canción completa al 100%') });
-$('#pSkipNote').addEventListener('click',()=>{ if(!PL.hold) return; const e=PL.holdEv; if(e) e.st=-1; PL.combo=0; release() });
+$('#pSkipNote').addEventListener('click',()=>{ if(!PL.hold) return; const e=PL.holdEv; if(e) e.st=-1; PL.notes.forEach(x=>{ if(Math.abs(x.t-PL.holdT)<.02&&(x.st===0||x.tent)){ x.st=-1; x.tent=false } }); PL.combo=0; release() });
+// activar o apagar Nota por nota sin salir de la canción (solo en Práctica)
+function waitBtn(){ const b=$('#pWaitT'); if(!b) return; const on=!!PL.cfg.wait; b.hidden=PL.mode!=='practice'; b.setAttribute('aria-pressed',String(on)); b.textContent=on?'Nota a nota ✓':'Nota a nota'; $('#pSkipNote').hidden=!(PL.mode==='practice'&&on) }
+function toggleWait(){ if(PL.mode!=='practice'||PL.edit) return; const on=!PL.cfg.wait; PL.cfg.wait=on; PL.song.play=PL.cfg; saveSongMeta(PL.song);
+  if(!on){ PL.notes.forEach(x=>{ if(x.tent){ x.tent=false; x.st=0 } }); if(PL.hold) release() }
+  PL.recent=[]; waitBtn(); feed(on?'Nota por nota: la canción te espera':'Nota por nota apagado','good') }
+$('#pWaitT').addEventListener('click',toggleWait);
 $('#pStop').addEventListener('click',()=>{ if(PL.running) finishPlayer() });
 $('#pExit').addEventListener('click',()=>{ stopPlayer(); openSong(PL.song?PL.song.id:curSongId) });
 $('#pSpeed').addEventListener('input',e=>{ if(!PL.running||PL.mode!=='practice') return; const v=+e.target.value/100, t=songTime();
@@ -3347,6 +3390,7 @@ document.addEventListener('keydown',e=>{
   const k=e.key;
   if(e.code==='Space'){ e.preventDefault(); $('#pPause').click() }
   else if(k==='r'||k==='R') $('#pRestart').click();
+  else if(k==='n'||k==='N') toggleWait();
   else if(k==='Escape') $('#pExit').click();
   else if(k==='e'||k==='E') $('#pEdit').click();
   else if(PL.mode==='practice'&&(k==='ArrowUp'||k==='ArrowDown')){ e.preventDefault(); const sp=$('#pSpeed'); sp.value=+sp.value+(k==='ArrowUp'?5:-5); sp.dispatchEvent(new Event('input')); sp.dispatchEvent(new Event('change')) }
