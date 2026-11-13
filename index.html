@@ -1451,7 +1451,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-13 03:16 · 9abf177";
+const BUILD="2026-11-13 04:40 · 1d94d9b";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -3172,8 +3172,8 @@ function playerAudio(o,now){
   // cuadro de frameA–frameB ms después de un ataque: ahí se juzga qué sonó con ese ataque (el golpe ya pasó y lo que se toque después no cuenta)
   const frameAt=rt=>(PL.chH||[]).find(x=>x.rt>=rt+T.frameA&&x.rt<=rt+T.frameB);
   const preOf=rt=>(PL.chH||[]).filter(x=>x.rt<=rt-T.preA&&x.rt>=rt-T.preB).pop();
-  const pcOf=m=>((m%12)+12)%12, nm=m=>nn(Math.round(m))+(Math.floor(Math.round(m)/12)-1);
-  if(o.onset){ PL.lastOn={t,rt:now,used:false}; if(D) DBG.ev('onset',{t:rnd2(t)}) }
+  const pcOf=m=>((Math.round(m)%12)+12)%12, nm=m=>nn(Math.round(m))+(Math.floor(Math.round(m)/12)-1);
+  if(o.onset){ PL.lastOn={t,rt:now,used:false,prevM:PL.lastM}; if(D) DBG.ev('onset',{t:rnd2(t)}) }
   // respaldo polifónico: con cuerdas sonando a la vez (arpegios), el tono dominante tapa la nota nueva. Tras cada
   // ataque se mira qué clases de nota subieron en el croma; sirven solo si el detector de tono no encontró la nota.
   if(o.live){ (PL.chH=PL.chH||[]).push({rt:now,ch:Float32Array.from(o.ch),raw:o.raw?Float32Array.from(o.raw):null}); while(PL.chH.length&&now-PL.chH[0].rt>T.histMs) PL.chH.shift() }
@@ -3187,9 +3187,15 @@ function playerAudio(o,now){
   if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
       if(o.onset||PL.lastM==null||Math.abs(m-PL.lastM)>T.pitchChange){
         // el tono se reconoce un poco después del ataque: la nota se fecha en el ataque que la originó
-        const on=PL.lastOn&&!PL.lastOn.used&&t-PL.lastOn.t<T.pitchOnWin*PL.speed; if(on) PL.lastOn.used=true;
-        const p={t:on?PL.lastOn.t:t,m,rt:now,ort:on?PL.lastOn.rt:now,used:false,on:on||PL.lastM==null}; PL.pitches.push(p);
-        if(D) DBG.ev('pitch',{m:rnd2(m),n:nm(m),on:p.on,ort:Math.round(p.ort),t:rnd2(p.t)}) }
+        const L=PL.lastOn, near=L&&t-L.t<T.pitchOnWin*PL.speed; let on=near&&!L.used, inh=false;
+        // si ese ataque ya se lo llevó la nota que venía sonando (el detector la siguió oyendo un momento), la nota nueva que
+        // aparece justo después es la que de verdad nació de ese ataque (pasa en arpegios: pellizco con la nota anterior sonando)
+        if(!on&&near&&L.used&&!L.reused&&L.by&&L.prevM!=null&&Math.abs(L.by.m-L.prevM)<T.pitchChange&&Math.abs(m-L.prevM)>T.pitchChange){
+          // solo si la que se llevó el ataque no volvió a sonar (venía sonando) y la nueva sí subió con ese ataque
+          const pre=preOf(L.rt); if(pre&&!fresh(pcOf(L.by.m),pre,T.freshK,o)&&fresh(pcOf(m),pre,T.freshK,o)){ on=inh=true; L.reused=true } }
+        if(on) L.used=true;
+        const p={t:on?L.t:t,m,rt:now,ort:on?L.rt:now,used:false,on:on||PL.lastM==null}; PL.pitches.push(p); if(on&&!L.by) L.by=p;
+        if(D) DBG.ev('pitch',Object.assign({m:rnd2(m),n:nm(m),on:p.on,ort:Math.round(p.ort),t:rnd2(p.t)},inh?{heredado:true}:{})) }
       PL.lastM=m } else PL.ear=null }
   else { PL.lastM=null; PL.ear=null }
   PL.pitches=PL.pitches.filter(p=>now-p.rt<T.pitchKeep);
@@ -3458,7 +3464,8 @@ $('#pReset').addEventListener('click',()=>{ if(!PL.running||PL.mode!=='practice'
   const cfg=PL.cfg; cfg.loopA=null; cfg.loopB=null; cfg.sel=PL.tl.sections.map((x,i)=>i); cfg.speed=100; PL.song.play=cfg; saveSongMeta(PL.song);
   PL.speed=1; if(PL.media) PL.media.setRate(1); $('#pSpeed').value=100; $('#pSpeedV').textContent='100%';
   PL.segs=buildSegs(); resetMarks(); PL.passes=0; PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,4); banner('Canción completa al 100%') });
-$('#pSkipNote').addEventListener('click',()=>{ if(!PL.hold) return; const e=PL.holdEv; if(e) e.st=-1; PL.notes.forEach(x=>{ if(Math.abs(x.t-PL.holdT)<.02&&(x.st===0||x.tent)){ x.st=-1; x.tent=false } }); PL.combo=0; release() });
+function skipHold(){ if(!PL.hold) return; const e=PL.holdEv; if(e) e.st=-1; PL.notes.forEach(x=>{ if(Math.abs(x.t-PL.holdT)<.02&&(x.st===0||x.tent)){ x.st=-1; x.tent=false } }); PL.combo=0; if(DBG.on) DBG.ev('skip',{t:rnd2(PL.holdT)}); release() }
+$('#pSkipNote').addEventListener('click',skipHold);
 // activar o apagar Nota por nota sin salir de la canción (solo en Práctica)
 function waitBtn(){ const b=$('#pWaitT'); if(!b) return; const on=!!PL.cfg.wait; b.hidden=PL.mode!=='practice'; b.setAttribute('aria-pressed',String(on)); b.textContent=on?'Nota a nota ✓':'Nota a nota'; $('#pSkipNote').hidden=!(PL.mode==='practice'&&on) }
 function toggleWait(){ if(PL.mode!=='practice'||PL.edit) return; const on=!PL.cfg.wait; PL.cfg.wait=on; PL.song.play=PL.cfg; saveSongMeta(PL.song);
@@ -4845,7 +4852,9 @@ $('#pRepBad').addEventListener('click',()=>diagReport('fail'));
 $('#pDiagT').addEventListener('click',()=>diagPanelToggle());
 document.addEventListener('keydown',e=>{ if(!PL.running||!DBG.on||PL.edit||e.target.matches('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return;
   if(e.key==='d'||e.key==='D') diagPanelToggle() });
-if(DBG.on) window.__TR={get PL(){ return PL },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats};
+if(DBG.on) window.__TR={get PL(){ return PL },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats,
+  // para tools/juez (la app en Node): arrancar canciones sin tocar la pantalla
+  sim:{startPlayer,stopPlayer,finishPlayer,skipHold,allSongs,songFromText,readGP5,gpToSong,gpTracks,gpRepeatsOk,playCfg,buildSong,toggleWait,songTime,lagT,MARG,get Mic(){ return Mic },get prefs(){ return prefs },get st(){ return st }}};
 diagButtons();
 
 /* ---------- laboratorio de calibración (#laboratorio) ----------
