@@ -770,6 +770,50 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .player.practice:not(.editing) .hw{cursor:grab} .player.practice:not(.editing) .hw.grabbing{cursor:grabbing}
 #pWaitT[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:color-mix(in oklab,var(--accent) 14%,transparent)}
 
+/* ---------- diagnóstico: panel en vivo, botones de reporte, Ajustes → Diagnóstico y laboratorio ---------- */
+.btn.sm{padding:6px 10px;font-size:13px;min-height:0}
+.pdiag{position:absolute;left:8px;top:64px;width:min(320px,64%);height:214px;z-index:6;border-radius:10px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.pdiagbar{position:absolute;right:8px;bottom:30px;z-index:7;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:70%}
+.pdiagbar .btn{background:color-mix(in srgb,var(--surface,#222) 82%,transparent);backdrop-filter:blur(4px)}
+#pRepOk{border-color:color-mix(in srgb,#3ccf7a 60%,transparent)}
+#pRepBad{border-color:color-mix(in srgb,#ff5d6c 60%,transparent)}
+#pDiagT[aria-pressed=true]{background:var(--accent);color:var(--on-accent,#fff)}
+.dglist{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.dgrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px}
+.dgrow>div:first-child{display:flex;flex-direction:column;min-width:0;flex:1 1 200px}
+.dgrow b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dgrow small{opacity:.75}
+.dgst{font-size:12px;color:var(--accent)}
+.dgact{display:flex;flex-wrap:wrap;gap:6px}
+.dgtune{margin-top:14px}
+.dgtune summary{cursor:pointer;font-weight:600}
+.dgdef{font-size:12px;max-height:160px;overflow:auto;background:var(--surface-2);padding:8px;border-radius:8px;white-space:pre-wrap}
+#v-laboratorio .sub{margin-top:6px}
+.labtips{margin:8px 0 12px;padding-left:18px}
+.labmic{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
+.labmic .lvl{width:140px;height:8px;border-radius:4px}
+.labmic #labNow{min-width:44px;font-size:18px}
+.labgroups{display:flex;flex-direction:column;gap:8px;margin:10px 0 14px}
+.labg{align-items:flex-start}
+.labg small{display:block;opacity:.75}
+.labprog{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin:10px 0}
+.labprog i{display:block;height:100%;background:var(--accent)}
+.labt{margin:4px 0 6px}
+.labd{font-size:16px;margin:0 0 6px}
+.hint.bad{color:#ff7b86}
+.labcue{font-size:28px;font-weight:800;text-align:center;padding:18px 8px;border-radius:14px;background:var(--surface-2);margin:10px 0;min-height:1.2em}
+.labcue.wait{opacity:.7}
+.labcue.go{background:var(--accent);color:var(--on-accent,#fff);animation:labgo .4s ease}
+@keyframes labgo{from{transform:scale(.96)}to{transform:none}}
+.labsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0}
+.labsum>div{background:var(--surface-2);border-radius:10px;padding:8px 10px;min-width:0}
+.labsum .k{display:block;font-size:12px;opacity:.7}
+.labsum b{overflow-wrap:anywhere}
+.labq{font-weight:700;margin:8px 0 4px}
+.labdone{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:4px}
+.labdone li.skip{opacity:.55}
+@media (prefers-reduced-motion:reduce){.labcue.go{animation:none}}
+
 </style>
 
 <div class="bgfx" aria-hidden="true"><div class="sun"></div><div class="grid"></div></div>
@@ -867,7 +911,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
                 <div class="tuner" aria-live="polite"><b id="tNote">–</b><span id="tCents">Toca una cuerda</span><div class="tneedle"><i id="tNeedle"></i></div></div>
                 <div id="tChroma" class="chroma free"></div>
                 <div id="tInfo" class="tInfo"></div>
-                <div class="row"><button id="tRec" class="btn">Grabar 8 s</button><span class="hint" style="margin:0;flex:1;min-width:160px">Toca algo que te cueste que reconozca y mándame el archivo para revisarlo.</span></div>
+                <div class="row"><button id="tRec" class="btn">Grabar 8 s</button><button class="btn" data-goto="laboratorio">Laboratorio</button><span class="hint" style="margin:0;flex:1;min-width:160px">Toca algo que te cueste que reconozca y mándame el archivo para revisarlo.</span></div>
                 <p id="tRecInfo" class="hint" hidden></p>
                 <details class="tTips"><summary>Si reconoce mal las notas en este equipo</summary>
                   <ul>
@@ -1077,11 +1121,21 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
       <div id="dataBackup"></div>
     </div>
     <div class="panel" style="margin-top:16px">
+      <span class="lab">Diagnóstico</span>
+      <div id="diagBox"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
       <span class="lab">Datos</span>
       <p class="hint" style="margin-top:0">Restaurar agrega de vuelta los mazos de ejemplo que hayas borrado, sin tocar los tuyos.</p>
       <div class="toolbar" id="dataTools"></div>
     </div>
   </section>
+  <section id="v-laboratorio" class="view" hidden>
+    <p class="eyebrow">Diagnóstico</p>
+    <h1 class="h1">Laboratorio de calibración</h1>
+    <div id="labBox"></div>
+  </section>
+
 
   <!-- AFINADOR -->
   <section id="v-afinador" class="view" hidden>
@@ -1245,7 +1299,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
       <div class="stat score"><span class="k">Puntaje</span><b id="pScore">0</b></div>
       <div class="stat"><span class="k">Combo</span><b id="pCombo">0</b></div>
       <div class="stat"><span class="k">Acierto</span><b id="pAcc">–</b></div>
-    </div><canvas id="hw" class="hw"></canvas><i class="pamb-edge" aria-hidden="true"></i><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div><div id="pChord" class="pchord" hidden><span class="k" id="pChordK"></span><b id="pChordN"></b><div id="pChordD"></div></div></div>
+    </div><canvas id="hw" class="hw"></canvas><i class="pamb-edge" aria-hidden="true"></i><div id="pCnt" class="pcount" hidden></div><div id="pBanner" class="pbanner" hidden></div><div id="pFeed" class="pfeed"></div><div id="pWait" class="pwait" hidden>Esperando que toques…</div><div id="pStall" class="pwait stall" hidden></div><canvas id="pDiag" class="pdiag" hidden></canvas><div class="pdiagbar" id="pDiagBar" hidden><button class="btn sm" id="pRepOk" title="Guardar los últimos segundos: lo toqué bien y no lo aceptó">✓ Estaba bien</button><button class="btn sm" id="pRepBad" title="Guardar los últimos segundos: lo aceptó y no debía">✗ No debía</button><button class="btn toggle sm" id="pDiagT" aria-pressed="false" title="Panel de diagnóstico (D)">Panel</button></div><div id="pChord" class="pchord" hidden><span class="k" id="pChordK"></span><b id="pChordN"></b><div id="pChordD"></div></div></div>
     <div class="ptl" id="ptl" aria-label="Línea de tiempo de la canción">
       <div class="ptl-secs" id="ptlSecs"></div>
       <div class="ptl-loop" id="ptlLoop"></div>
@@ -1397,6 +1451,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
+const BUILD="2026-11-13 03:16 · 9abf177";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -1549,18 +1604,19 @@ function diagram(fr,{labels=false}={}){
 }
 
 /* ---------- vistas ---------- */
-const VIEWS=['inicio','practicar','mazos','acordes','progreso','ajustes','afinador','canciones','cancion','tocar'];
+const VIEWS=['inicio','practicar','mazos','acordes','progreso','ajustes','afinador','canciones','cancion','tocar','laboratorio'];
 function showView(v){
   if(!VIEWS.includes(v)) v='inicio';
   if(v!=='afinador'&&typeof leaveTuner==='function') leaveTuner();
   if(v!=='tocar'&&PL.running) stopPlayer();
+  if(v!=='laboratorio'&&LAB.on) labLeave();
   if(v==='tocar'&&!PL.running&&!PL.song) v='canciones';
   VIEWS.forEach(n=>{ const el=$('#v-'+n); const was=!el.hidden; el.hidden=n!==v; if(n===v&&!was){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter') } });
-  const dv=v==='cancion'||v==='tocar'?'canciones':v;
+  const dv=v==='cancion'||v==='tocar'?'canciones':v==='laboratorio'?'ajustes':v;
   document.querySelectorAll('.dockbtn').forEach(t=>{ if(t.dataset.view===dv) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current') });
   document.body.classList.toggle('athome',v==='inicio');
   if(v!=='practicar'&&v!=='tocar') document.body.classList.remove('playing');
-  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail();
+  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail(); if(v==='laboratorio') labEnter();
   window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){location.hash=g.dataset.goto}});
@@ -1598,6 +1654,56 @@ $('#startBtn').addEventListener('click',()=>startSession());
 function setSkip6(v){ prefs.skip6=v; savePrefs(); $('#skip6Chk').checked=v; $('#bSkip6').setAttribute('aria-pressed',String(v)); if(Sess.running&&Sess.adv==='mic') micTarget(); }
 $('#skip6Chk').addEventListener('change',e=>setSkip6(e.target.checked));
 $('#bSkip6').addEventListener('click',()=>{ setSkip6(!prefs.skip6); toast(prefs.skip6?'6.ª cuerda libre: 20% menos puntos en acordes que la usan':'6.ª cuerda exigida otra vez') });
+
+/* ---------- diagnóstico: umbrales ajustables (TUNE) y registro de eventos (DBG) ----------
+   TUNE junta los umbrales del juez de notas. Se pueden cambiar sin recompilar:
+     · por URL:          ?tune=freshK=1.2,frameA=150
+     · en este equipo:   Ajustes → Diagnóstico → Ajustes finos (trastero.__tune, no viaja a la nube)
+   DBG guarda un registro de lo que decide el juez (con el motivo de cada rechazo). Se activa con
+   ?debug=1 o con Ajustes → Diagnóstico → Modo diagnóstico (trastero.__diag). Apagado no cuesta nada. */
+const TUNE_DEF={
+  tonal:.5,          // las 3 notas más fuertes suman al menos esta parte del croma (si no, es ruido: golpes, uñas)
+  freshMin:.35,      // una nota "suena" si su croma normalizado llega a esto
+  freshK:1.12,       // y su energía (croma sin normalizar) subió ×freshK respecto de justo antes del ataque…
+  freshKHeard:1.25,  // …×freshKHeard si esa nota ya sonó en este intento (Nota por nota)
+  freshKLive:1.2,    // lo ya tocado de un pellizco también tiene que haber subido esto para dar la compañera por croma
+  freshAbsent:.25,   // …o antes casi no sonaba (menos de esta parte del máximo)
+  silMin:.4,         // si antes había silencio: croma ≥ silMin…
+  silTop:3,          // …y entre las silTop más fuertes
+  frameA:160,        // cuadro que se juzga: de frameA a frameB ms después del ataque
+  frameB:300,
+  preA:15,           // cuadro "antes": de preB a preA ms antes del ataque
+  preB:120,
+  histMs:2000,       // cuánto croma se guarda
+  cevT1:90,          // respaldo polifónico: candidatas a los cevT1 ms…
+  cevT2:200,         // …confirmadas a los cevT2 ms si siguen sonando
+  cevRise:.22, cevMin:.3, cevKeep:1500,
+  pinchUntil:450,    // Prueba/Práctica: hasta cuándo se busca la compañera de un pellizco
+  pinchTop:4,        // la compañera tiene que estar entre las pinchTop más fuertes
+  waitExtra:400,     // Nota por nota: plazo = margen + waitExtra (lo que tarda en reconocerse el tono)
+  waitHeardMs:1500, waitSince:250,
+  pitchTol:.55,      // semitonos de tolerancia
+  pitchChange:.6,    // un cambio de altura mayor que esto es una nota nueva
+  pitchOnWin:.3,     // s: un tono nace del ataque si llega dentro de esta ventana (× velocidad)
+  pitchKeep:1500, bendMax:2.3
+};
+const TUNE=Object.assign({},TUNE_DEF);
+function tuneLoad(){
+  for(const k of Object.keys(TUNE)) delete TUNE[k]; Object.assign(TUNE,TUNE_DEF);
+  let saved={}; try{ saved=JSON.parse(localStorage.getItem('trastero.__tune')||'{}')||{} }catch(e){}
+  let url={}; try{ const q=new URLSearchParams(location.search).get('tune'); if(q) q.split(',').forEach(p=>{ const [k,v]=p.split('='); if(k&&v!=null&&v!=='') url[k.trim()]=+v }) }catch(e){}
+  for(const src of [saved,url]) for(const [k,v] of Object.entries(src)) if(k in TUNE_DEF&&typeof v==='number'&&isFinite(v)) TUNE[k]=v }
+const tuneDiff=()=>Object.fromEntries(Object.keys(TUNE_DEF).filter(k=>TUNE[k]!==TUNE_DEF[k]).map(k=>[k,TUNE[k]]));
+tuneLoad();
+
+const DBG={on:false,url:false,log:[],max:8000,frames:[],why:[],
+  // registra un evento: tipo + datos. "at" = performance.now() redondeado
+  ev(k,d){ if(!this.on) return; const e=Object.assign({k,at:Math.round(performance.now())},d); this.log.push(e); if(this.log.length>this.max) this.log.splice(0,this.log.length-this.max);
+    if(k==='rej'||k==='reset'){ this.why.push(e); if(this.why.length>6) this.why.shift() } return e },
+  since(ms){ const t=performance.now()-ms; return this.log.filter(e=>e.at>=t) }};
+try{ DBG.url=new URLSearchParams(location.search).get('debug')==='1' }catch(e){}
+try{ DBG.on=DBG.url||localStorage.getItem('trastero.__diag')==='1' }catch(e){ DBG.on=DBG.url }
+const rnd2=v=>Math.round(v*100)/100;
 
 /* ---------- audio ---------- */
 let actx=null;
@@ -1652,8 +1758,9 @@ async function micStart(){
   let split=null; if((set.channelCount||1)>1){ split=a.createChannelSplitter(set.channelCount); src.connect(split); split.connect(an,0) } else src.connect(an);
   Mic.settings=Object.assign({},set,{ctxRate:a.sampleRate,label:tr&&tr.label||''}); Mic.split=split; if(tr) tr.onended=()=>{ Mic.on=false; if(Sess.running&&Sess.adv==='mic'){ $('#hMic').className='mic off'; $('#hMicTxt').textContent='Micrófono detenido' } if(testOn){ testOn=false; resetTest('El sistema cortó el micrófono. Vuelve a probar.') } };
   Object.assign(Mic,{on:true,stream,an,src,td:new Float32Array(an.fftSize),ear:Ear.create(a.sampleRate),judge:Ear.judge()});
+  if(DBG.on||LAB.on) tapStart();
 }
-function micStop(){ recStop(true); if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect(); Mic.split&&Mic.split.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
+function micStop(){ recStop(true); tapStop(); if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect(); Mic.split&&Mic.split.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
 const ROOTS={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.name); let root=null;
   if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
@@ -1668,7 +1775,11 @@ const STR=['6.ª','5.ª','4.ª','3.ª','2.ª','1.ª'];
 function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
 function micFrame(fc){
   if(!Mic.an) return; Mic.an.getFloatTimeDomainData(Mic.td);
-  const now=performance.now(), o=Mic.ear.process(Mic.td,now); Mic.rms=o.rms; Mic.noise=o.noise;
+  const now=performance.now(), o=Mic.ear.process(Mic.td,now), tE=performance.now();
+  micFrameRest(fc,o,now);
+  if(DBG.on||LAB.on) diagFrame(o,now,tE-now,performance.now()-tE) }
+function micFrameRest(fc,o,now){
+  Mic.rms=o.rms; Mic.noise=o.noise;
   for(let i=0;i<12;i++) Mic.disp[i]=Mic.disp[i]*.6+(o.live?o.ch[i]:0)*.4;
   const lv=Math.min(100,Math.sqrt(o.rms)*260)+'%'; $('#hLvl').style.width=lv; $('#tLvl').style.width=lv;
   drawChroma();
@@ -2097,7 +2208,7 @@ function renderSettings(){
     h('button',{class:'btn ghost',onclick:()=>{ prefs=Object.assign({},DEFAULT_PREFS); savePrefs(); applyPrefs(); buildChroma(); renderSettings(); toast('Ajustes por defecto') }},'Volver a los ajustes por defecto'));
   const wipe=h('span',{}); const ask=()=>{ wipe.innerHTML=''; wipe.append(h('span',{class:'confirm'},'¿Borrar mazos, acordes propios e historial?',h('button',{class:'btn danger',onclick:()=>{ ['decks','custom','history','settings','seenDefaults'].forEach(k=>{try{localStorage.removeItem('trastero.'+k)}catch(e){}}); location.reload() }},'Sí, borrar todo'),h('button',{class:'btn ghost',onclick:renderSettings},'No'))) };
   wipe.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar todos los datos')); dt.append(wipe);
-  renderBackup(); renderCloud();
+  renderBackup(); renderCloud(); renderDiag();
 }
 document.querySelectorAll('#v-ajustes input[type=radio]').forEach(r=>r.addEventListener('change',()=>{ const k={pTheme:'theme',pWood:'wood',pHand:'hand',pNotes:'notes',pSize:'size'}[r.name]; prefs[k]=r.value; savePrefs(); applyPrefs(); if(k==='notes') buildChroma(); renderSettings() }));
 $('#pCount').addEventListener('change',e=>{prefs.countdown=e.target.checked;savePrefs()});
@@ -2958,8 +3069,8 @@ function playerLoop(){
   // ni en pausa (mientras arrastras la autopista el tiempo se mueve, pero no estás tocando) ni esperando al anti-colapso
   if(!(PL.mode==='practice'&&PL.cfg.wait)&&!PL.paused&&!PL.rsWaiting){
     const lateN=lagT()+winL()+.04;
-    for(const n of PL.notes){ if(PL.jumped) break; if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; miss(n.s); track(n.t,false) } }
-    for(const b of PL.blocks){ if(PL.jumped) break; if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; miss(-1); track(b.t0,false) } }
+    for(const n of PL.notes){ if(PL.jumped) break; if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; if(DBG.on) DBG.ev('miss',{m:n.m,t:rnd2(n.t)}); miss(n.s); track(n.t,false) } }
+    for(const b of PL.blocks){ if(PL.jumped) break; if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; if(DBG.on) DBG.ev('miss',{chord:b.chords.map(c=>c.name).join('/'),best:Math.round(b.best),t:rnd2(b.t0)}); miss(-1); track(b.t0,false) } }
   }
   drawHighway(t); playerHud(t); updateTimeline(t);
 }
@@ -3045,48 +3156,56 @@ function playerAudio(o,now){
     else if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m; const d=Math.abs(m-ev.m); if(d<.55||Math.abs(d-12)<.55||(/b/.test(ev.tech)&&m>ev.m&&m<ev.m+2.3)) PL.confirm.ok+=16; if(PL.confirm.ok>=64) confirmDone(false) } }
     return }
   if(!PL.running||PL.paused||!PL.mic||PL.stall) return;
-  const t=songTime()-lagT(), waiting=PL.hold;
+  const t=songTime()-lagT(), waiting=PL.hold, T=TUNE, D=DBG.on;
   // ¿suena a notas? En el ruido de un golpe (o uñas en la pantalla) el croma queda parejo; en notas reales, concentrado
-  const srtOf=f=>f.srt||(f.srt=[...f.ch].sort((a,b)=>b-a)), tonalOf=f=>{ const r=srtOf(f), tot=r.reduce((a,b)=>a+b,0)||1; return (r[0]+r[1]+r[2])/tot>=.5 };
-  const tonal=o.live&&tonalOf(o), topN=(f,pc,k)=>f.ch[pc]>=srtOf(f)[k-1], top4=pc=>topN(o,pc,4);
+  const srtOf=f=>f.srt||(f.srt=[...f.ch].sort((a,b)=>b-a)), shareOf=f=>{ const r=srtOf(f), tot=r.reduce((a,b)=>a+b,0)||1; return (r[0]+r[1]+r[2])/tot }, tonalOf=f=>shareOf(f)>=T.tonal;
+  const tonal=o.live&&tonalOf(o), topN=(f,pc,k)=>f.ch[pc]>=srtOf(f)[k-1], top4=pc=>topN(o,pc,T.pinchTop);
   // una compañera de pellizco vale si está entre las notas fuertes y de verdad volvió a sonar: su energía (croma sin normalizar)
-  // sube al menos 12% (el croma usa la raíz de la amplitud: ~25% de amplitud) respecto de justo antes del ataque, o antes casi no sonaba.
-  // Así una nota que viene sonando no cuenta.
-  // Sin un cuadro justo antes (venía silencio) se exige que la nota esté entre las 3 más fuertes y sea ≥0,4.
-  // f es el cuadro que se juzga (por defecto el actual).
-  const fresh=(pc,pre,k=1.12,f=o)=>{ if(!pre) return f.ch[pc]>=.4&&topN(f,pc,3); if(!f.raw||!pre.raw) return f.ch[pc]>=Math.max(.35,pre.ch[pc]*.95); const mx=Math.max(...pre.raw)||1;
-    return f.ch[pc]>=.35&&(f.raw[pc]>=pre.raw[pc]*k||pre.raw[pc]<mx*.25) };
-  // cuadro de 160–300 ms después de un ataque: ahí se juzga qué sonó con ese ataque (el golpe ya pasó y lo que se toque después no cuenta)
-  const frameAt=rt=>(PL.chH||[]).find(x=>x.rt>=rt+160&&x.rt<=rt+300);
-  const preOf=rt=>(PL.chH||[]).filter(x=>x.rt<=rt-15&&x.rt>=rt-120).pop();
-  if(o.onset) PL.lastOn={t,rt:now,used:false};
+  // sube al menos ×freshK (el croma usa la raíz de la amplitud: 12% ≈ 25% de amplitud) respecto de justo antes del ataque, o antes casi no sonaba.
+  // Así una nota que viene sonando no cuenta. Sin un cuadro justo antes (venía silencio) se exige que esté entre las silTop más fuertes y sea ≥silMin.
+  // f es el cuadro que se juzga (por defecto el actual). whyFresh devuelve el motivo del rechazo (o null si vale).
+  const whyFresh=(pc,pre,k,f)=>{ if(!pre) return f.ch[pc]>=T.silMin&&topN(f,pc,T.silTop)?null:{r:'silWeak',ch:rnd2(f.ch[pc])};
+    if(!f.raw||!pre.raw) return f.ch[pc]>=Math.max(T.freshMin,pre.ch[pc]*.95)?null:{r:'notFresh',ch:rnd2(f.ch[pc])};
+    if(f.ch[pc]<T.freshMin) return {r:'weak',ch:rnd2(f.ch[pc])}; const mx=Math.max(...pre.raw)||1;
+    return f.raw[pc]>=pre.raw[pc]*k||pre.raw[pc]<mx*T.freshAbsent?null:{r:'notFresh',ratio:rnd2(f.raw[pc]/(pre.raw[pc]||1e-9)),need:k} };
+  const fresh=(pc,pre,k=T.freshK,f=o)=>!whyFresh(pc,pre,k,f);
+  // cuadro de frameA–frameB ms después de un ataque: ahí se juzga qué sonó con ese ataque (el golpe ya pasó y lo que se toque después no cuenta)
+  const frameAt=rt=>(PL.chH||[]).find(x=>x.rt>=rt+T.frameA&&x.rt<=rt+T.frameB);
+  const preOf=rt=>(PL.chH||[]).filter(x=>x.rt<=rt-T.preA&&x.rt>=rt-T.preB).pop();
+  const pcOf=m=>((m%12)+12)%12, nm=m=>nn(Math.round(m))+(Math.floor(Math.round(m)/12)-1);
+  if(o.onset){ PL.lastOn={t,rt:now,used:false}; if(D) DBG.ev('onset',{t:rnd2(t)}) }
   // respaldo polifónico: con cuerdas sonando a la vez (arpegios), el tono dominante tapa la nota nueva. Tras cada
   // ataque se mira qué clases de nota subieron en el croma; sirven solo si el detector de tono no encontró la nota.
-  if(o.live){ (PL.chH=PL.chH||[]).push({rt:now,ch:Float32Array.from(o.ch),raw:o.raw?Float32Array.from(o.raw):null}); while(PL.chH.length&&now-PL.chH[0].rt>2000) PL.chH.shift() }
+  if(o.live){ (PL.chH=PL.chH||[]).push({rt:now,ch:Float32Array.from(o.ch),raw:o.raw?Float32Array.from(o.raw):null}); while(PL.chH.length&&now-PL.chH[0].rt>T.histMs) PL.chH.shift() }
   if(o.onset&&o.live){ const base=(PL.chH||[]).find(x=>now-x.rt<=90&&now-x.rt>=40)||PL.chH[0]; (PL.pendOn=PL.pendOn||[]).push({t,rt:now,base:base?base.ch:new Float32Array(12)}) }
-  // dos pasos: a los 90 ms se ve qué subió; a los 200 ms tiene que seguir sonando (un golpe o ruido se apaga antes)
-  if(PL.pendOn&&PL.pendOn.length&&o.live){ PL.pendOn=PL.pendOn.filter(q=>{ if(now-q.rt<90) return true;
-      if(!q.cand){ q.cand=tonal?[...o.ch].map((v,pc)=>({pc,r:v-q.base[pc],v})).filter(x=>x.r>.22&&x.v>=.3).sort((a,b)=>b.r-a.r).slice(0,2):[]; return q.cand.length>0 }
-      if(now-q.rt<200) return true;
-      if(tonal) q.cand.forEach(x=>{ if(o.ch[x.pc]>=.3) (PL.cev=PL.cev||[]).push({t:q.t,pc:x.pc,rt:now,used:false}) }); return false }) }
-  if(PL.cev) PL.cev=PL.cev.filter(c=>now-c.rt<1500);
+  // dos pasos: a los cevT1 ms se ve qué subió; a los cevT2 ms tiene que seguir sonando (un golpe o ruido se apaga antes)
+  if(PL.pendOn&&PL.pendOn.length&&o.live){ PL.pendOn=PL.pendOn.filter(q=>{ if(now-q.rt<T.cevT1) return true;
+      if(!q.cand){ q.cand=tonal?[...o.ch].map((v,pc)=>({pc,r:v-q.base[pc],v})).filter(x=>x.r>T.cevRise&&x.v>=T.cevMin).sort((a,b)=>b.r-a.r).slice(0,2):[]; return q.cand.length>0 }
+      if(now-q.rt<T.cevT2) return true;
+      if(tonal) q.cand.forEach(x=>{ if(o.ch[x.pc]>=T.cevMin){ (PL.cev=PL.cev||[]).push({t:q.t,pc:x.pc,rt:now,used:false}); if(D) DBG.ev('cev',{pc:x.pc,t:rnd2(q.t)}) } }); return false }) }
+  if(PL.cev) PL.cev=PL.cev.filter(c=>now-c.rt<T.cevKeep);
   if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
-      if(o.onset||PL.lastM==null||Math.abs(m-PL.lastM)>.6){
+      if(o.onset||PL.lastM==null||Math.abs(m-PL.lastM)>T.pitchChange){
         // el tono se reconoce un poco después del ataque: la nota se fecha en el ataque que la originó
-        const on=PL.lastOn&&!PL.lastOn.used&&t-PL.lastOn.t<.3*PL.speed; if(on) PL.lastOn.used=true;
-        PL.pitches.push({t:on?PL.lastOn.t:t,m,rt:now,ort:on?PL.lastOn.rt:now,used:false,on:on||PL.lastM==null}) }
+        const on=PL.lastOn&&!PL.lastOn.used&&t-PL.lastOn.t<T.pitchOnWin*PL.speed; if(on) PL.lastOn.used=true;
+        const p={t:on?PL.lastOn.t:t,m,rt:now,ort:on?PL.lastOn.rt:now,used:false,on:on||PL.lastM==null}; PL.pitches.push(p);
+        if(D) DBG.ev('pitch',{m:rnd2(m),n:nm(m),on:p.on,ort:Math.round(p.ort),t:rnd2(p.t)}) }
       PL.lastM=m } else PL.ear=null }
   else { PL.lastM=null; PL.ear=null }
-  PL.pitches=PL.pitches.filter(p=>now-p.rt<1500);
-  const match=(p,n)=>Math.abs(p.m-n.m)<.55||Math.abs(Math.abs(p.m-n.m)-12)<.55||(/b/.test(n.tech)&&p.m>n.m&&p.m<n.m+2.3);
+  PL.pitches=PL.pitches.filter(p=>now-p.rt<T.pitchKeep);
+  const match=(p,n)=>Math.abs(p.m-n.m)<T.pitchTol||Math.abs(Math.abs(p.m-n.m)-12)<T.pitchTol||(/b/.test(n.tech)&&p.m>n.m&&p.m<n.m+T.bendMax);
   // pellizcos: dos cuerdas a la vez. El detector de tono oye solo la más fuerte; la otra se reconoce por el croma:
-  // tras el ataque su clase de nota tiene que estar presente (≥0,35) y no venir apagándose de antes
+  // tras el ataque su clase de nota tiene que estar presente (≥freshMin) y no venir apagándose de antes
   const pinchOpen=(n,ort)=>{ const mates=PL.notes.filter(x=>x!==n&&x.st===0&&Math.abs(x.t-n.t)<.02&&!/[b\/\\]/.test(x.tech)); if(!mates.length) return;
     const pre=preOf(ort);
-    (PL.pinch=PL.pinch||[]).push({mates,pre,ort,until:ort+450,dt:n.hitDt||0}) };
-  if(PL.pinch&&PL.pinch.length&&o.live) PL.pinch=PL.pinch.filter(q=>{ if(now>q.until) return false; if(now<q.ort+160) return true;   // tiene que seguir sonando, no ser el golpe
-      q.mates=q.mates.filter(x=>{ if(x.st!==0) return false; const pc=((x.m%12)+12)%12;
-        if(tonal&&top4(pc)&&fresh(pc,q.pre)){ x.st=1; award(100,q.dt,'',x.s,false,x); if(!(PL.mode==='practice'&&PL.cfg.wait)) track(x.t,true); return false } return true });
+    (PL.pinch=PL.pinch||[]).push({mates,pre,ort,until:ort+T.pinchUntil,dt:n.hitDt||0}) };
+  if(PL.pinch&&PL.pinch.length&&o.live) PL.pinch=PL.pinch.filter(q=>{
+      if(now>q.until){ if(D) q.mates.forEach(x=>{ if(x.st===0) DBG.ev('rej',Object.assign({r:'mateTimeout',m:x.m,n:nm(x.m)},q.last&&q.last.get(x)||{})) }); return false }
+      if(now<q.ort+T.frameA) return true;   // tiene que seguir sonando, no ser el golpe
+      q.mates=q.mates.filter(x=>{ if(x.st!==0) return false; const pc=pcOf(x.m);
+        const w=!tonal?{r:'notTonal',share:rnd2(shareOf(o))}:!top4(pc)?{r:'notTop',ch:rnd2(o.ch[pc])}:whyFresh(pc,q.pre,T.freshK,o);
+        if(!w){ x.st=1; award(100,q.dt,'',x.s,false,x); if(D) DBG.ev('hit',{m:x.m,n:nm(x.m),via:'mate'}); if(!(PL.mode==='practice'&&PL.cfg.wait)) track(x.t,true); return false }
+        if(D){ (q.last=q.last||new Map()).set(x,w) } return true });
       return q.mates.length>0 });
   if(waiting&&PL.holdEv&&PL.holdEv.m!=null){
     // Nota por nota: se espera todo lo de ese instante. Cada nota necesita su tono (no basta un golpe ni ruido).
@@ -3095,38 +3214,45 @@ function playerAudio(o,now){
     const W=(MARG[PL.cfg.margin]||MARG.normal).l, group=PL.notes.filter(x=>Math.abs(x.t-PL.holdT)<.02&&inSegs(x.t)&&(x.st===0||x.tent));
     for(const n of group){ if(n.st!==0) continue;
       // en un pellizco cada nota tiene que nacer de un ataque (no de una nota que sigue sonando y vuelve a dominar)
-      const hit=PL.pitches.find(p=>{ if(p.used||p.rt<PL.holdSince-250||!match(p,n)) return false; if(group.length<2) return true;
-        // si esa nota ya sonó en este intento, tiene que subir más (25%): al tocar la otra cuerda el detector puede seguir oyendo la primera
-        if(!p.on) return false; const pc=((n.m%12)+12)%12, k=n.heard&&n.heard>=PL.holdSince-250&&p.ort-n.heard<1500?1.25:1.12, key=pc+'/'+k; p.fr=p.fr||{};
-        if(p.fr[key]==null){ const F=frameAt(p.ort); if(!F) return false; p.fr[key]=fresh(pc,preOf(p.ort),k,F) }   // se decide una vez
+      const hit=PL.pitches.find(p=>{ if(p.used||p.rt<PL.holdSince-T.waitSince||!match(p,n)) return false; if(group.length<2) return true;
+        if(!p.on){ if(D&&!p.lgOn){ p.lgOn=1; DBG.ev('rej',{r:'notOn',m:n.m,n:nm(n.m)}) } return false }
+        // si esa nota ya sonó en este intento, tiene que subir más (freshKHeard): al tocar la otra cuerda el detector puede seguir oyendo la primera
+        const pc=pcOf(n.m), k=n.heard&&n.heard>=PL.holdSince-T.waitSince&&p.ort-n.heard<T.waitHeardMs?T.freshKHeard:T.freshK, key=pc+'/'+k; p.fr=p.fr||{};
+        if(p.fr[key]==null){ const F=frameAt(p.ort); if(!F) return false; const w=whyFresh(pc,preOf(p.ort),k,F); p.fr[key]=!w;   // se decide una vez
+          if(D&&w) DBG.ev('rej',Object.assign({m:n.m,n:nm(n.m),via:'pitch',ort:Math.round(p.ort)},w)) }
         return p.fr[key] });
-      if(hit){ hit.used=true; n.st=1; n.tent=true; n.ort=n.heard=hit.ort } }
+      if(hit){ hit.used=true; n.st=1; n.tent=true; n.ort=n.heard=hit.ort; if(D) DBG.ev('tent',{m:n.m,n:nm(n.m),via:'pitch',ort:Math.round(hit.ort)}) } }
     // lo tocado hace más que el margen respecto de la última nota no cuenta como "a la vez": se apaga
     const last=Math.max(-1e9,...group.filter(x=>x.tent).map(x=>x.ort)); let lost=false;
-    group.forEach(x=>{ if(x.tent&&x.ort<last-W){ x.tent=false; x.st=0; lost=true } });
+    group.forEach(x=>{ if(x.tent&&x.ort<last-W){ if(D) DBG.ev('reset',{r:'spread',m:x.m,n:nm(x.m),dt:Math.round(last-x.ort),W}); x.tent=false; x.st=0; lost=true } });
     if(lost) feed('¡Tócalas juntas!','bad');
     const ons=group.filter(x=>x.tent).map(x=>x.ort), f0=ons.length?Math.min(...ons):null;
-    // el tono se reconoce hasta ~400 ms después del ataque: se espera eso además del margen
-    const dl=Math.max(f0||0,PL.holdSince)+W+400, F=f0!=null&&frameAt(f0);
-    if(F&&tonalOf(F)){
+    // el tono se reconoce hasta ~waitExtra ms después del ataque: se espera eso además del margen
+    const dl=Math.max(f0||0,PL.holdSince)+W+T.waitExtra, F=f0!=null&&frameAt(f0);
+    if(F){ const tn=tonalOf(F);
+      if(D&&!tn&&PL.lgF!==f0){ PL.lgF=f0; DBG.ev('rej',{r:'notTonal',via:'chroma',share:rnd2(shareOf(F))}) }
+      if(tn){
       // la compañera vale solo si lo ya tocado también acaba de sonar de nuevo: si venía sonando de antes y lo que
       // golpeaste es la otra cuerda, el detector de tono puede seguir oyendo la vieja y daría el pellizco por bueno
-      const pre=preOf(f0), pc0=x=>((x.m%12)+12)%12, live=group.filter(x=>x.tent).every(x=>fresh(pc0(x),pre,1.2,F));
-      if(live) for(const n of group){ if(n.st!==0||/[b\/\\]/.test(n.tech)) continue; const pc=pc0(n);
-        if(topN(F,pc,4)&&fresh(pc,pre,1.12,F)){ n.st=1; n.tent=true; n.ort=f0 } } }
-    if(group.length&&group.every(x=>x.tent)){ group.forEach(x=>{ x.tent=false; x.hitDt=0; award(100,0,'',x.s,false,x) }); afterWaitHit() }
-    else if(f0!=null&&now>dl){ group.forEach(x=>{ if(x.tent){ x.tent=false; x.st=0 } }); feed(group.length>1?'¡Tócalas juntas!':'Otra vez','bad') } }
+      const pre=preOf(f0), dead=group.filter(x=>x.tent).map(x=>[x,whyFresh(pcOf(x.m),pre,T.freshKLive,F)]).find(z=>z[1]);
+      if(dead){ if(D&&PL.lgF!==f0){ PL.lgF=f0; DBG.ev('rej',Object.assign({r:'notLive',m:dead[0].m,n:nm(dead[0].m),via:'chroma',why:dead[1].r},dead[1],{r:'notLive'})) } }
+      else for(const n of group){ if(n.st!==0||/[b\/\\]/.test(n.tech)) continue; const pc=pcOf(n.m);
+        const w=!topN(F,pc,T.pinchTop)?{r:'notTop',ch:rnd2(F.ch[pc])}:whyFresh(pc,pre,T.freshK,F);
+        if(!w){ n.st=1; n.tent=true; n.ort=f0; if(D) DBG.ev('tent',{m:n.m,n:nm(n.m),via:'chroma',ort:Math.round(f0)}) }
+        else if(D&&n.lgF!==f0){ n.lgF=f0; DBG.ev('rej',Object.assign({m:n.m,n:nm(n.m),via:'chroma'},w)) } } } }
+    if(group.length&&group.every(x=>x.tent)){ if(D) DBG.ev('pass',{ms:group.map(x=>x.m),ns:group.map(x=>nm(x.m))}); group.forEach(x=>{ x.tent=false; x.hitDt=0; award(100,0,'',x.s,false,x) }); afterWaitHit() }
+    else if(f0!=null&&now>dl){ if(D) DBG.ev('reset',{r:'deadline',missing:group.filter(x=>!x.tent).map(x=>nm(x.m)),had:group.filter(x=>x.tent).map(x=>nm(x.m))}); group.forEach(x=>{ if(x.tent){ x.tent=false; x.st=0 } }); feed(group.length>1?'¡Tócalas juntas!':'Otra vez','bad') } }
   else { const we=winE(), wl=winL();
     for(const n of PL.notes){ if(n.st!==0||!inSegs(n.t)||n.t>t+we||n.t<t-wl-.3) continue;
       const hit=PL.pitches.find(p=>!p.used&&p.t>=n.t-we&&p.t<=n.t+wl&&match(p,n));
       let ht=hit?hit.t:null, ort=hit?hit.ort:now; if(hit) hit.used=true;
       else if(PL.cev&&!/[b\/\\]/.test(n.tech)){ const c=PL.cev.find(c=>!c.used&&c.pc===((n.m%12)+12)%12&&c.t>=n.t-we&&c.t<=n.t+wl); if(c){ c.used=true; ht=c.t; ort=c.rt-90 } }
-      if(ht!=null){ n.st=1; n.hitDt=ht-n.t; award(100,ht-n.t,'',n.s,false,n); track(n.t,true); pinchOpen(n,ort); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+      if(ht!=null){ n.st=1; n.hitDt=ht-n.t; award(100,ht-n.t,'',n.s,false,n); if(D) DBG.ev('hit',{m:n.m,n:nm(n.m),via:hit?'pitch':'cev',dt:Math.round((ht-n.t)*1000)}); track(n.t,true); pinchOpen(n,ort); if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
     // fuera del margen: "¡Aún no!" si se adelantó mucho, "¡Tarde!" si ya pasó (una vez por nota)
     if(!PL.cfg.wait||PL.mode!=='practice') for(const p of PL.pitches){ if(p.used||p.cl) continue; p.cl=1; if(!p.on||PL.notes.some(n=>n.st===1&&Math.abs(p.t-n.t)<.6*PL.speed&&match(p,n))) continue;
       let best=null; for(const n of PL.notes){ if(n.st===1||n.fb||!inSegs(n.t)||!match(p,n)) continue; const d=p.t-n.t;
         const ok=(n.st===0&&d<-we&&d>-we-.5*PL.speed)||(d>wl&&d<wl+.6*PL.speed); if(ok&&(!best||Math.abs(d)<Math.abs(best.d))) best={n,d} }
-      if(best){ best.n.fb=1; const early=best.d<0; feed(early?'¡Aún no!':'¡Tarde!','bad'); PL.ticks.push({d:early?-mg().e/1000*1.15:mg().l/1000*1.15,g:'out',life:1}); PL.cats[early?'tooEarly':'tooLate']=(PL.cats[early?'tooEarly':'tooLate']||0)+1 } } }
+      if(best){ best.n.fb=1; const early=best.d<0; if(D) DBG.ev('out',{m:best.n.m,n:nm(best.n.m),early,d:Math.round(best.d*1000)}); feed(early?'¡Aún no!':'¡Tarde!','bad'); PL.ticks.push({d:early?-mg().e/1000*1.15:mg().l/1000*1.15,g:'out',life:1}); PL.cats[early?'tooEarly':'tooLate']=(PL.cats[early?'tooEarly':'tooLate']||0)+1 } } }
   // acordes
   for(let i=0;i<12;i++){ PL.sm[i]=o.live?PL.sm[i]*.55+o.ch[i]*.45:PL.sm[i]*.85; PL.bv[i]=o.live?PL.bv[i]*.6+(o.bass===i?.4:0):PL.bv[i]*.85 }
   const thr=(Ear.SENS[st.sens]||Ear.SENS.normal).thr-4; PL.pct=null;
@@ -3136,7 +3262,7 @@ function playerAudio(o,now){
     let best=0; for(const c of b.cands){ const sc=Ear.score(PL.sm,c,PL.bv); const okn=sc.missing.length===0||(sc.n>=5&&sc.missing.length<=1); if(okn&&sc.pct>best) best=sc.pct; else if(!okn) best=Math.max(best,Math.min(sc.pct,thr-1)) }
     b.best=Math.max(b.best,best); PL.pct=best;
     if(o.live&&best>=thr) b.ok+=16;
-    if(b.ok>=96){ b.st=1; if(!isWait) track(b.t0,true); award(150,isWait?0:t-b.t0-.15,b.chords.map(c=>c.name).join('/'),-1,true,b); if(isWait) afterWaitHit(); else if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
+    if(b.ok>=96){ b.st=1; if(DBG.on) DBG.ev('hit',{chord:b.chords.map(c=>c.name).join('/'),pct:Math.round(best)}); if(!isWait) track(b.t0,true); award(150,isWait?0:t-b.t0-.15,b.chords.map(c=>c.name).join('/'),-1,true,b); if(isWait) afterWaitHit(); else if(PL.cfg.wait&&PL.cfg.waitJump) jumpNext() } }
 }
 function afterWaitHit(){ if(PL.cfg.waitJump){ PL.hold=false; $('#pWait').hidden=true; const t=PL.holdT; PL.base=t; PL.t0=performance.now(); jumpNext(); if(!PL.hold&&PL.base===t&&PL.media) PL.media.play(t,PL.speed) } else release() }
 const midiName=m=>{ const r=Math.round(m); return nn(r)+(Math.floor(r/12)-1) };
@@ -4563,6 +4689,268 @@ function flSendBox(s){ const box=$('#sFlSend'); if(!box) return; box.innerHTML='
 /* cuándo revisar: después de cada sincronización de la nube (al abrir, al volver a la app, cada 5 min…) */
 CL.after=async()=>{ await flPull('auto');
   const meta=S.get('songmeta',{}); for(const [id,m] of Object.entries(meta)) if(m&&m.two&&m.pend&&m.pend.sent!==m.pend.pid&&id.startsWith('fl_')) flPushEdits(id.slice(3)) };
+
+/* ---------- diagnóstico: caja negra, reportes, panel en vivo y envío ----------
+   Con el modo diagnóstico activo:
+   · TAP graba siempre los últimos 12 s del micrófono (AudioWorklet; si no hay, ScriptProcessor).
+   · DIAG.frames guarda lo que vio Ear en cada cuadro (croma, energía, ataque, tono) los últimos 10 s.
+   · DIAG.perf mide cuadros perdidos y cuánto tardan Ear y el juez.
+   · En el reproductor aparecen «✓ Estaba bien» / «✗ No debía» (guardan los últimos 8 s como paquete) y «Panel».
+   Los paquetes (.trdbg) se guardan en IndexedDB (trastero-diag) y se envían al repo de la nube
+   (trastero/debug/…), como archivo o como texto comprimido (sin audio). Formato en CLAUDE.md. */
+const DIAG={frames:[],perf:{gap:[],ear:[],rest:[],last:0,long:0},panel:false,keepMs:10000};
+const TAP={on:false,sr:0,buf:null,total:0,lastT:0,mod:false,starting:null};
+const TAP_SRC=`class T extends AudioWorkletProcessor{constructor(){super();this.b=new Float32Array(2048);this.n=0}
+process(i){const c=i[0]&&i[0][0];if(c){for(let k=0;k<c.length;k++){this.b[this.n++]=c[k];if(this.n===2048){this.port.postMessage(this.b);this.b=new Float32Array(2048);this.n=0}}}return true}}
+registerProcessor('tr-tap',T)`;
+function tapStart(){ if(TAP.on||TAP.starting||!Mic.on||!actx) return TAP.starting;
+  return TAP.starting=(async()=>{ const a=actx; let node=null;
+    try{ if(!a.audioWorklet||typeof AudioWorkletNode==='undefined') throw new Error('sin worklet');
+      if(!TAP.mod){ const url=URL.createObjectURL(new Blob([TAP_SRC],{type:'application/javascript'})); await a.audioWorklet.addModule(url); URL.revokeObjectURL(url); TAP.mod=true }
+      node=new AudioWorkletNode(a,'tr-tap',{numberOfInputs:1,numberOfOutputs:1,channelCount:1,channelCountMode:'explicit',channelInterpretation:'discrete'}); node.port.onmessage=e=>tapPush(e.data); TAP.kind='worklet' }
+    catch(e){ node=a.createScriptProcessor(2048,1,1); node.onaudioprocess=e=>tapPush(e.inputBuffer.getChannelData(0)); TAP.kind='script' }
+    if(!Mic.on){ TAP.starting=null; return }
+    const z=a.createGain(); z.gain.value=0; if(Mic.split) Mic.split.connect(node,0); else Mic.src.connect(node); node.connect(z); z.connect(a.destination);
+    Object.assign(TAP,{on:true,node,z,sr:a.sampleRate,buf:new Float32Array(Math.round(a.sampleRate*12)),total:0,lastT:0,starting:null}) })() }
+function tapStop(){ if(!TAP.on) return; try{ TAP.node.disconnect(); TAP.z.disconnect(); (Mic.split||Mic.src)&&(Mic.split||Mic.src).disconnect(TAP.node) }catch(e){} TAP.on=false; TAP.buf=null }
+function tapPush(c){ const b=TAP.buf; if(!b) return; const N=b.length; let w=TAP.total%N;
+  for(let i=0;i<c.length;i++){ b[w]=c[i]; if(++w===N) w=0 } TAP.total+=c.length; TAP.lastT=performance.now() }
+// audio entre dos instantes de performance.now(). El último dato que llegó corresponde a TAP.lastT (±30 ms)
+function tapGrab(t0,t1){ if(!TAP.on||!TAP.total) return null; const sr=TAP.sr, N=TAP.buf.length;
+  let i1=TAP.total-Math.max(0,Math.round((TAP.lastT-t1)*sr/1000)), i0=i1-Math.round((t1-t0)*sr/1000);
+  i0=Math.max(i0,TAP.total-N,0); i1=Math.min(i1,TAP.total); if(i1<=i0) return null;
+  const out=new Float32Array(i1-i0); for(let i=i0;i<i1;i++) out[i-i0]=TAP.buf[i%N];
+  return {data:out,sr,t0:TAP.lastT-(TAP.total-i0)/sr*1000} }
+// a 22 050 Hz, 16 bits, base64 (promedio por tramo como filtro anti-alias simple)
+function pcmPack(a,to=22050){ const r=a.sr/to, n=Math.floor(a.data.length/r), pcm=new Int16Array(n);
+  for(let j=0;j<n;j++){ const s=Math.floor(j*r), e=Math.max(s+1,Math.floor((j+1)*r)); let acc=0; for(let i=s;i<e;i++) acc+=a.data[i]; pcm[j]=Math.max(-32767,Math.min(32767,Math.round(acc/(e-s)*32767))) }
+  return {sr:to,enc:'pcm16le-b64',n,t0:Math.round(a.t0),data:bytesB64(new Uint8Array(pcm.buffer))} }
+function bytesB64(u){ let s=''; for(let i=0;i<u.length;i+=0x8000) s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(s) }
+
+/* cada cuadro: lo que vio Ear, el rendimiento y el panel */
+function diagFrame(o,now,earMs,restMs){ const P=DIAG.perf; if(LAB.on) labFrame(o);
+  if(P.last){ const g=now-P.last; P.gap.push(g); if(g>50) P.long++ } P.last=now; P.ear.push(earMs); P.rest.push(restMs);
+  for(const k of ['gap','ear','rest']) if(P[k].length>600) P[k].splice(0,P[k].length-600);
+  if(DBG.on||LAB.rec){ DIAG.frames.push({t:now,rms:o.rms,noise:o.noise,live:o.live,on:o.onset,ch:o.ch?Array.from(o.ch,v=>Math.round(v*100)):null,raw:o.raw?Array.from(o.raw,rnd2):null,ear:PL.running?PL.ear:(LAB.rec?LAB.ear:null)});
+    while(DIAG.frames.length&&now-DIAG.frames[0].t>DIAG.keepMs) DIAG.frames.shift() }
+  if(DIAG.panel&&PL.running&&(DIAG.pf=(DIAG.pf||0)+1)%2===0) drawDiagPanel(o) }
+const pct=(arr,q)=>{ if(!arr.length) return 0; const s=[...arr].sort((a,b)=>a-b); return s[Math.min(s.length-1,Math.floor(q*s.length))] };
+function perfStats(){ const P=DIAG.perf, g=P.gap; const fps=g.length?1000/(g.reduce((a,b)=>a+b,0)/g.length):0;
+  return {fps:Math.round(fps),gapP50:Math.round(pct(g,.5)),gapP95:Math.round(pct(g,.95)),gapMax:Math.round(Math.max(0,...g)),long:P.long,earP50:rnd2(pct(P.ear,.5)),earP95:rnd2(pct(P.ear,.95)),judgeP95:rnd2(pct(P.rest,.95)),tap:TAP.kind||'—'} }
+function framesPack(t0,t1){ const fr=DIAG.frames.filter(f=>f.t>=t0&&f.t<=t1); if(!fr.length) return null; const b=Math.round(fr[0].t);
+  return {t0:b,t:fr.map(f=>Math.round(f.t-b)),rms:fr.map(f=>+f.rms.toPrecision(3)),noise:+(fr[fr.length-1].noise||0).toPrecision(3),live:fr.map(f=>f.live?1:0),on:fr.map((f,i)=>f.on?i:-1).filter(i=>i>=0),
+    ch:fr.map(f=>f.ch),raw:fr.map(f=>f.raw),ear:fr.map(f=>f.ear==null?null:rnd2(f.ear))} }
+const devName=()=>{ const c=S.get('cloud',null); if(c&&c.device) return c.device; const u=navigator.userAgent;
+  return /iPad/.test(u)||(navigator.maxTouchPoints>1&&/Mac/.test(u))?'ipad':/iPhone/.test(u)?'iphone':/Android/.test(u)?'android':'equipo' };
+function diagMeta(kind){ return {app:'trastero-debug',v:1,kind,at:Date.now(),device:devName(),build:typeof BUILD!=='undefined'?BUILD:'',ua:navigator.userAgent,
+  mic:Object.assign({},Mic.settings||{},{noise:Mic.noise}),tune:tuneDiff(),perf:perfStats(),lat:PL.cfg?PL.cfg.lat:null} }
+
+/* reporte desde el reproductor: los últimos 8 s con todo lo que hace falta para entenderlos */
+function diagReport(verdict){ if(!PL.running) return; const now=performance.now(), t0=now-8000;
+  const t=songTime()-lagT(), sp=PL.speed||1, w0=t-8*sp, w1=t+1.5*sp;
+  const ctx={song:{id:PL.song.id,title:PL.song.title,src:PL.song.src||'demo'},mode:PL.mode,speed:sp,margin:PL.cfg.margin,wait:!!(PL.mode==='practice'&&PL.cfg.wait),sens:st.sens,
+    songT:rnd2(t),perfNow:Math.round(now),hold:PL.hold?{t:rnd2(PL.holdT),since:Math.round(PL.holdSince)}:null,
+    notes:PL.notes.filter(n=>n.t>=w0&&n.t<=w1).map(n=>({t:rnd2(n.t),m:n.m,s:n.s,f:n.f,tech:n.tech||'',st:n.st,tent:!!n.tent,late:n.late||0})),
+    blocks:PL.blocks.filter(b=>b.t1>=w0&&b.t0<=w1).map(b=>({t0:rnd2(b.t0),t1:rnd2(b.t1),chords:b.chords.map(c=>c.name),st:b.st,best:Math.round(b.best||0)}))};
+  const a=tapGrab(t0,now);
+  const pk=Object.assign(diagMeta('report'),{label:{verdict,note:verdict==='pass'?'Lo toqué bien y no lo aceptó':'Lo aceptó y no debía'},ctx,
+    audio:a?pcmPack(a):null,frames:framesPack(t0,now),log:DBG.since(8500)});
+  diagSave(pk,`${verdict==='pass'?'✓ Estaba bien':'✗ No debía'} · ${PL.song.title} ${fmtT(t)}`).then(rec=>{
+    const cfg=S.get('cloud',null); toast(cfg?'Guardado. Enviando a la nube…':'Guardado. Envíalo desde Ajustes → Diagnóstico');
+    if(cfg) diagSend(rec).then(()=>toast('Reporte enviado')).catch(e=>toast('Guardado (no se pudo enviar: '+e.message+')')) }).catch(e=>toast('No pude guardar el reporte: '+e.message)) }
+const fmtT=s=>{ s=Math.max(0,s); return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0') };
+
+/* almacenamiento local de paquetes */
+function idb(){ return DIAG.db||(DIAG.db=new Promise((res,rej)=>{ const r=indexedDB.open('trastero-diag',1); r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error||new Error('IndexedDB no disponible')) })) }
+async function idbDo(mode,fn){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('p',mode), st=tx.objectStore('p'); let out; const r=fn(st); if(r) r.onsuccess=()=>{ out=r.result }; tx.oncomplete=()=>res(out); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error||new Error('cancelado')) }) }
+const diagList=()=>idbDo('readonly',s=>s.getAll()).then(a=>(a||[]).sort((x,y)=>y.at-x.at));
+async function diagSave(pk,title){ const json=JSON.stringify(pk), stamp=new Date(pk.at), p2=n=>String(n).padStart(2,'0');
+  const id=`${devName().replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${stamp.getFullYear()}${p2(stamp.getMonth()+1)}${p2(stamp.getDate())}-${p2(stamp.getHours())}${p2(stamp.getMinutes())}${p2(stamp.getSeconds())}-${pk.kind}`;
+  const rec={id,at:pk.at,kind:pk.kind,title,size:json.length,sent:null,json}; await idbDo('readwrite',s=>s.put(rec)); return rec }
+const diagDel=id=>idbDo('readwrite',s=>s.delete(id));
+async function diagSend(rec){ const c=S.get('cloud',null); if(!c||!c.repo||!c.token) throw new Error('conecta la nube en Ajustes → Nube');
+  const path=`trastero/debug/${rec.id}.json`, url=`https://api.github.com/repos/${c.repo}/contents/${path}`;
+  let r; try{ r=await fetch(url,{method:'PUT',headers:{Authorization:'Bearer '+c.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},
+    body:JSON.stringify({message:`Diagnóstico · ${rec.kind} · ${c.device||devName()}`,content:b64enc(rec.json)})}) }catch(e){ throw new Error('sin conexión') }
+  if(r.status===422){ /* ya existe con ese nombre: lo damos por enviado */ }
+  else if(!r.ok) throw new Error(r.status===401?'token vencido':r.status===403?'el token no puede escribir':r.status===413?'muy grande: usa Archivo':'GitHub respondió '+r.status);
+  rec.sent=path; await idbDo('readwrite',s=>s.put(rec)); return path }
+async function diagFile(rec){ const name=`trastero-${rec.id}.trdbg.json`, file=new File([rec.json],name,{type:'application/json'});
+  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Diagnóstico de Trastero'}); return } }catch(e){ if(e&&e.name==='AbortError') return }
+  const a=h('a',{href:URL.createObjectURL(file),download:name}); document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() },1500) }
+// texto para pegar en el chat: sin audio, comprimido. TRDBG1: = gzip+base64; TRDBG0: = JSON sin comprimir
+async function diagText(rec){ const pk=JSON.parse(rec.json); const strip=x=>{ if(x&&x.audio) x.audio={sr:x.audio.sr,n:x.audio.n,omitted:true} };
+  strip(pk); (pk.takes||[]).forEach(strip); const js=JSON.stringify(pk);
+  if(typeof CompressionStream==='undefined') return 'TRDBG0:'+js;
+  const cs=new Blob([js]).stream().pipeThrough(new CompressionStream('gzip')); const u=new Uint8Array(await new Response(cs).arrayBuffer()); return 'TRDBG1:'+bytesB64(u) }
+
+/* panel en vivo sobre la autopista */
+function diagPanelToggle(force){ DIAG.panel=force!=null?force:!DIAG.panel; const c=$('#pDiag'); if(c) c.hidden=!DIAG.panel; const b=$('#pDiagT'); if(b) b.setAttribute('aria-pressed',String(DIAG.panel)) }
+function drawDiagPanel(o){ const cv=$('#pDiag'); if(!cv||cv.hidden) return; const dpr=Math.min(2,window.devicePixelRatio||1), W=cv.clientWidth||240, H=cv.clientHeight||170;
+  if(cv.width!==Math.round(W*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr) } const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  g.fillStyle='rgba(10,10,14,.78)'; g.fillRect(0,0,W,H);
+  const fr=DIAG.frames, mxRaw=Math.max(1e-6,...fr.slice(-120).map(f=>f.raw?Math.max(...f.raw):0)), bw=(W-16)/12, bh=46, y0=8;
+  const srt=o.ch?[...o.ch].sort((a,b)=>b-a):[0,0,0], tot=srt.reduce((a,b)=>a+b,0)||1, share=(srt[0]+srt[1]+srt[2])/tot;
+  const want=new Set((PL.hold?PL.notes.filter(x=>Math.abs(x.t-PL.holdT)<.02):PL.notes.filter(x=>x.st===0&&Math.abs(x.t-(songTime()-lagT()))<.4)).map(x=>((x.m%12)+12)%12));
+  g.font='10px ui-monospace,monospace'; g.textAlign='center';
+  for(let i=0;i<12;i++){ const x=8+i*bw, v=o.live&&o.ch?o.ch[i]:0, rv=o.raw?o.raw[i]/mxRaw:0;
+    g.fillStyle=want.has(i)?'#ffcc4d':'#6ec1ff'; g.fillRect(x+1,y0+bh*(1-v),bw-3,bh*v);
+    g.fillStyle='#ff6b9a'; g.fillRect(x+1,y0+bh*(1-Math.min(1,rv))-1,bw-3,2);
+    g.fillStyle='#ccc'; g.fillText(nn(i),x+bw/2,y0+bh+11) }
+  g.strokeStyle='rgba(255,255,255,.25)'; g.beginPath(); g.moveTo(8,y0+bh*(1-TUNE.freshMin)); g.lineTo(W-8,y0+bh*(1-TUNE.freshMin)); g.stroke();
+  const lines=[], db=v=>v>0?Math.round(20*Math.log10(v)):-99, ear=PL.ear!=null?nn(Math.round(PL.ear))+(Math.floor(Math.round(PL.ear)/12)-1)+` ${Math.round((PL.ear-Math.round(PL.ear))*100)}¢`:'—';
+  lines.push([`tonal ${share.toFixed(2)} ${share>=TUNE.tonal?'✓':'✗'} · ${db(o.rms)} dB (ruido ${db(o.noise)})`,share>=TUNE.tonal?'#9f9':'#f88']);
+  lines.push([`tono ${ear}${o.onset?' · ATAQUE':''}`,o.onset?'#ffcc4d':'#ddd']);
+  if(PL.hold){ const gp=PL.notes.filter(x=>Math.abs(x.t-PL.holdT)<.02&&(x.st===0||x.tent)); lines.push(['espera: '+gp.map(x=>(x.tent?'●':'○')+nn(x.m)+(Math.floor(x.m/12)-1)).join(' '),'#ffcc4d']) }
+  const now=performance.now(); DBG.why.slice(-3).reverse().forEach(e=>{ const age=((now-e.at)/1000).toFixed(1); const d=Object.entries(e).filter(([k])=>!['k','at','m','ort','via'].includes(k)).map(([k,v])=>k==='r'?v:`${k}=${Array.isArray(v)?v.join('+'):v}`).join(' ');
+    lines.push([`${age}s ${e.k==='reset'?'⟲':'✗'} ${d}`.slice(0,58),now-e.at<1500?'#ff8a8a':'#a88']) });
+  const ps=perfStats(); lines.push([`${ps.fps} fps · p95 ${ps.gapP95} ms · Ear ${ps.earP95} ms · juez ${ps.judgeP95} ms`,ps.gapP95>40?'#f88':'#8a8']);
+  g.textAlign='left'; g.font='11px ui-monospace,monospace'; lines.forEach(([tx,c],i)=>{ g.fillStyle=c; g.fillText(tx,8,y0+bh+28+i*14) }) }
+
+/* Ajustes → Diagnóstico */
+function diagSetOn(on){ DBG.on=on||DBG.url; try{ if(on) localStorage.setItem('trastero.__diag','1'); else localStorage.removeItem('trastero.__diag') }catch(e){}
+  if(DBG.on&&Mic.on) tapStart(); if(!DBG.on&&!LAB.on) tapStop(); diagButtons() }
+function diagButtons(){ const b=$('#pDiagBar'); if(b) b.hidden=!DBG.on; if(!DBG.on) diagPanelToggle(false) }
+const kb=n=>n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
+async function renderDiag(){ const box=$('#diagBox'); if(!box) return; box.innerHTML='';
+  const on=h('input',{type:'checkbox',id:'dgOn'}); on.checked=DBG.on; on.disabled=DBG.url; on.addEventListener('change',()=>{ diagSetOn(on.checked); renderDiag() });
+  box.append(h('label',{class:'check'},on,'Modo diagnóstico'),
+    h('p',{class:'hint'},'Mientras tocas canciones guarda los últimos segundos de sonido y lo que decidió el juez. En el reproductor aparecen «✓ Estaba bien» y «✗ No debía»: tócalos justo después de un error y ese momento queda guardado para revisarlo. «Panel» (o la tecla D) muestra lo que escucha la app en vivo.'+(DBG.url?' (Activado por la dirección: ?debug=1.)':'')),
+    h('div',{class:'toolbar'},h('button',{class:'btn',onclick:()=>{ location.hash='laboratorio' }},'Laboratorio de calibración')),
+    h('p',{class:'hint'},'El laboratorio te pide tocar notas, pellizcos, acordes y ruidos, y guarda solo las tomas que confirmas: así tengo sonido real de tu guitarra y tu micrófono.'));
+  const list=h('div',{class:'dglist'}); box.append(h('span',{class:'lab',style:'margin-top:12px;display:block'},'Guardado para revisar'),list);
+  let recs=[]; try{ recs=await diagList() }catch(e){ list.append(h('p',{class:'hint'},'Este navegador no deja guardar reportes ('+e.message+').')); return }
+  if(!recs.length) list.append(h('p',{class:'hint'},'Nada todavía.'));
+  const cloud=S.get('cloud',null);
+  recs.forEach(rec=>{ const st=h('span',{class:'dgst'},rec.sent?'enviado':'');
+    const act=(lbl,fn)=>h('button',{class:'btn sm',onclick:async e=>{ const b=e.currentTarget; b.disabled=true; try{ await fn() }catch(er){ toast(er.message) } b.disabled=false }},lbl);
+    list.append(h('div',{class:'dgrow'},h('div',{},h('b',{},rec.title||rec.kind),h('small',{},`${new Date(rec.at).toLocaleString()} · ${kb(rec.size)} `),st),
+      h('div',{class:'dgact'},
+        act(rec.sent?'Reenviar':'Enviar',async()=>{ st.textContent='enviando…'; await diagSend(rec); st.textContent='enviado'; toast('Enviado a la nube') }),
+        act('Archivo',()=>diagFile(rec)),
+        act('Copiar',async()=>{ const t=await diagText(rec); await navigator.clipboard.writeText(t); toast(`Copiado (${kb(t.length)}, sin audio): pégalo en el chat`) }),
+        act('Borrar',async()=>{ if(!confirm('¿Borrar este reporte?')) return; await diagDel(rec.id); renderDiag() })))) });
+  if(recs.some(r=>!r.sent)) list.prepend(h('div',{class:'toolbar'},h('button',{class:'btn primary sm',disabled:!cloud,onclick:async e=>{ e.currentTarget.disabled=true; let ok=0,bad=0; for(const r of recs.filter(r=>!r.sent)){ try{ await diagSend(r); ok++ }catch(er){ bad++ } } toast(`Enviados ${ok}`+(bad?` · ${bad} con error`:'')); renderDiag() }},'Enviar todo a la nube'),cloud?null:h('small',{class:'hint'},' Conecta la nube para enviar; o usa Archivo.')));
+  // ajustes finos
+  const ta=h('textarea',{rows:5,class:'mono',style:'width:100%;font-size:13px'}); ta.value=JSON.stringify(tuneDiff(),null,1);
+  const det=h('details',{class:'dgtune'},h('summary',{},'Ajustes finos del juez (solo para pruebas)'),
+    h('p',{class:'hint'},'Cambia umbrales sin actualizar la app. Escribe solo los que cambias, por ejemplo {"freshK":1.1}. Valores por defecto:'),
+    h('pre',{class:'mono dgdef'},Object.entries(TUNE_DEF).map(([k,v])=>`${k}: ${v}`).join('\n')),ta,
+    h('div',{class:'toolbar'},h('button',{class:'btn sm',onclick:()=>{ let j; try{ j=JSON.parse(ta.value||'{}') }catch(e){ toast('No es JSON válido'); return } const bad=Object.keys(j).filter(k=>!(k in TUNE_DEF)||typeof j[k]!=='number'); if(bad.length){ toast('No conozco: '+bad.join(', ')); return } try{ localStorage.setItem('trastero.__tune',JSON.stringify(j)) }catch(e){} tuneLoad(); toast('Aplicado'); renderDiag() }},'Aplicar'),
+      h('button',{class:'btn ghost sm',onclick:()=>{ try{ localStorage.removeItem('trastero.__tune') }catch(e){} tuneLoad(); toast('Volví a los valores por defecto'); renderDiag() }},'Volver a los de fábrica')));
+  if(Object.keys(tuneDiff()).length) det.open=true; box.append(det) }
+
+$('#pRepOk').addEventListener('click',()=>diagReport('pass'));
+$('#pRepBad').addEventListener('click',()=>diagReport('fail'));
+$('#pDiagT').addEventListener('click',()=>diagPanelToggle());
+document.addEventListener('keydown',e=>{ if(!PL.running||!DBG.on||PL.edit||e.target.matches('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return;
+  if(e.key==='d'||e.key==='D') diagPanelToggle() });
+if(DBG.on) window.__TR={get PL(){ return PL },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats};
+diagButtons();
+
+/* ---------- laboratorio de calibración (#laboratorio) ----------
+   Protocolo guiado: la app pide algo concreto (una cuerda, un pellizco, un acorde, un ruido), graba unos segundos
+   y muestra lo que escuchó. Solo se guardan las tomas que el usuario confirma («Sí, eso toqué»), así cada una llega
+   etiquetada con lo que de verdad sonó. La sesión se guarda en IndexedDB a medida que avanza (paquete kind:'lab')
+   y se envía como cualquier reporte (nube, archivo o texto sin audio). */
+const LAB={on:false,rec:false,ear:null,plan:[],i:0,takes:[],sel:null,rec0:0,session:null,last:null};
+const LAB_STR=s=>`cuerda ${6-s}`;
+const labNote=(s,f)=>{ const m=OPEN[s]+f; return {s,f,m,txt:`${LAB_STR(s)} ${f?'traste '+f:'al aire'}`,name:nn(m)+(Math.floor(m/12)-1)} };
+const LAB_CHORDS=[['G','3.2.0.0.0.3'],['C','x.3.2.0.1.0'],['D','x.x.0.2.3.2'],['Em','0.2.2.0.0.0'],['Am','x.0.2.2.1.0']];
+const LAB_PINCH=[[[1,3],[5,0]],[[0,3],[4,0]],[[1,0],[4,1]],[[1,0],[5,0]]];   // C3+E4, G2+B3, A2+C4, A2+E4 (la 12.ª, la difícil)
+function labPlan(){ const G=[];
+  G.push({id:'silencio',n:'Silencio',d:'Mide el ruido de tu sala.',items:[{id:'sil',t:'No toques nada',d:'Deja la guitarra quieta y apaga las cuerdas con la mano.',ex:{kind:'silence',pass:false},dur:3}]});
+  G.push({id:'cuerdas',n:'Cuerdas al aire',d:'Una por una, como tocas normalmente.',items:[0,1,2,3,4,5].map(s=>{ const a=labNote(s,0); return {id:'open'+s,t:`${a.name}: ${a.txt}`,d:'Toca la cuerda una vez y déjala sonar.',ex:{kind:'note',notes:[a.m],pass:true}} })});
+  G.push({id:'notas',n:'Notas pisadas',d:'De la grave a la aguda.',items:[[1,3],[2,2],[3,2],[4,1],[5,3],[5,12]].map(([s,f])=>{ const a=labNote(s,f); return {id:`n${s}-${f}`,t:`${a.name}: ${a.txt}`,d:'Una vez, limpia.',ex:{kind:'note',notes:[a.m],pass:true}} })});
+  const pin=[]; LAB_PINCH.forEach(([x,y],k)=>{ const a=labNote(...x), b=labNote(...y), nm=`${a.name} + ${b.name}`;
+    pin.push({id:`p${k}-juntas`,t:`Pellizco ${nm}: las dos a la vez`,d:`${a.txt} con el pulgar y ${b.txt} con un dedo, al mismo tiempo.`,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m,b.m],pass:true}},
+      {id:`p${k}-una`,t:`Pellizco ${nm}: solo la grave`,d:`Toca solo ${a.txt} (${a.name}). Esta toma debe fallar.`,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m],pass:false}},
+      {id:`p${k}-tarde`,t:`Pellizco ${nm}: la aguda tarde`,d:`Toca ${a.txt} y medio segundo después ${b.txt}. Esta toma debe fallar.`,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m,b.m],lateMs:500,pass:false},dur:4.5}) });
+  G.push({id:'pellizcos',n:'Pellizcos',d:'Juntas, una sola y desfasadas.',items:pin});
+  const c3=labNote(1,3), e4=labNote(5,0);
+  G.push({id:'sonando',n:'Pellizco con algo sonando',d:'Como en un arpegio: la nota anterior sigue sonando.',items:[[1,3],[5,0],[3,0]].map(([s,f])=>{ const r=labNote(s,f);
+    return {id:`ring${s}-${f}`,t:`${r.name} y luego ${c3.name} + ${e4.name}`,d:`Toca ${r.txt} (${r.name}), déjala sonar y a ~1 s haz el pellizco ${c3.txt} + ${e4.txt}.`,ex:{kind:'pinch',notes:[c3.m,e4.m],played:[c3.m,e4.m],ringing:[r.m],pass:true},dur:4.5} })});
+  G.push({id:'acordes',n:'Acordes',d:'Un rasgueo parejo hacia abajo.',items:LAB_CHORDS.map(([n,fr])=>{ const f=fr.split('.').map(x=>x==='x'?-1:+x); return {id:'ch'+n,t:`Acorde ${n}`,d:`Digitación ${fr.replace(/\./g,' ')} (de la 6.ª a la 1.ª).`,ex:{kind:'chord',name:n,frets:f,pass:true}} })});
+  G.push({id:'ruidos',n:'Ruidos (deben fallar)',d:'Lo que la app no debería tomar como notas.',items:[
+    {id:'uñas',t:'Uñas en la pantalla',d:'Golpecitos con las uñas sobre la pantalla, como cuando te pasó.',ex:{kind:'noise',pass:false}},
+    {id:'caja',t:'Golpe a la caja',d:'Golpea la caja de la guitarra con los nudillos.',ex:{kind:'noise',pass:false}},
+    {id:'roce',t:'Roce de cuerdas',d:'Desliza la mano por las cuerdas entorchadas, sin tocar notas.',ex:{kind:'noise',pass:false}},
+    {id:'chuck',t:'Rasgueo apagado',d:'Rasguea con la otra mano apagando todas las cuerdas.',ex:{kind:'noise',pass:false}}]});
+  return G }
+function labEnter(){ LAB.on=true; renderLab() }
+function labLeave(){ LAB.on=false; LAB.rec=false; if(!DBG.on) tapStop(); if(Mic.on&&!testOn&&!tunerOn&&!Sess.running&&!PL.running) micStop() }
+/* cada cuadro (desde diagFrame): tono y nivel */
+function labFrame(o){ LAB.ear=null; if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f) LAB.ear=69+12*Math.log2(f/440) }
+  const lv=$('#labLvl'); if(lv) lv.style.width=Math.min(100,Math.sqrt(o.rms)*260)+'%';
+  const ln=$('#labNow'); if(ln) ln.textContent=LAB.ear!=null?nn(Math.round(LAB.ear))+(Math.floor(Math.round(LAB.ear)/12)-1):'–';
+  if(LAB.rec&&performance.now()>=LAB.rec0+LAB.dur*1000) labStop() }
+async function labMic(){ const st=$('#labMicSt'); try{ LAB.on=true; ctx(); await micStart(); startLoop(); await tapStart(); if(st) st.textContent='Micrófono listo.'; renderLab() }
+  catch(e){ const r=micReason(e); if(st) st.textContent=MIC_MSG[r]||'No pude abrir el micrófono.' } }
+function labRecord(){ if(!Mic.on||!TAP.on){ toast('Primero abre el micrófono'); return } const it=LAB.plan[LAB.i]; LAB.dur=it.dur||3.5; LAB.rec0=performance.now(); LAB.rec=true; LAB.last=null;
+  const cue=$('#labCue'); cue.textContent='Prepárate…'; cue.className='labcue wait'; setTimeout(()=>{ if(LAB.rec){ cue.textContent='¡Ahora!'; cue.className='labcue go' } },500);
+  $('#labRec').disabled=true }
+function labStop(){ LAB.rec=false; const t1=performance.now(), t0=LAB.rec0, it=LAB.plan[LAB.i];
+  setTimeout(()=>{ // espera a que llegue el último trozo de audio
+    const a=tapGrab(t0,t1), fr=framesPack(t0,t1); LAB.last={id:it.id,group:it.g,title:it.t,expect:it.ex,at:Date.now(),dur:LAB.dur,audio:a?pcmPack(a):null,frames:fr,summary:labSummary(fr,it.ex)}; renderLab() },150) }
+function labSummary(fr,ex){ if(!fr) return {heard:'nada'}; const n=fr.t.length, on=fr.on.length, db=v=>v>0?Math.round(20*Math.log10(v)):-99;
+  const ears={}; fr.ear.forEach(m=>{ if(m!=null){ const r=Math.round(m); ears[r]=(ears[r]||0)+1 } });
+  const notes=Object.entries(ears).filter(([,c])=>c>=4).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([m])=>nn(+m)+(Math.floor(+m/12)-1));
+  const avg=new Array(12).fill(0); let k=0, shares=[]; const from=fr.on.length?fr.t[fr.on[0]]+TUNE.frameA:0;
+  fr.t.forEach((t,i)=>{ if(!fr.live[i]||!fr.ch[i]||t<from) return; k++; fr.ch[i].forEach((v,j)=>avg[j]+=v/100); const s=[...fr.ch[i]].sort((a,b)=>b-a), tot=s.reduce((a,b)=>a+b,0)||1; shares.push((s[0]+s[1]+s[2])/tot) });
+  if(k) for(let j=0;j<12;j++) avg[j]/=k;
+  const top=avg.map((v,pc)=>({pc,v})).sort((a,b)=>b.v-a.v).slice(0,4).filter(x=>x.v>.2).map(x=>`${nn(x.pc)} ${x.v.toFixed(2)}`);
+  const out={onsets:on,peakDb:db(Math.max(...fr.rms)),noiseDb:db(fr.noise),tonal:shares.length?rnd2(shares.reduce((a,b)=>a+b,0)/shares.length):null,pitches:notes,chroma:top};
+  if(ex.kind==='chord'&&k){ const ns=ex.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean), cand={key:ex.name,notes:ns,pcs:[...new Set(ns.map(x=>x.m%12))],bass:ns[0].m%12,root:null};
+    try{ out.chordPct=Math.round(Ear.score(Float32Array.from(avg),cand,new Float32Array(12)).pct) }catch(e){} }
+  return out }
+function labKeep(ok){ if(ok&&LAB.last){ LAB.takes=LAB.takes.filter(t=>t.id!==LAB.last.id); LAB.takes.push(LAB.last); labPersist() } LAB.last=null; LAB.i++; renderLab() }
+async function labPersist(){ if(!LAB.takes.length) return; if(!LAB.session) LAB.session={at:Date.now()};
+  const pk=Object.assign(diagMeta('lab'),{at:LAB.session.at,label:{groups:[...LAB.sel]},takes:LAB.takes});
+  try{ const rec=await diagSave(pk,`Laboratorio · ${LAB.takes.length} toma${LAB.takes.length>1?'s':''}`); LAB.session.rec=rec }catch(e){ toast('No pude guardar la sesión: '+e.message) } }
+function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
+  const groups=labPlan(); if(!LAB.sel) LAB.sel=new Set(groups.map(g=>g.id));
+  const micRow=h('div',{class:'labmic'},h('div',{class:'lvl'},h('i',{id:'labLvl'})),h('b',{id:'labNow',class:'mono'},'–'),
+    Mic.on&&TAP.on?h('span',{class:'hint',id:'labMicSt'},'Micrófono listo.'):h('button',{class:'btn primary',onclick:labMic},'Abrir micrófono'),!(Mic.on&&TAP.on)?h('span',{class:'hint',id:'labMicSt'}):null);
+  if(!LAB.plan.length){ // portada: elegir grupos
+    box.append(h('p',{class:'sub'},'Te pediré tocar cosas concretas. Cada toma dura unos segundos; después te muestro lo que escuché y tú decides si de verdad tocaste eso. Solo se guarda lo que confirmas.'),
+      h('ul',{class:'hint labtips'},h('li',{},'Pon el equipo donde lo dejas siempre para practicar, con el mismo Modo de micrófono.'),h('li',{},'Toca como siempre, ni más fuerte ni más suave.'),h('li',{},'Si te equivocas, repite la toma: lo importante es que lo guardado sea cierto.')),
+      micRow);
+    const list=h('div',{class:'labgroups'}); groups.forEach(g=>{ const c=h('input',{type:'checkbox'}); c.checked=LAB.sel.has(g.id); c.addEventListener('change',()=>{ c.checked?LAB.sel.add(g.id):LAB.sel.delete(g.id) });
+      list.append(h('label',{class:'check labg'},c,h('span',{},h('b',{},`${g.n} `),h('small',{},`${g.items.length} toma${g.items.length>1?'s':''} · ${g.d}`)))) });
+    box.append(list,h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ LAB.plan=groups.filter(g=>LAB.sel.has(g.id)).flatMap(g=>g.items.map(it=>Object.assign({g:g.id,gn:g.n},it))); if(!LAB.plan.length){ toast('Elige al menos un grupo'); return } LAB.i=0; LAB.takes=[]; LAB.session=null; renderLab() }},'Empezar'),
+      h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver')));
+    return }
+  const total=LAB.plan.length;
+  if(LAB.i>=total){ // final
+    const rec=LAB.session&&LAB.session.rec;
+    box.append(h('h2',{class:'h2'},`Listo: ${LAB.takes.length} de ${total} tomas guardadas`),
+      h('ul',{class:'labdone'},...LAB.plan.map(it=>{ const tk=LAB.takes.find(t=>t.id===it.id); return h('li',{class:tk?'ok':'skip'},`${tk?'✓':'–'} ${it.t}`) })));
+    if(rec){ const st=h('span',{class:'hint'});
+      box.append(h('div',{class:'toolbar'},
+        h('button',{class:'btn primary',onclick:async e=>{ e.currentTarget.disabled=true; st.textContent='Enviando…'; try{ const p=await diagSend(rec); st.textContent='Enviado ('+p+').' }catch(er){ st.textContent='No se pudo enviar: '+er.message+'. Usa Archivo.'; e.currentTarget.disabled=false } }},'Enviar a la nube'),
+        h('button',{class:'btn',onclick:()=>diagFile(rec)},'Archivo'),
+        h('button',{class:'btn',onclick:async()=>{ const t=await diagText(rec); await navigator.clipboard.writeText(t); toast(`Copiado (${kb(t.length)}, sin audio)`) }},'Copiar sin audio')),st,
+        h('p',{class:'hint'},'También queda en Ajustes → Diagnóstico.')) }
+    box.append(h('div',{class:'toolbar'},h('button',{class:'btn ghost',onclick:()=>{ LAB.plan=[]; renderLab() }},'Otra sesión'),h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver a Ajustes')));
+    return }
+  const it=LAB.plan[LAB.i];
+  box.append(h('div',{class:'labprog'},h('i',{style:`width:${Math.round(LAB.i/total*100)}%`})),h('p',{class:'eyebrow'},`${it.gn} · ${LAB.i+1} de ${total}`),
+    h('h2',{class:'h2 labt'},it.t),h('p',{class:'labd'},it.d),
+    ...[it.ex.pass===false?h('p',{class:'hint bad'},'Esta toma es para enseñarle a la app lo que NO debe aceptar.'):null, micRow,
+    LAB.last?null:h('div',{id:'labCue',class:'labcue'},'Toca «Grabar» y espera el «¡Ahora!»')].filter(Boolean));
+  if(!LAB.last) box.append(h('div',{class:'toolbar'},h('button',{class:'btn primary',id:'labRec',onclick:labRecord,disabled:!(Mic.on&&TAP.on)},`Grabar ${it.dur||3.5} s`),h('button',{class:'btn ghost',onclick:()=>labKeep(false)},'Saltar'),
+    h('button',{class:'btn ghost',onclick:()=>{ LAB.i=total; renderLab() }},'Terminar aquí')));
+  else { const s=LAB.last.summary||{};
+    box.append(h('div',{class:'labsum'},
+      h('div',{},h('span',{class:'k'},'Tono'),h('b',{},s.pitches&&s.pitches.length?s.pitches.join(', '):'ninguno')),
+      h('div',{},h('span',{class:'k'},'Notas fuertes'),h('b',{},s.chroma&&s.chroma.length?s.chroma.join(' · '):'–')),
+      h('div',{},h('span',{class:'k'},'Ataques'),h('b',{},String(s.onsets??'–'))),
+      h('div',{},h('span',{class:'k'},'Parece nota'),h('b',{},s.tonal==null?'–':`${s.tonal} ${s.tonal>=TUNE.tonal?'✓':'✗'}`)),
+      h('div',{},h('span',{class:'k'},'Volumen'),h('b',{},`${s.peakDb??'–'} dB (ruido ${s.noiseDb??'–'})`)),
+      s.chordPct!=null?h('div',{},h('span',{class:'k'},'Acorde'),h('b',{},s.chordPct+'%')):null,
+      !LAB.last.audio?h('p',{class:'hint bad'},'No llegó el audio de esta toma; repítela.'):null),
+      h('p',{class:'labq'},'¿Sonó lo que se pedía?'),
+      h('div',{class:'toolbar'},h('button',{class:'btn primary',disabled:!LAB.last.audio,onclick:()=>labKeep(true)},'✓ Sí, eso toqué'),h('button',{class:'btn',onclick:()=>{ LAB.last=null; renderLab() }},'↻ Repetir'),h('button',{class:'btn ghost',onclick:()=>labKeep(false)},'Saltar'))) } }
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
