@@ -813,6 +813,37 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .labdone{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:4px}
 .labdone li.skip{opacity:.55}
 @media (prefers-reduced-motion:reduce){.labcue.go{animation:none}}
+/* laboratorio manos libres: diapasón, estado grande, resultado */
+.labstage{display:flex;flex-direction:column;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.labstage.paused{opacity:.6}
+.labfret{width:100%;max-width:520px;height:auto;margin:6px 0 2px;display:block}
+.labfret .str{stroke:var(--fg);opacity:.75;stroke-linecap:round}
+.labfret .str.wound{stroke-dasharray:1.4 1.6;opacity:.85}
+.labfret .fret{stroke:var(--line);stroke-width:2}
+.labfret .nut{stroke:var(--fg);stroke-width:5}
+.labfret .snum{font:700 14px var(--mono,ui-monospace,monospace);fill:var(--fg);text-anchor:middle}
+.labfret .sname{font:12px var(--mono,ui-monospace,monospace);fill:var(--muted);text-anchor:middle}
+.labfret .fnum{font:11px var(--mono,ui-monospace,monospace);fill:var(--muted);text-anchor:middle}
+.labfret .mute{font:700 16px var(--body,system-ui);fill:var(--bad);text-anchor:middle}
+.labfret .dot circle{fill:var(--accent);stroke:var(--bg);stroke-width:2}
+.labfret .dot text{font:700 12px var(--mono,ui-monospace,monospace);fill:var(--accent-ink,#fff);text-anchor:middle}
+.labfret .dot.pre circle{fill:var(--muted)}
+.labfret .dot.ghost circle{fill:none;stroke:var(--muted);stroke-dasharray:3 3}
+.labfret .dot.ghost text{fill:var(--muted)}
+.labfret .dot.seq circle{fill:var(--warn)}
+.labcue{display:flex;flex-direction:column;gap:8px;align-items:stretch;font-size:24px}
+.labcue.go{background:color-mix(in srgb,var(--accent) 22%,var(--surface-2));color:var(--fg);animation:labpulse 1.6s ease-in-out infinite}
+.labcue.rec{background:color-mix(in srgb,var(--bad) 30%,var(--surface-2));color:var(--fg)}
+@keyframes labpulse{50%{background:color-mix(in srgb,var(--accent) 40%,var(--surface-2))}}
+.labbar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--fg) 12%,transparent);overflow:hidden}
+.labbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .05s linear}
+.labres{padding:14px;border-radius:14px;display:flex;flex-direction:column;gap:8px;font-size:18px}
+.labres.ok{background:color-mix(in srgb,#3ccf7a 22%,var(--surface-2))}
+.labres.bad{background:color-mix(in srgb,var(--bad) 22%,var(--surface-2))}
+.labres small{opacity:.75;font-size:13px}
+.labact .btn{min-height:48px}
+.btn.big{min-height:54px;font-size:18px;padding:0 28px}
+@media (prefers-reduced-motion:reduce){.labcue.go{animation:none}}
 
 </style>
 
@@ -1451,7 +1482,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-13 04:40 · 1d94d9b";
+const BUILD="2026-11-13 17:09 · 0175759";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -4738,7 +4769,7 @@ function bytesB64(u){ let s=''; for(let i=0;i<u.length;i+=0x8000) s+=String.from
 function diagFrame(o,now,earMs,restMs){ const P=DIAG.perf; if(LAB.on) labFrame(o);
   if(P.last){ const g=now-P.last; P.gap.push(g); if(g>50) P.long++ } P.last=now; P.ear.push(earMs); P.rest.push(restMs);
   for(const k of ['gap','ear','rest']) if(P[k].length>600) P[k].splice(0,P[k].length-600);
-  if(DBG.on||LAB.rec){ DIAG.frames.push({t:now,rms:o.rms,noise:o.noise,live:o.live,on:o.onset,ch:o.ch?Array.from(o.ch,v=>Math.round(v*100)):null,raw:o.raw?Array.from(o.raw,rnd2):null,ear:PL.running?PL.ear:(LAB.rec?LAB.ear:null)});
+  if(DBG.on||LAB.on){ DIAG.frames.push({t:now,rms:o.rms,noise:o.noise,live:o.live,on:o.onset,ch:o.ch?Array.from(o.ch,v=>Math.round(v*100)):null,raw:o.raw?Array.from(o.raw,rnd2):null,ear:PL.running?PL.ear:(LAB.on?LAB.ear:null)});
     while(DIAG.frames.length&&now-DIAG.frames[0].t>DIAG.keepMs) DIAG.frames.shift() }
   if(DIAG.panel&&PL.running&&(DIAG.pf=(DIAG.pf||0)+1)%2===0) drawDiagPanel(o) }
 const pct=(arr,q)=>{ if(!arr.length) return 0; const s=[...arr].sort((a,b)=>a-b); return s[Math.min(s.length-1,Math.floor(q*s.length))] };
@@ -4852,88 +4883,155 @@ $('#pRepBad').addEventListener('click',()=>diagReport('fail'));
 $('#pDiagT').addEventListener('click',()=>diagPanelToggle());
 document.addEventListener('keydown',e=>{ if(!PL.running||!DBG.on||PL.edit||e.target.matches('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return;
   if(e.key==='d'||e.key==='D') diagPanelToggle() });
-if(DBG.on) window.__TR={get PL(){ return PL },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats,
+if(DBG.on) window.__TR={get PL(){ return PL },get LAB(){ return LAB },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats,
   // para tools/juez (la app en Node): arrancar canciones sin tocar la pantalla
   sim:{startPlayer,stopPlayer,finishPlayer,skipHold,allSongs,songFromText,readGP5,gpToSong,gpTracks,gpRepeatsOk,playCfg,buildSong,toggleWait,songTime,lagT,MARG,get Mic(){ return Mic },get prefs(){ return prefs },get st(){ return st }}};
 diagButtons();
 
-/* ---------- laboratorio de calibración (#laboratorio) ----------
-   Protocolo guiado: la app pide algo concreto (una cuerda, un pellizco, un acorde, un ruido), graba unos segundos
-   y muestra lo que escuchó. Solo se guardan las tomas que el usuario confirma («Sí, eso toqué»), así cada una llega
-   etiquetada con lo que de verdad sonó. La sesión se guarda en IndexedDB a medida que avanza (paquete kind:'lab')
-   y se envía como cualquier reporte (nube, archivo o texto sin audio). */
-const LAB={on:false,rec:false,ear:null,plan:[],i:0,takes:[],sel:null,rec0:0,session:null,last:null};
-const LAB_STR=s=>`cuerda ${6-s}`;
-const labNote=(s,f)=>{ const m=OPEN[s]+f; return {s,f,m,txt:`${LAB_STR(s)} ${f?'traste '+f:'al aire'}`,name:nn(m)+(Math.floor(m/12)-1)} };
-const LAB_CHORDS=[['G','3.2.0.0.0.3'],['C','x.3.2.0.1.0'],['D','x.x.0.2.3.2'],['Em','0.2.2.0.0.0'],['Am','x.0.2.2.1.0']];
+/* ---------- laboratorio de calibración (#laboratorio), manos libres ----------
+   Se toca «Empezar» una vez y después no hace falta tocar la pantalla:
+   1. espera a que las cuerdas se apaguen (silencio),
+   2. queda escuchando y la toma empieza sola con el primer ataque (más 0,4 s de antes, que ya estaban grabados),
+   3. al terminar compara lo que oyó con lo pedido (`labCheck`, una revisión aproximada, no el juez):
+      · si calza: lo guarda solo en 1,5 s (se puede tocar para descartarlo) y pasa a lo siguiente;
+      · si no calza: dice «Pediste… escuché…», y si no tocas nada vuelve a escuchar para repetir;
+        «Sí, lo toqué bien» guarda igual (esas tomas son las más valiosas: lo que el detector no reconoce).
+   Cada toma se dibuja en un diapasón con las cuerdas numeradas y de distinto grosor, ordenado como la tablatura y la
+   autopista: 1 = Mi agudo (delgada) arriba, 6 = Mi grave (gruesa) abajo.
+   Teclado: Espacio = guardar, R = repetir, S = saltar, P = pausa. La sesión se guarda en IndexedDB (kind:'lab'). */
+const LAB={on:false,phase:'idle',ear:null,plan:[],i:0,takes:[],sel:null,session:null,last:null,paused:false,quiet0:0,armedAt:0,trig:0,dur:2,timer:null,fails:0,sound:true};
+const STR_NAME=['Mi grave','La','Re','Sol','Si','Mi agudo'];
+const labNote=(s,f)=>{ const m=OPEN[s]+f; return {s,f,m,txt:`cuerda ${6-s} ${f?'traste '+f:'al aire'}`,name:nn(m)+(Math.floor(m/12)-1)} };
+const nmO=m=>nn(((Math.round(m)%12)+12)%12)+(Math.floor(Math.round(m)/12)-1);
+const LAB_CHORDS=[['D','x.x.0.2.3.2'],['Em','0.2.2.0.0.0']];
 const LAB_PINCH=[[[1,3],[5,0]],[[0,3],[4,0]],[[1,0],[4,1]],[[1,0],[5,0]]];   // C3+E4, G2+B3, A2+C4, A2+E4 (la 12.ª, la difícil)
 function labPlan(){ const G=[];
-  G.push({id:'silencio',n:'Silencio',d:'Mide el ruido de tu sala.',items:[{id:'sil',t:'No toques nada',d:'Deja la guitarra quieta y apaga las cuerdas con la mano.',ex:{kind:'silence',pass:false},dur:3}]});
-  G.push({id:'cuerdas',n:'Cuerdas al aire',d:'Una por una, como tocas normalmente.',items:[0,1,2,3,4,5].map(s=>{ const a=labNote(s,0); return {id:'open'+s,t:`${a.name}: ${a.txt}`,d:'Toca la cuerda una vez y déjala sonar.',ex:{kind:'note',notes:[a.m],pass:true}} })});
-  G.push({id:'notas',n:'Notas pisadas',d:'De la grave a la aguda.',items:[[1,3],[2,2],[3,2],[4,1],[5,3],[5,12]].map(([s,f])=>{ const a=labNote(s,f); return {id:`n${s}-${f}`,t:`${a.name}: ${a.txt}`,d:'Una vez, limpia.',ex:{kind:'note',notes:[a.m],pass:true}} })});
-  const pin=[]; LAB_PINCH.forEach(([x,y],k)=>{ const a=labNote(...x), b=labNote(...y), nm=`${a.name} + ${b.name}`;
-    pin.push({id:`p${k}-juntas`,t:`Pellizco ${nm}: las dos a la vez`,d:`${a.txt} con el pulgar y ${b.txt} con un dedo, al mismo tiempo.`,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m,b.m],pass:true}},
-      {id:`p${k}-una`,t:`Pellizco ${nm}: solo la grave`,d:`Toca solo ${a.txt} (${a.name}). Esta toma debe fallar.`,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m],pass:false}},
-      {id:`p${k}-tarde`,t:`Pellizco ${nm}: la aguda tarde`,d:`Toca ${a.txt} y medio segundo después ${b.txt}. Esta toma debe fallar.`,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m,b.m],lateMs:500,pass:false},dur:4.5}) });
+  G.push({id:'silencio',n:'Silencio',d:'Mide el ruido de tu sala.',items:[{id:'sil',t:'No toques nada',d:'Apaga las cuerdas con la mano y quédate quieto 3 segundos.',ex:{kind:'silence',pass:false},dur:3}]});
+  G.push({id:'cuerdas',n:'Cuerdas al aire',d:'Una por una, como tocas normalmente.',items:[5,4,3,2,1,0].map(s=>{ const a=labNote(s,0); return {id:'open'+s,t:`Cuerda ${6-s} al aire (${STR_NAME[s]})`,d:'Tócala una vez y déjala sonar.',dots:[{s,f:0}],ex:{kind:'note',notes:[a.m],pass:true}} })});
+  G.push({id:'notas',n:'Notas pisadas',d:'De la grave a la aguda.',items:[[1,3],[2,2],[3,2],[4,1],[5,3],[5,12]].map(([s,f])=>{ const a=labNote(s,f); return {id:`n${s}-${f}`,t:`Cuerda ${6-s}, traste ${f} (${a.name})`,d:'Una vez, limpia.',dots:[{s,f}],ex:{kind:'note',notes:[a.m],pass:true}} })});
+  const pin=[]; LAB_PINCH.forEach(([x,y],k)=>{ const a=labNote(...x), b=labNote(...y), nm=`${a.name} + ${b.name}`, dd=[{s:x[0],f:x[1]},{s:y[0],f:y[1]}];
+    pin.push({id:`p${k}-juntas`,t:`Pellizco ${nm}: las dos a la vez`,d:'Pulgar en la grave y un dedo en la aguda, al mismo tiempo.',dots:dd,ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m,b.m],pass:true},dur:2.2},
+      {id:`p${k}-una`,t:`Pellizco ${nm}: solo la grave`,d:`Toca solo la ${a.txt}. Esta toma debe fallar en el juego.`,dots:[dd[0]],ghost:[dd[1]],ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m],pass:false},dur:2.2},
+      {id:`p${k}-tarde`,t:`Pellizco ${nm}: la aguda tarde`,d:'Primero la grave y medio segundo después la aguda. Esta toma debe fallar en el juego.',dots:dd.map((d,i)=>Object.assign({n:i+1},d)),ex:{kind:'pinch',notes:[a.m,b.m],played:[a.m,b.m],lateMs:500,pass:false},dur:2.8}) });
   G.push({id:'pellizcos',n:'Pellizcos',d:'Juntas, una sola y desfasadas.',items:pin});
   const c3=labNote(1,3), e4=labNote(5,0);
   G.push({id:'sonando',n:'Pellizco con algo sonando',d:'Como en un arpegio: la nota anterior sigue sonando.',items:[[1,3],[5,0],[3,0]].map(([s,f])=>{ const r=labNote(s,f);
-    return {id:`ring${s}-${f}`,t:`${r.name} y luego ${c3.name} + ${e4.name}`,d:`Toca ${r.txt} (${r.name}), déjala sonar y a ~1 s haz el pellizco ${c3.txt} + ${e4.txt}.`,ex:{kind:'pinch',notes:[c3.m,e4.m],played:[c3.m,e4.m],ringing:[r.m],pass:true},dur:4.5} })});
-  G.push({id:'acordes',n:'Acordes',d:'Un rasgueo parejo hacia abajo.',items:LAB_CHORDS.map(([n,fr])=>{ const f=fr.split('.').map(x=>x==='x'?-1:+x); return {id:'ch'+n,t:`Acorde ${n}`,d:`Digitación ${fr.replace(/\./g,' ')} (de la 6.ª a la 1.ª).`,ex:{kind:'chord',name:n,frets:f,pass:true}} })});
+    return {id:`ring${s}-${f}`,t:`${r.name}, y luego el pellizco ${c3.name} + ${e4.name}`,d:'Toca la nota gris, déjala sonar y al segundo haz el pellizco de las dos de color.',dots:[{s:1,f:3},{s:5,f:0}],pre:[{s,f}],ex:{kind:'pinch',notes:[c3.m,e4.m],played:[c3.m,e4.m],ringing:[r.m],pass:true},dur:3.4} })});
+  G.push({id:'acordes',n:'Acordes',d:'Un rasgueo parejo hacia abajo.',items:LAB_CHORDS.map(([n,fr])=>{ const f=fr.split('.').map(x=>x==='x'?-1:+x); return {id:'ch'+n,t:`Acorde ${n}`,d:'Un rasgueo hacia abajo y déjalo sonar.',dots:f.map((v,s)=>({s,f:v})).filter(d=>d.f>=0),mute:f.map((v,s)=>v<0?s:-1).filter(s=>s>=0),ex:{kind:'chord',name:n,frets:f,pass:true},dur:2.5} })});
   G.push({id:'ruidos',n:'Ruidos (deben fallar)',d:'Lo que la app no debería tomar como notas.',items:[
-    {id:'uñas',t:'Uñas en la pantalla',d:'Golpecitos con las uñas sobre la pantalla, como cuando te pasó.',ex:{kind:'noise',pass:false}},
-    {id:'caja',t:'Golpe a la caja',d:'Golpea la caja de la guitarra con los nudillos.',ex:{kind:'noise',pass:false}},
-    {id:'roce',t:'Roce de cuerdas',d:'Desliza la mano por las cuerdas entorchadas, sin tocar notas.',ex:{kind:'noise',pass:false}},
-    {id:'chuck',t:'Rasgueo apagado',d:'Rasguea con la otra mano apagando todas las cuerdas.',ex:{kind:'noise',pass:false}}]});
+    {id:'uñas',t:'Uñas en la pantalla',d:'Unos golpecitos con las uñas sobre la pantalla.',ex:{kind:'noise',pass:false},dur:2.5},
+    {id:'caja',t:'Golpe a la caja',d:'Golpea la caja de la guitarra con los nudillos, sin tocar las cuerdas.',ex:{kind:'noise',pass:false},dur:2.5},
+    {id:'roce',t:'Roce de la mano',d:'Desliza la mano izquierda por las cuerdas gruesas, como al cambiar de posición, sin pulsar ninguna.',ex:{kind:'noise',pass:false},dur:2.5},
+    {id:'chuck',t:'Rasgueo apagado',d:'Apoya la mano izquierda sobre todas las cuerdas (sin apretar) y rasguea.',ex:{kind:'noise',pass:false},dur:2.5}]});
   return G }
-function labEnter(){ LAB.on=true; renderLab() }
-function labLeave(){ LAB.on=false; LAB.rec=false; if(!DBG.on) tapStop(); if(Mic.on&&!testOn&&!tunerOn&&!Sess.running&&!PL.running) micStop() }
-/* cada cuadro (desde diagFrame): tono y nivel */
-function labFrame(o){ LAB.ear=null; if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f) LAB.ear=69+12*Math.log2(f/440) }
-  const lv=$('#labLvl'); if(lv) lv.style.width=Math.min(100,Math.sqrt(o.rms)*260)+'%';
-  const ln=$('#labNow'); if(ln) ln.textContent=LAB.ear!=null?nn(Math.round(LAB.ear))+(Math.floor(Math.round(LAB.ear)/12)-1):'–';
-  if(LAB.rec&&performance.now()>=LAB.rec0+LAB.dur*1000) labStop() }
-async function labMic(){ const st=$('#labMicSt'); try{ LAB.on=true; ctx(); await micStart(); startLoop(); await tapStart(); if(st) st.textContent='Micrófono listo.'; renderLab() }
-  catch(e){ const r=micReason(e); if(st) st.textContent=MIC_MSG[r]||'No pude abrir el micrófono.' } }
-function labRecord(){ if(!Mic.on||!TAP.on){ toast('Primero abre el micrófono'); return } const it=LAB.plan[LAB.i]; LAB.dur=it.dur||3.5; LAB.rec0=performance.now(); LAB.rec=true; LAB.last=null;
-  const cue=$('#labCue'); cue.textContent='Prepárate…'; cue.className='labcue wait'; setTimeout(()=>{ if(LAB.rec){ cue.textContent='¡Ahora!'; cue.className='labcue go' } },500);
-  $('#labRec').disabled=true }
-function labStop(){ LAB.rec=false; const t1=performance.now(), t0=LAB.rec0, it=LAB.plan[LAB.i];
-  setTimeout(()=>{ // espera a que llegue el último trozo de audio
-    const a=tapGrab(t0,t1), fr=framesPack(t0,t1); LAB.last={id:it.id,group:it.g,title:it.t,expect:it.ex,at:Date.now(),dur:LAB.dur,audio:a?pcmPack(a):null,frames:fr,summary:labSummary(fr,it.ex)}; renderLab() },150) }
-function labSummary(fr,ex){ if(!fr) return {heard:'nada'}; const n=fr.t.length, on=fr.on.length, db=v=>v>0?Math.round(20*Math.log10(v)):-99;
+
+/* ---- diapasón como la tablatura: 1 = Mi agudo (delgada) arriba, 6 = Mi grave (gruesa) abajo ---- */
+function labFret(it){ const ds=it.dots||[], pre=it.pre||[], gh=it.ghost||[], all=[...ds,...pre,...gh].filter(d=>d.f>=0); if(!all.length&&!(it.mute||[]).length) return null;
+  const mx=Math.max(4,...all.map(d=>d.f)), lo=mx>5?Math.max(0,mx-4):0, hi=lo?mx:Math.max(4,mx), nF=hi-lo, W=360, H=176, x0=lo?34:44, x1=W-10, y0=18, gap=(H-y0*2)/5;
+  const fx=f=>f===0?x0-16:x0+(f-lo-.5)*(x1-x0)/nF, sy=s=>y0+(5-s)*gap;   // s=0 (Mi grave) abajo
+  const NS='http://www.w3.org/2000/svg', el=(t,a,txt)=>{ const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!=null) e.textContent=txt; return e };
+  const svg=el('svg',{viewBox:`-30 0 ${W+30} ${H}`,class:'labfret',role:'img','aria-label':it.t});
+  for(let f=lo;f<=hi;f++){ const x=x0+(f-lo)*(x1-x0)/nF; svg.append(el('line',{x1:x,y1:y0-6,x2:x,y2:H-y0+6,class:f===0?'nut':'fret'})) }
+  [3,5,7,9,12].filter(f=>f>lo&&f<=hi).forEach(f=>svg.append(el('text',{x:fx(f),y:H-2,class:'fnum'},String(f))));
+  for(let s=0;s<6;s++){ const w=[4.2,3.3,2.6,1.7,1.3,1][s]; svg.append(el('line',{x1:x0-24,y1:sy(s),x2:x1,y2:sy(s),class:'str'+(s<3?' wound':''),'stroke-width':w}));
+    svg.append(el('text',{x:-26,y:sy(s)+4,class:'snum'},String(6-s))); svg.append(el('text',{x:-12,y:sy(s)+4,class:'sname'},['E','A','D','G','B','e'][s])) }
+  (it.mute||[]).forEach(s=>svg.append(el('text',{x:fx(0),y:sy(s)+5,class:'mute'},'×')));
+  const dot=(d,cls,lbl)=>{ const g=el('g',{class:cls}); g.append(el('circle',{cx:fx(d.f),cy:sy(d.s),r:11})); g.append(el('text',{x:fx(d.f),y:sy(d.s)+4},lbl)); svg.append(g) };
+  pre.forEach(d=>dot(d,'dot pre',d.f?String(d.f):'0')); gh.forEach(d=>dot(d,'dot ghost',d.f?String(d.f):'0'));
+  ds.forEach(d=>dot(d,'dot'+(d.n?' seq':''),d.n?String(d.n):(d.f?String(d.f):'0')));
+  return svg }
+
+/* ---- revisión aproximada de lo que sonó ---- */
+function labCheck(sum,ex,fr){ const pcs=sum.pcs||{}, has=(m,thr=.25)=>(pcs[((m%12)+12)%12]||0)>=thr, heard=sum.pitchMs||[];
+  // misma nota, tolerando un error de octava del detector (no dos: E2 y E4 son cuerdas distintas)
+  const hp=m=>heard.some(x=>((x-m)%12+12)%12===0&&Math.abs(x-m)<=12)||(!heard.length&&has(m,.5));
+  if(ex.kind==='silence') return sum.onsets===0?{ok:true,msg:'Silencio'}:{ok:false,msg:`Escuché ${sum.onsets} ataque(s)`};
+  if(!sum.onsets) return {ok:false,msg:'No escuché nada'};
+  if(ex.kind==='noise') return {ok:true,msg:'Ruido registrado'};
+  if(ex.kind==='chord') return (sum.chordPct||0)>=70?{ok:true,msg:`${ex.name} al ${sum.chordPct}%`}:{ok:false,msg:`El acorde me dio ${sum.chordPct||0}% (escuché ${sum.chroma.join(' · ')||'poco'})`};
+  const want=ex.played||ex.notes, wn=want.map(nmO).join(' + '), hn=heard.length?heard.map(nmO).join(', '):'ningún tono claro';
+  const mirror=m=>{ for(let s=0;s<6;s++) for(let f=0;f<=12;f++) if(OPEN[s]+f===m) return OPEN[5-s]+f; return null };
+  const hint=want.every(m=>{ const r=mirror(m); return r!=null&&hp(r)&&!hp(m) })?' ¿Contaste las cuerdas al revés? La 6 es la más gruesa (Mi grave); la 1, la más delgada.':'';
+  if(ex.kind==='note'){ const m=want[0]; return hp(m)?{ok:true,msg:`Escuché ${nmO(heard.find(x=>((x-m)%12+12)%12===0&&Math.abs(x-m)<=12)??m)}`}:{ok:false,msg:`Pediste ${wn} y escuché ${hn}.`+hint} }
+  if(ex.ringing){ const okN=want.every(m=>has(m,.25))&&sum.onsets>=2; return okN?{ok:true,msg:'Nota sonando y pellizco'}:{ok:false,msg:sum.onsets<2?'Escuché un solo ataque: falta la nota de antes o el pellizco.':`Pediste ${wn}; escuché ${sum.chroma.join(' · ')}.`+hint} }
+  if(ex.lateMs){ const g=sum.onGaps.find(x=>x>=250&&x<=1100); return g&&want.every(m=>has(m,.2))?{ok:true,msg:`Segunda nota ${g} ms después`}:{ok:false,msg:g?`Pediste ${wn}; escuché ${sum.chroma.join(' · ')}.`+hint:'Las escuché juntas o muy separadas: la aguda va ~medio segundo después.'} }
+  if(want.length===1){ const other=ex.notes.find(m=>m!==want[0]); return hp(want[0])&&!has(other,.3)?{ok:true,msg:`Solo ${nmO(want[0])}`}:{ok:false,msg:has(other,.3)?`Escuché también ${nmO(other)}: toca solo la grave.`:`Pediste ${wn} y escuché ${hn}.`+hint} }
+  const tog=want.every(m=>has(m,.25)), close=sum.onGaps.every(x=>x>150);
+  return tog?{ok:true,msg:`Escuché ${wn}`}:{ok:false,msg:`Pediste ${wn}; escuché ${sum.chroma.join(' · ')||hn}.`+hint} }
+function labSummary(fr,ex){ if(!fr) return {onsets:0,chroma:[],pcs:{},pitchMs:[],onGaps:[]}; const db=v=>v>0?Math.round(20*Math.log10(v)):-99;
   const ears={}; fr.ear.forEach(m=>{ if(m!=null){ const r=Math.round(m); ears[r]=(ears[r]||0)+1 } });
-  const notes=Object.entries(ears).filter(([,c])=>c>=4).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([m])=>nn(+m)+(Math.floor(+m/12)-1));
-  const avg=new Array(12).fill(0); let k=0, shares=[]; const from=fr.on.length?fr.t[fr.on[0]]+TUNE.frameA:0;
-  fr.t.forEach((t,i)=>{ if(!fr.live[i]||!fr.ch[i]||t<from) return; k++; fr.ch[i].forEach((v,j)=>avg[j]+=v/100); const s=[...fr.ch[i]].sort((a,b)=>b-a), tot=s.reduce((a,b)=>a+b,0)||1; shares.push((s[0]+s[1]+s[2])/tot) });
+  const pitchMs=Object.entries(ears).filter(([,c])=>c>=4).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([m])=>+m);
+  const onT=fr.on.map(i=>fr.t[i]), onGaps=onT.slice(1).map((t,i)=>Math.round(t-onT[i]));
+  const avg=new Array(12).fill(0), pk=new Array(12).fill(0); let k=0, shares=[]; const from=onT.length?onT[0]+TUNE.frameA:0;
+  fr.t.forEach((t,i)=>{ if(!fr.live[i]||!fr.ch[i]||t<from) return; k++; fr.ch[i].forEach((v,j)=>{ avg[j]+=v/100; pk[j]=Math.max(pk[j],v/100) }); const s=[...fr.ch[i]].sort((a,b)=>b-a), tot=s.reduce((a,b)=>a+b,0)||1; shares.push((s[0]+s[1]+s[2])/tot) });
   if(k) for(let j=0;j<12;j++) avg[j]/=k;
-  const top=avg.map((v,pc)=>({pc,v})).sort((a,b)=>b.v-a.v).slice(0,4).filter(x=>x.v>.2).map(x=>`${nn(x.pc)} ${x.v.toFixed(2)}`);
-  const out={onsets:on,peakDb:db(Math.max(...fr.rms)),noiseDb:db(fr.noise),tonal:shares.length?rnd2(shares.reduce((a,b)=>a+b,0)/shares.length):null,pitches:notes,chroma:top};
+  const pcs={}; avg.forEach((v,j)=>pcs[j]=Math.max(v,pk[j]*.8));
+  const chroma=avg.map((v,pc)=>({pc,v})).sort((a,b)=>b.v-a.v).slice(0,4).filter(x=>x.v>.2).map(x=>`${nn(x.pc)} ${x.v.toFixed(2)}`);
+  const out={onsets:onT.length,onGaps,peakDb:db(Math.max(...fr.rms)),noiseDb:db(fr.noise),tonal:shares.length?rnd2(shares.reduce((a,b)=>a+b,0)/shares.length):null,pitches:pitchMs.map(nmO),pitchMs,chroma,pcs:Object.fromEntries(Object.entries(pcs).map(([a,b])=>[a,rnd2(b)]))};
   if(ex.kind==='chord'&&k){ const ns=ex.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean), cand={key:ex.name,notes:ns,pcs:[...new Set(ns.map(x=>x.m%12))],bass:ns[0].m%12,root:null};
     try{ out.chordPct=Math.round(Ear.score(Float32Array.from(avg),cand,new Float32Array(12)).pct) }catch(e){} }
   return out }
-function labKeep(ok){ if(ok&&LAB.last){ LAB.takes=LAB.takes.filter(t=>t.id!==LAB.last.id); LAB.takes.push(LAB.last); labPersist() } LAB.last=null; LAB.i++; renderLab() }
+
+/* ---- máquina de estados, cuadro a cuadro ---- */
+function labEnter(){ LAB.on=true; renderLab() }
+function labLeave(){ LAB.on=false; labClear(); LAB.phase='idle'; if(!DBG.on) tapStop(); if(Mic.on&&!testOn&&!tunerOn&&!Sess.running&&!PL.running) micStop() }
+function labClear(){ if(LAB.timer){ clearTimeout(LAB.timer); clearInterval(LAB.timer); LAB.timer=null } }
+const labQuiet=o=>o.rms<Math.max((o.noise||0)*3,6e-4);
+function labFrame(o){ LAB.ear=null; if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f) LAB.ear=69+12*Math.log2(f/440) }
+  const lv=$('#labLvl'); if(lv) lv.style.width=Math.min(100,Math.sqrt(o.rms)*260)+'%';
+  const ln=$('#labNow'); if(ln) ln.textContent=LAB.ear!=null?nmO(LAB.ear):'–';
+  if(LAB.paused||!LAB.plan.length||LAB.i>=LAB.plan.length) return; const now=performance.now(), it=LAB.plan[LAB.i];
+  if(LAB.phase==='quiet'){ if(labQuiet(o)){ if(!LAB.quiet0) LAB.quiet0=now; if(now-LAB.quiet0>350) labArm() } else LAB.quiet0=0;
+    if(now-LAB.waitAt>2500) labArm() }   // cuerdas que no se apagan: se arma igual (cuenta el ataque nuevo)
+  else if(LAB.phase==='armed'){ if(it.ex.kind==='silence'){ if(now-LAB.armedAt>800) labStart(now) }
+    else if(o.onset&&o.rms>Math.max((o.noise||0)*4,8e-4)) labStart(now) }
+  else if(LAB.phase==='rec'){ const p=Math.min(1,(now-LAB.trig)/(LAB.dur*1000)), bar=$('#labRecBar'); if(bar) bar.style.width=Math.round(p*100)+'%';
+    if(now>=LAB.trig+LAB.dur*1000) labStop() } }
+function labWait(){ labClear(); LAB.phase='quiet'; LAB.quiet0=0; LAB.waitAt=performance.now(); LAB.last=null; renderLab() }
+function labArm(){ LAB.phase='armed'; LAB.armedAt=performance.now(); labStatus() }
+function labStart(now){ const it=LAB.plan[LAB.i]; LAB.phase='rec'; LAB.trig=now; LAB.dur=it.dur||2; LAB.t0=it.ex.kind==='silence'?now:now-400; labStatus() }
+function labStop(){ LAB.phase='check'; const t1=performance.now(), t0=LAB.t0, it=LAB.plan[LAB.i];
+  setTimeout(()=>{ const a=tapGrab(t0,t1), fr=framesPack(t0,t1), sum=labSummary(fr,it.ex), chk=labCheck(sum,it.ex,fr);
+    LAB.last={id:it.id,group:it.g,title:it.t,expect:it.ex,at:Date.now(),dur:Math.round(t1-t0)/1000,audio:a?pcmPack(a):null,frames:fr,summary:sum,check:chk};
+    if(!LAB.last.audio){ chk.ok=false; chk.msg='No llegó el audio; repitamos.' }
+    labBeep(chk.ok); renderLab();
+    if(chk.ok) labCountdown(1500,()=>labKeep(true,'auto'));
+    else { LAB.fails++; labCountdown(6000,()=>labWait()) } },180) }
+function labCountdown(ms,fn){ labClear(); const end=performance.now()+ms; const tick=()=>{ const left=Math.max(0,end-performance.now()), b=$('#labCount'); if(b) b.style.width=Math.round(left/ms*100)+'%';
+    if(left<=0){ labClear(); fn() } }; LAB.timer=setInterval(tick,50); tick() }
+function labBeep(ok){ if(!LAB.sound) return; try{ const a=ctx(), o=a.createOscillator(), g=a.createGain(); o.frequency.value=ok?880:330; g.gain.setValueAtTime(.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(.08,a.currentTime+.01); g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+(ok?.12:.25)); o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+.3) }catch(e){} }
+function labKeep(ok,how){ labClear(); if(ok&&LAB.last){ LAB.last.confirmed=how||'manual'; LAB.takes=LAB.takes.filter(t=>t.id!==LAB.last.id); LAB.takes.push(LAB.last); labPersist() }
+  LAB.last=null; LAB.fails=0; LAB.i++; if(LAB.i>=LAB.plan.length){ LAB.phase='idle'; renderLab() } else labWait() }
+function labPause(on){ LAB.paused=on==null?!LAB.paused:on;
+  if(LAB.paused){ labClear(); renderLab(); return }
+  if(LAB.last){ renderLab(); if(LAB.last.check.ok) labCountdown(1500,()=>labKeep(true,'auto')); else labCountdown(6000,()=>labWait()) } else labWait() }
 async function labPersist(){ if(!LAB.takes.length) return; if(!LAB.session) LAB.session={at:Date.now()};
-  const pk=Object.assign(diagMeta('lab'),{at:LAB.session.at,label:{groups:[...LAB.sel]},takes:LAB.takes});
+  const pk=Object.assign(diagMeta('lab'),{at:LAB.session.at,label:{groups:[...LAB.sel],strings:'6=Mi grave'},takes:LAB.takes});
   try{ const rec=await diagSave(pk,`Laboratorio · ${LAB.takes.length} toma${LAB.takes.length>1?'s':''}`); LAB.session.rec=rec }catch(e){ toast('No pude guardar la sesión: '+e.message) } }
+async function labBegin(groups){ LAB.plan=groups.filter(g=>LAB.sel.has(g.id)).flatMap(g=>g.items.map(it=>Object.assign({g:g.id,gn:g.n},it)));
+  if(!LAB.plan.length){ toast('Elige al menos un grupo'); return } LAB.i=0; LAB.takes=[]; LAB.session=null; LAB.paused=false;
+  if(!(Mic.on&&TAP.on)){ try{ LAB.on=true; ctx(); await micStart(); startLoop(); await tapStart() }catch(e){ const r=micReason(e); toast(MIC_MSG[r]||'No pude abrir el micrófono.'); LAB.plan=[]; renderLab(); return } }
+  labWait() }
+function labStatus(){ const b=$('#labCue'); if(!b) return; const it=LAB.plan[LAB.i];
+  const T={quiet:['wait','Apaga las cuerdas…'],armed:['go',it&&it.ex.kind==='silence'?'Silencio…':'Escuchando: toca cuando quieras'],rec:['rec','Grabando'],check:['wait','Revisando…']}[LAB.phase]||['','']; b.className='labcue '+T[0]; b.firstChild.textContent=LAB.paused?'En pausa · toca para seguir':T[1] }
+
 function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
   const groups=labPlan(); if(!LAB.sel) LAB.sel=new Set(groups.map(g=>g.id));
-  const micRow=h('div',{class:'labmic'},h('div',{class:'lvl'},h('i',{id:'labLvl'})),h('b',{id:'labNow',class:'mono'},'–'),
-    Mic.on&&TAP.on?h('span',{class:'hint',id:'labMicSt'},'Micrófono listo.'):h('button',{class:'btn primary',onclick:labMic},'Abrir micrófono'),!(Mic.on&&TAP.on)?h('span',{class:'hint',id:'labMicSt'}):null);
-  if(!LAB.plan.length){ // portada: elegir grupos
-    box.append(h('p',{class:'sub'},'Te pediré tocar cosas concretas. Cada toma dura unos segundos; después te muestro lo que escuché y tú decides si de verdad tocaste eso. Solo se guarda lo que confirmas.'),
-      h('ul',{class:'hint labtips'},h('li',{},'Pon el equipo donde lo dejas siempre para practicar, con el mismo Modo de micrófono.'),h('li',{},'Toca como siempre, ni más fuerte ni más suave.'),h('li',{},'Si te equivocas, repite la toma: lo importante es que lo guardado sea cierto.')),
-      micRow);
+  if(!LAB.plan.length){ // portada
+    box.append(h('p',{class:'sub'},'Toca «Empezar» y deja el equipo donde practicas. No necesitas volver a tocar la pantalla: cada toma empieza sola cuando suena la guitarra y, si lo que escuché calza con lo pedido, se guarda sola y pasa a la siguiente.'),
+      h('ul',{class:'hint labtips'},h('li',{},'Las cuerdas van numeradas como en el dibujo: la 1 es la más delgada (Mi agudo) y la 6 la más gruesa (Mi grave). El dibujo va como la tablatura: la 1 arriba.'),
+        h('li',{},'Entre toma y toma apaga las cuerdas con la mano: la siguiente espera el silencio.'),h('li',{},'Si no calza, te digo qué escuché y vuelvo a escuchar solo. Si sí lo tocaste bien, toca «Sí, lo toqué bien»: esas tomas me sirven mucho.'),
+        h('li',{},'Teclado: Espacio guardar · R repetir · S saltar · P pausa.')));
     const list=h('div',{class:'labgroups'}); groups.forEach(g=>{ const c=h('input',{type:'checkbox'}); c.checked=LAB.sel.has(g.id); c.addEventListener('change',()=>{ c.checked?LAB.sel.add(g.id):LAB.sel.delete(g.id) });
       list.append(h('label',{class:'check labg'},c,h('span',{},h('b',{},`${g.n} `),h('small',{},`${g.items.length} toma${g.items.length>1?'s':''} · ${g.d}`)))) });
-    box.append(list,h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ LAB.plan=groups.filter(g=>LAB.sel.has(g.id)).flatMap(g=>g.items.map(it=>Object.assign({g:g.id,gn:g.n},it))); if(!LAB.plan.length){ toast('Elige al menos un grupo'); return } LAB.i=0; LAB.takes=[]; LAB.session=null; renderLab() }},'Empezar'),
-      h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver')));
+    const snd=h('input',{type:'checkbox'}); snd.checked=LAB.sound; snd.addEventListener('change',()=>{ LAB.sound=snd.checked });
+    box.append(list,h('label',{class:'check'},snd,'Pitido al guardar o repetir'),h('div',{class:'toolbar'},h('button',{class:'btn primary big',onclick:()=>labBegin(groups)},'Empezar'),h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver')));
     return }
   const total=LAB.plan.length;
   if(LAB.i>=total){ // final
     const rec=LAB.session&&LAB.session.rec;
     box.append(h('h2',{class:'h2'},`Listo: ${LAB.takes.length} de ${total} tomas guardadas`),
-      h('ul',{class:'labdone'},...LAB.plan.map(it=>{ const tk=LAB.takes.find(t=>t.id===it.id); return h('li',{class:tk?'ok':'skip'},`${tk?'✓':'–'} ${it.t}`) })));
+      h('ul',{class:'labdone'},...LAB.plan.map(it=>{ const tk=LAB.takes.find(t=>t.id===it.id); return h('li',{class:tk?'ok':'skip'},`${tk?(tk.confirmed==='manual'?'✓ (tú)':'✓'):'–'} ${it.t}`) })));
     if(rec){ const st=h('span',{class:'hint'});
       box.append(h('div',{class:'toolbar'},
         h('button',{class:'btn primary',onclick:async e=>{ e.currentTarget.disabled=true; st.textContent='Enviando…'; try{ const p=await diagSend(rec); st.textContent='Enviado ('+p+').' }catch(er){ st.textContent='No se pudo enviar: '+er.message+'. Usa Archivo.'; e.currentTarget.disabled=false } }},'Enviar a la nube'),
@@ -4942,24 +5040,25 @@ function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
         h('p',{class:'hint'},'También queda en Ajustes → Diagnóstico.')) }
     box.append(h('div',{class:'toolbar'},h('button',{class:'btn ghost',onclick:()=>{ LAB.plan=[]; renderLab() }},'Otra sesión'),h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver a Ajustes')));
     return }
-  const it=LAB.plan[LAB.i];
-  box.append(h('div',{class:'labprog'},h('i',{style:`width:${Math.round(LAB.i/total*100)}%`})),h('p',{class:'eyebrow'},`${it.gn} · ${LAB.i+1} de ${total}`),
+  const it=LAB.plan[LAB.i], L=LAB.last;
+  const stage=h('div',{class:'labstage'+(LAB.paused?' paused':''),onclick:e=>{ if(e.target.closest('button')) return; if(LAB.phase==='check'&&L&&L.check.ok){ labClear(); LAB.last=null; labWait(); toast('Descartada: repítela') } else labPause() }},
+    h('div',{class:'labprog'},h('i',{style:`width:${Math.round(LAB.i/total*100)}%`})),h('p',{class:'eyebrow'},`${it.gn} · ${LAB.i+1} de ${total}`),
     h('h2',{class:'h2 labt'},it.t),h('p',{class:'labd'},it.d),
-    ...[it.ex.pass===false?h('p',{class:'hint bad'},'Esta toma es para enseñarle a la app lo que NO debe aceptar.'):null, micRow,
-    LAB.last?null:h('div',{id:'labCue',class:'labcue'},'Toca «Grabar» y espera el «¡Ahora!»')].filter(Boolean));
-  if(!LAB.last) box.append(h('div',{class:'toolbar'},h('button',{class:'btn primary',id:'labRec',onclick:labRecord,disabled:!(Mic.on&&TAP.on)},`Grabar ${it.dur||3.5} s`),h('button',{class:'btn ghost',onclick:()=>labKeep(false)},'Saltar'),
-    h('button',{class:'btn ghost',onclick:()=>{ LAB.i=total; renderLab() }},'Terminar aquí')));
-  else { const s=LAB.last.summary||{};
-    box.append(h('div',{class:'labsum'},
-      h('div',{},h('span',{class:'k'},'Tono'),h('b',{},s.pitches&&s.pitches.length?s.pitches.join(', '):'ninguno')),
-      h('div',{},h('span',{class:'k'},'Notas fuertes'),h('b',{},s.chroma&&s.chroma.length?s.chroma.join(' · '):'–')),
-      h('div',{},h('span',{class:'k'},'Ataques'),h('b',{},String(s.onsets??'–'))),
-      h('div',{},h('span',{class:'k'},'Parece nota'),h('b',{},s.tonal==null?'–':`${s.tonal} ${s.tonal>=TUNE.tonal?'✓':'✗'}`)),
-      h('div',{},h('span',{class:'k'},'Volumen'),h('b',{},`${s.peakDb??'–'} dB (ruido ${s.noiseDb??'–'})`)),
-      s.chordPct!=null?h('div',{},h('span',{class:'k'},'Acorde'),h('b',{},s.chordPct+'%')):null,
-      !LAB.last.audio?h('p',{class:'hint bad'},'No llegó el audio de esta toma; repítela.'):null),
-      h('p',{class:'labq'},'¿Sonó lo que se pedía?'),
-      h('div',{class:'toolbar'},h('button',{class:'btn primary',disabled:!LAB.last.audio,onclick:()=>labKeep(true)},'✓ Sí, eso toqué'),h('button',{class:'btn',onclick:()=>{ LAB.last=null; renderLab() }},'↻ Repetir'),h('button',{class:'btn ghost',onclick:()=>labKeep(false)},'Saltar'))) } }
+    ...[labFret(it),it.ex.pass===false&&it.ex.kind!=='silence'?h('p',{class:'hint bad'},'Esta toma le enseña a la app lo que NO debe aceptar.'):null,
+      h('div',{class:'labmic'},h('div',{class:'lvl'},h('i',{id:'labLvl'})),h('b',{id:'labNow',class:'mono'},'–'))].filter(Boolean));
+  if(!L){ stage.append(h('div',{id:'labCue',class:'labcue'},h('span',{},''),h('div',{class:'labbar'},h('i',{id:'labRecBar'}))),
+      h('div',{class:'toolbar labact'},h('button',{class:'btn ghost',onclick:()=>labKeep(false)},'Saltar'),h('button',{class:'btn ghost',onclick:()=>labPause()},LAB.paused?'Seguir':'Pausa'),h('button',{class:'btn ghost',onclick:()=>{ labClear(); LAB.i=total; LAB.phase='idle'; renderLab() }},'Terminar aquí'))) }
+  else { const c=L.check, s=L.summary||{};
+    stage.append(h('div',{class:'labres '+(c.ok?'ok':'bad')},h('b',{},c.ok?'✓ '+c.msg:c.msg),h('div',{class:'labbar'},h('i',{id:'labCount'})),
+        h('small',{},c.ok?'Se guarda sola · toca la pantalla para descartarla':'Vuelvo a escuchar en unos segundos')),
+      h('div',{class:'labsum'},h('div',{},h('span',{class:'k'},'Tono'),h('b',{},s.pitches&&s.pitches.length?s.pitches.join(', '):'ninguno')),h('div',{},h('span',{class:'k'},'Notas fuertes'),h('b',{},s.chroma&&s.chroma.length?s.chroma.join(' · '):'–')),
+        h('div',{},h('span',{class:'k'},'Ataques'),h('b',{},String(s.onsets??'–'))),h('div',{},h('span',{class:'k'},'Volumen'),h('b',{},`${s.peakDb??'–'} dB`))),
+      c.ok?h('div',{class:'toolbar labact'},h('button',{class:'btn primary',onclick:()=>labKeep(true,'auto')},'Guardar ya'),h('button',{class:'btn ghost',onclick:()=>{ labClear(); labWait() }},'Repetir'))
+        :h('div',{class:'toolbar labact'},h('button',{class:'btn primary',disabled:!L.audio,onclick:()=>labKeep(true,'manual')},'Sí, lo toqué bien'),h('button',{class:'btn',onclick:()=>{ labClear(); labWait() }},'Repetir ya'),h('button',{class:'btn ghost',onclick:()=>labKeep(false)},'Saltar'))) }
+  box.append(stage); labStatus() }
+document.addEventListener('keydown',e=>{ if(!LAB.on||!LAB.plan.length||LAB.i>=LAB.plan.length||e.target.matches('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return; const k=e.key.toLowerCase();
+  if(k===' '){ e.preventDefault(); if(LAB.last&&LAB.last.audio) labKeep(true,LAB.last.check.ok?'auto':'manual') }
+  else if(k==='r'){ labClear(); labWait() } else if(k==='s') labKeep(false); else if(k==='p') labPause() });
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
