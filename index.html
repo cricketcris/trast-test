@@ -92,6 +92,7 @@ textarea{font-family:var(--mono);font-size:.82rem;min-height:110px;resize:vertic
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .chip{font-family:var(--mono);font-size:.8rem;font-weight:600;padding:4px 9px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}
 .startrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.check.check-top{align-items:flex-start}.check.check-top input{margin-top:3px;flex:none}
 
 /* Sesión */
 .hud{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
@@ -844,6 +845,53 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .labact .btn{min-height:48px}
 .btn.big{min-height:54px;font-size:18px;padding:0 28px}
 @media (prefers-reduced-motion:reduce){.labcue.go{animation:none}}
+/* ---------- Envíos ---------- */
+#v-envios .envtabs{margin:6px 0 12px}
+.envstep{border-top:1px solid var(--line);padding:12px 0 6px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.envh{display:flex;align-items:center;gap:10px;font-size:1.05rem;margin:0}
+.envh i{font-style:normal;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#fff);font-size:.8rem;font-weight:800;flex:none}
+.envfret{cursor:crosshair;touch-action:manipulation;max-width:560px}
+.envfret .hit{fill:transparent}
+.envtarget{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0}
+.envlib{max-width:100%}
+.envdesc{width:100%;font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);resize:vertical;box-sizing:border-box}
+.envsong{display:flex;gap:8px;flex-wrap:wrap}
+.envsong select{flex:1 1 200px;min-width:0}
+.envat{width:9em;font-size:16px}
+.envrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.envrow>span{min-width:9em;opacity:.85}
+.envcount{margin:4px 0 0;font-weight:700}
+.envtakes{display:flex;flex-direction:column;gap:6px}
+.envtake{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:10px;background:var(--surface-2);min-width:0}
+.envtk{display:flex;flex-direction:column;min-width:0}
+.envtk b,.envtk small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.envtk small{opacity:.75}
+.envplay{min-width:40px}
+.envsum{margin:0;line-height:1.5}
+.envhead{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.envstat{margin:0}
+.envlist{display:flex;flex-direction:column;gap:8px}
+.envitem{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.envitem.replied{border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.envtop{all:unset;box-sizing:border-box;width:100%;display:flex;flex-direction:column;gap:3px;padding:10px 12px;cursor:pointer;min-width:0}
+.envtop:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.envkind{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;opacity:.65}
+.envtitle{overflow-wrap:anywhere}
+.envdx{opacity:.85;font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.envitem.open .envdx{display:none}
+.envmeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;opacity:.9}
+.envb{padding:2px 8px;border-radius:999px;font-weight:700;font-size:.75rem;background:var(--surface-2)}
+.envb.ok{background:color-mix(in srgb,#3ccf7a 25%,var(--surface-2))}
+.envb.warn{background:color-mix(in srgb,var(--warn) 30%,var(--surface-2))}
+.envb.info{background:color-mix(in srgb,var(--accent) 25%,var(--surface-2))}
+.envb.muted{opacity:.7}
+.envreply{margin:0 12px 10px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--accent) 14%,var(--surface-2));font-size:.95rem;white-space:pre-wrap}
+.envbody{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.envfacts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.92rem}
+.envfacts dt{opacity:.7}
+.envfacts dd{margin:0;overflow-wrap:anywhere}
+.envacts{border-top:1px solid var(--line);padding-top:10px}
+.pdgnote{flex:1 1 220px;min-width:0;font-size:16px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface,#222) 90%,transparent);color:var(--fg)}
 
 </style>
 
@@ -934,7 +982,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
                 <label><input type="radio" name="sens" value="strict"><span>Estricta</span></label>
               </div>
             </div>
-            <label class="check" style="margin-top:10px"><input type="checkbox" id="skip6Chk">6.ª cuerda libre: no exigir la E grave (los acordes que la usan dan 20% menos puntos)</label>
+            <label class="check check-top" style="margin-top:10px"><input type="checkbox" id="skip6Chk"><span>Cuerdas libres: no exige la 6.ª (Mi grave) ni las cuerdas al aire entre dos dedos (como la 2.ª al aire entre la 3.ª y la 1.ª pisadas), que se apagan sin querer. Si las tocas, vale igual. Sin la 6.ª, 20% menos puntos.</span></label>
             <div class="micTest" id="fMicTest">
               <div class="row"><span id="tStatus" class="hint" style="margin:0">Prueba el micrófono antes de empezar. Trae un afinador.</span><button id="tBtn" class="btn">Probar micrófono</button></div>
               <div id="tLive" class="tLive" hidden>
@@ -1016,7 +1064,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
         <button id="bListen" class="btn">Escuchar</button>
         <button id="bSkip" class="btn">Saltar</button>
         <button id="bDone" class="btn primary">Listo</button>
-        <button id="bSkip6" class="btn ghost chiptog" aria-pressed="false" title="No exigir la 6.ª cuerda">6.ª libre</button>
+        <button id="bSkip6" class="btn ghost chiptog" aria-pressed="false" title="No exigir la 6.ª ni las cuerdas al aire entre dedos">Cuerdas libres</button>
         <button id="bPause" class="btn">Pausa</button>
         <button id="bEnd" class="btn ghost">Terminar</button>
       </div>
@@ -1167,6 +1215,12 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
     <div id="labBox"></div>
   </section>
 
+  <section id="v-envios" class="view" hidden>
+    <p class="eyebrow">Diagnóstico</p>
+    <h1 class="h1">Envíos</h1>
+    <div id="envBox"></div>
+  </section>
+
 
   <!-- AFINADOR -->
   <section id="v-afinador" class="view" hidden>
@@ -1255,6 +1309,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
             <label><input type="radio" name="sMarg" value="relajado"><span>Relajado</span></label>
           </div>
           <p class="hint" id="sMargHint"></p>
+          <label class="check check-top" style="margin-top:8px"><input type="checkbox" id="sLoose"><span>Cuerdas libres en los acordes: no exige la 6.ª ni las cuerdas al aire entre dos dedos, que se apagan sin querer (vale en todas las canciones y en Practicar).</span></label>
         </fieldset>
         <fieldset><legend class="lab">Sonido</legend>
           <label class="check"><input type="checkbox" id="sClick">Clic de metrónomo</label>
@@ -1464,13 +1519,13 @@ const Ear=(()=>{
         if(!gate||settleAt) return {sm,gate};
         hist=hist.filter(h=>now-h.t<400);
         if(!o.live){hist.push({t:now,ok:false,dt});return {sm,gate:true,quiet:true,best}}
-        // un objetivo puede traer una versión alternativa (t.alt): con "6.ª libre" vale tocar el acorde con o sin la E grave
+        // un objetivo puede traer versiones alternativas (t.alt, una o una lista): con "cuerdas libres" vale tocar el acorde completo o sin las cuerdas que se apagan
         const evalT=tt=>{const s=score(sm,tt,bv);
           let blocked=null;for(const c of cands){const cs=score(sm,c,bv).pct;if(cs>=s.pct+S.margin&&cs>=S.thr-4){blocked=c;break}}
           let bassBad=false;if(tt.bass!=null){let bm=0,bi=-1;for(let i=0;i<12;i++) if(bv[i]>bm){bm=bv[i];bi=i}if(bm>.6&&bi!==tt.bass&&!tt.pcs.includes(bi)) bassBad=true;if(bm>.6&&bi!==tt.bass&&cands.some(c=>c.bass===bi&&score(sm,c,bv).pct>=s.pct-3)) bassBad=true}
           const minPur=.45+Math.max(0,s.n-3)*.04;return {s,blocked,bassBad,ok:s.pct>=S.thr&&s.purity>=minPur&&!blocked&&!bassBad&&allowMiss(S,s)}};
         let R=evalT(t),full=false;
-        if(t.alt){const R2=evalT(t.alt);if((R2.ok&&!R.ok)||(R2.ok===R.ok&&R2.s.pct>R.s.pct)){R=R2;full=true}}
+        if(t.alt) for(const a of [].concat(t.alt)){const R2=evalT(a);if((R2.ok&&!R.ok)||(R2.ok===R.ok&&R2.s.pct>R.s.pct)){R=R2;full=true}}
         const s=R.s,blocked=R.blocked,ok=R.ok;
         hist.push({t:now,ok,dt,pct:s.pct,full});
         if(!best||s.pct>best.pct) best=s;
@@ -1487,7 +1542,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-13 19:10 · b82f1be";
+const BUILD="2026-11-16 22:37 · cb4831b";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -1640,7 +1695,7 @@ function diagram(fr,{labels=false}={}){
 }
 
 /* ---------- vistas ---------- */
-const VIEWS=['inicio','practicar','mazos','acordes','progreso','ajustes','afinador','canciones','cancion','tocar','laboratorio'];
+const VIEWS=['inicio','practicar','mazos','acordes','progreso','ajustes','afinador','canciones','cancion','tocar','laboratorio','envios'];
 function showView(v){
   if(!VIEWS.includes(v)) v='inicio';
   if(v!=='afinador'&&typeof leaveTuner==='function') leaveTuner();
@@ -1648,11 +1703,11 @@ function showView(v){
   if(v!=='laboratorio'&&LAB.on) labLeave();
   if(v==='tocar'&&!PL.running&&!PL.song) v='canciones';
   VIEWS.forEach(n=>{ const el=$('#v-'+n); const was=!el.hidden; el.hidden=n!==v; if(n===v&&!was){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter') } });
-  const dv=v==='cancion'||v==='tocar'?'canciones':v==='laboratorio'?'ajustes':v;
+  const dv=v==='cancion'||v==='tocar'?'canciones':v==='laboratorio'||v==='envios'?'ajustes':v;
   document.querySelectorAll('.dockbtn').forEach(t=>{ if(t.dataset.view===dv) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current') });
   document.body.classList.toggle('athome',v==='inicio');
   if(v!=='practicar'&&v!=='tocar') document.body.classList.remove('playing');
-  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail(); if(v==='laboratorio') labEnter();
+  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail(); if(v==='laboratorio') labEnter(); if(v==='envios') envEnter();
   window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){location.hash=g.dataset.goto}});
@@ -1687,9 +1742,9 @@ document.querySelectorAll('#setup [data-k]').forEach(inp=>inp.addEventListener('
 $('#startBtn').addEventListener('click',()=>startSession());
 
 /* 6.ª cuerda libre: interruptor en la configuración y en la sesión */
-function setSkip6(v){ prefs.skip6=v; savePrefs(); $('#skip6Chk').checked=v; $('#bSkip6').setAttribute('aria-pressed',String(v)); if(Sess.running&&Sess.adv==='mic') micTarget(); }
+function setSkip6(v){ prefs.skip6=v; savePrefs(); $('#skip6Chk').checked=v; const sl=$('#sLoose'); if(sl) sl.checked=v; $('#bSkip6').setAttribute('aria-pressed',String(v)); if(Sess.running&&Sess.adv==='mic') micTarget(); }
 $('#skip6Chk').addEventListener('change',e=>setSkip6(e.target.checked));
-$('#bSkip6').addEventListener('click',()=>{ setSkip6(!prefs.skip6); toast(prefs.skip6?'6.ª cuerda libre: 20% menos puntos en acordes que la usan':'6.ª cuerda exigida otra vez') });
+$('#bSkip6').addEventListener('click',()=>{ setSkip6(!prefs.skip6); toast(prefs.skip6?'Cuerdas libres: no exijo la 6.ª ni las cuerdas al aire entre dedos':'Exijo todas las cuerdas otra vez') });
 
 /* ---------- diagnóstico: umbrales ajustables (TUNE) y registro de eventos (DBG) ----------
    TUNE junta los umbrales del juez de notas. Se pueden cambiar sin recompilar:
@@ -1807,13 +1862,25 @@ function micStop(){ recStop(true); tapStop(); if(Mic.stream) Mic.stream.getTrack
 const ROOTS={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.name); let root=null;
   if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
-  let notes=c.frets.map((f,s)=>f<0?null:{s,m:OPEN[s]+f}).filter(Boolean);
-  // 6.ª libre: si el acorde usa la E grave, se ignora esa cuerda (el juego descuenta puntos)
+  let notes=c.frets.map((f,s)=>f<0?null:{s,f,m:OPEN[s]+f}).filter(Boolean);
   const mk=ns=>{ const ms=ns.map(n=>n.m); return {key:id,notes:ns,pcs:[...new Set(ms.map(x=>x%12))],bass:ms[0]%12,root} };
-  // con la E grave libre, el objetivo es el acorde sin ella, pero el acorde completo también vale (y da todos los puntos)
-  if(prefs.skip6&&notes.length>2&&notes[0].s===0){ const t=mk(notes.slice(1)); t.alt=mk(notes); return t }
+  // cuerdas libres: el objetivo es el acorde sin ellas, pero el completo (y sin solo las «sándwich») también vale
+  const v=looseVariants(notes); if(v){ const t=mk(v[0]); t.alt=v.length>2?v.slice(1).map(mk):mk(v[1]); return t }
   return mk(notes) };
-const uses6=id=>LIB[id]&&LIB[id].frets[0]>=0&&LIB[id].frets.filter(f=>f>=0).length>2;
+/* «Cuerdas libres» (prefs.skip6; antes «6.ª libre»): cuerdas que se apagan sin querer y no se exigen
+   · la 6.ª (Mi grave), si el acorde tiene más de 2 notas;
+   · una cuerda al aire «sándwich»: entre dos cuerdas vecinas pisadas (p. ej. la 2.ª al aire entre la 3.ª y la 1.ª
+     pisadas, como la 3.ª del C o la 4.ª del E7): el dedo de la cuerda gruesa suele apoyarse en ella.
+   Siempre quedan al menos 3 cuerdas (si no, solo se suelta la 6.ª, que deja 2 como antes). */
+function looseOf(frets){ const pl=[]; frets.forEach((f,s)=>{ if(f>=0) pl.push(s) }); if(pl.length<=2) return [];
+  const six=frets[0]>=0?[0]:[], sand=[];
+  for(let k=1;k<pl.length-1;k++){ const s=pl[k]; if(frets[s]===0&&pl[k-1]===s-1&&pl[k+1]===s+1&&frets[s-1]>0&&frets[s+1]>0) sand.push(s) }
+  const all=[...six,...sand]; return pl.length-all.length>=3?all:six }
+// variantes de notas {s,m}: [objetivo sin las libres, completo, (con la 6.ª pero sin las sándwich)], o null
+function looseVariants(notes){ if(!prefs.skip6) return null; const fr=[-1,-1,-1,-1,-1,-1]; notes.forEach(n=>fr[n.s]=n.f);
+  const lo=looseOf(fr); if(!lo.length) return null; const keep=drop=>notes.filter(n=>!drop.includes(n.s)), sand=lo.filter(s=>s!==0);
+  const v=[keep(lo),notes]; if(lo.includes(0)&&sand.length) v.push(keep(sand)); return v }
+const uses6=id=>!!LIB[id]&&looseOf(LIB[id].frets).includes(0);
 const STR=['6.ª','5.ª','4.ª','3.ª','2.ª','1.ª'];
 function micTarget(){ if(Mic.judge&&Sess.cur) Mic.judge.setTarget(candOf(Sess.cur),Sess.cands,performance.now()) }
 function micFrame(fc){
@@ -2967,6 +3034,7 @@ function renderSongDetail(){
   $('#sLoop').checked=cfg.loop; $('#sLoop').onchange=e=>{cfg.loop=e.target.checked;save()};
   document.querySelectorAll('input[name=sMarg]').forEach(r=>{ r.checked=r.value===(cfg.margin||'normal'); r.onchange=()=>{ cfg.margin=r.value; save(); margHint(cfg) } }); margHint(cfg);
   $('#sClick').checked=cfg.click; $('#sClick').onchange=e=>{cfg.click=e.target.checked;save()};
+  $('#sLoose').checked=!!prefs.skip6; $('#sLoose').onchange=e=>setSkip6(e.target.checked);
   $('#sAmb').checked=cfg.amb!==false; $('#sAmb').onchange=e=>{ cfg.amb=e.target.checked; save() };
   $('#sLat').value=cfg.lat; $('#sLatV').textContent=cfg.lat+' ms'; $('#sLat').oninput=e=>{cfg.lat=+e.target.value;cfg.latUser=true;$('#sLatV').textContent=cfg.lat+' ms'}; $('#sLat').onchange=save;
   $('#sDelay').value=cfg.delay||0; $('#sDelayV').textContent=(cfg.delay||0)+' s'; $('#sDelay').oninput=e=>{cfg.delay=+e.target.value;$('#sDelayV').textContent=cfg.delay+' s'}; $('#sDelay').onchange=save;
@@ -2999,8 +3067,9 @@ const PL={running:false};
 const CHCOL={rock:['#ff2fb3','#22e7ff','#ffd23f','#9b5cff','#ff7b54','#3dffb0','#ff4d6d','#5cc8ff'],country:['#e0a24a','#7fb0a8','#d0643a','#b9c46a','#c99adb','#e6cf8b','#8fb3d9','#d98a8a'],estudio:['#6ab0de','#e5a65b','#78c99a','#b48ead','#e06c75','#d9c86a','#5fc4c0','#e39ac4']};
 const STRCOL={rock:['#ff4d6d','#ff9f1c','#ffd23f','#22e7ff','#7b61ff','#ff2fb3'],country:['#c0532f','#d9822b','#e8b04b','#9fae5a','#6d9eb0','#c99adb'],estudio:['#e06c75','#e5a65b','#d9c86a','#78c99a','#6ab0de','#b48ead']};
 const beatSec=()=>60/(PL.song.bpm||90);
-function candFrets(c,full){ const TU=PL.tune||OPEN; let notes=c.frets.map((f,s)=>f<0?null:{s,m:TU[s]+f}).filter(Boolean);
-  if(!full&&prefs.skip6&&notes.length>2&&notes[0].s===0) notes=notes.slice(1);
+// drop = cuerdas que no se exigen (cuerdas libres: ver looseOf en 08-microfono)
+function candFrets(c,drop){ const TU=PL.tune||OPEN; let notes=c.frets.map((f,s)=>f<0?null:{s,m:TU[s]+f}).filter(Boolean);
+  if(drop&&drop.length) notes=notes.filter(n=>!drop.includes(n.s));
   const mt=/^([A-G])([#b])?/.exec(c.name||''); let root=null; if(mt){ root=(ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0)+12)%12 }
   return {key:c.id,notes,pcs:[...new Set(notes.map(n=>n.m%12))],bass:notes[0].m%12,root} }
 /* tramos que se tocan: en prueba, las secciones elegidas (las contiguas se unen); en práctica, el loop [A, B] */
@@ -3023,7 +3092,7 @@ function plColors(){
 function plLoad(tl){
   PL.tl=tl; PL.tune=tl.tune||OPEN;
   PL.notes=tl.notes.map(n=>Object.assign({},n,{st:0}));
-  PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.flatMap(c=>prefs.skip6&&c.frets[0]>=0&&c.frets.filter(f=>f>=0).length>2?[candFrets(c),candFrets(c,true)]:[candFrets(c)])}));
+  PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.flatMap(c=>{ const lo=prefs.skip6?looseOf(c.frets):[], sand=lo.filter(s=>s!==0); return lo.length?[candFrets(c,lo),candFrets(c)].concat(lo.includes(0)&&sand.length?[candFrets(c,sand)]:[]):[candFrets(c)] })}));
   PL.strums=tl.strums; PL.chucks=tl.chucks;
   // tramos de acorde con color fijo por acorde y referencia al bloque que los puntúa
   const pal=CHCOL[prefs.style]||CHCOL.estudio, cmap={}; let ci=0;
@@ -4836,28 +4905,23 @@ function diagReport(verdict){ if(!PL.running) return; const now=performance.now(
     notes:PL.notes.filter(n=>n.t>=w0&&n.t<=w1).map(n=>({t:rnd2(n.t),m:n.m,s:n.s,f:n.f,tech:n.tech||'',st:n.st,tent:!!n.tent,late:n.late||0})),
     blocks:PL.blocks.filter(b=>b.t1>=w0&&b.t0<=w1).map(b=>({t0:rnd2(b.t0),t1:rnd2(b.t1),chords:b.chords.map(c=>c.name),st:b.st,best:Math.round(b.best||0)}))};
   const a=tapGrab(t0,now);
-  const pk=Object.assign(diagMeta('report'),{label:{verdict,note:verdict==='pass'?'Lo toqué bien y no lo aceptó':'Lo aceptó y no debía'},ctx,
+  const pk=Object.assign(diagMeta('report'),{label:{verdict,note:verdict==='pass'?'Lo toqué bien y no lo aceptó':'Lo aceptó y no debía',desc:''},ctx,
     audio:a?pcmPack(a):null,frames:framesPack(t0,now),log:DBG.since(8500)});
   diagSave(pk,`${verdict==='pass'?'✓ Estaba bien':'✗ No debía'} · ${PL.song.title} ${fmtT(t)}`).then(rec=>{
-    const cfg=S.get('cloud',null); toast(cfg?'Guardado. Enviando a la nube…':'Guardado. Envíalo desde Ajustes → Diagnóstico');
+    const cfg=envCloud(); toast(cfg?'Guardado. Enviando… (puedes escribir qué pasó)':'Guardado. Envíalo desde Envíos');
+    envAfterReport(rec);
     if(cfg) diagSend(rec).then(()=>toast('Reporte enviado')).catch(e=>toast('Guardado (no se pudo enviar: '+e.message+')')) }).catch(e=>toast('No pude guardar el reporte: '+e.message)) }
 const fmtT=s=>{ s=Math.max(0,s); return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0') };
 
 /* almacenamiento local de paquetes */
 function idb(){ return DIAG.db||(DIAG.db=new Promise((res,rej)=>{ const r=indexedDB.open('trastero-diag',1); r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error||new Error('IndexedDB no disponible')) })) }
 async function idbDo(mode,fn){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('p',mode), st=tx.objectStore('p'); let out; const r=fn(st); if(r) r.onsuccess=()=>{ out=r.result }; tx.oncomplete=()=>res(out); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error||new Error('cancelado')) }) }
-const diagList=()=>idbDo('readonly',s=>s.getAll()).then(a=>(a||[]).sort((x,y)=>y.at-x.at));
+const diagList=()=>idbDo('readonly',s=>s.getAll()).then(a=>(a||[]).filter(r=>r.id!=='__draft').sort((x,y)=>y.at-x.at));
 async function diagSave(pk,title){ const json=JSON.stringify(pk), stamp=new Date(pk.at), p2=n=>String(n).padStart(2,'0');
   const id=`${devName().replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${stamp.getFullYear()}${p2(stamp.getMonth()+1)}${p2(stamp.getDate())}-${p2(stamp.getHours())}${p2(stamp.getMinutes())}${p2(stamp.getSeconds())}-${pk.kind}`;
   const rec={id,at:pk.at,kind:pk.kind,title,size:json.length,sent:null,json}; await idbDo('readwrite',s=>s.put(rec)); return rec }
 const diagDel=id=>idbDo('readwrite',s=>s.delete(id));
-async function diagSend(rec){ const c=S.get('cloud',null); if(!c||!c.repo||!c.token) throw new Error('conecta la nube en Ajustes → Nube');
-  const path=`trastero/debug/${rec.id}.json`, url=`https://api.github.com/repos/${c.repo}/contents/${path}`;
-  let r; try{ r=await fetch(url,{method:'PUT',headers:{Authorization:'Bearer '+c.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},
-    body:JSON.stringify({message:`Diagnóstico · ${rec.kind} · ${c.device||devName()}`,content:b64enc(rec.json)})}) }catch(e){ throw new Error('sin conexión') }
-  if(r.status===422){ /* ya existe con ese nombre: lo damos por enviado */ }
-  else if(!r.ok) throw new Error(r.status===401?'token vencido':r.status===403?'el token no puede escribir':r.status===413?'muy grande: usa Archivo':'GitHub respondió '+r.status);
-  rec.sent=path; await idbDo('readwrite',s=>s.put(rec)); return path }
+// diagSend: en 29-envios.js
 async function diagFile(rec){ const name=`trastero-${rec.id}.trdbg.json`, file=new File([rec.json],name,{type:'application/json'});
   try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Diagnóstico de Trastero'}); return } }catch(e){ if(e&&e.name==='AbortError') return }
   const a=h('a',{href:URL.createObjectURL(file),download:name}); document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() },1500) }
@@ -4901,19 +4965,10 @@ async function renderDiag(){ const box=$('#diagBox'); if(!box) return; box.inner
     h('p',{class:'hint'},'Mientras tocas canciones guarda los últimos segundos de sonido y lo que decidió el juez. En el reproductor aparecen «✓ Estaba bien» y «✗ No debía»: tócalos justo después de un error y ese momento queda guardado para revisarlo. «Panel» (o la tecla D) muestra lo que escucha la app en vivo.'+(DBG.url?' (Activado por la dirección: ?debug=1.)':'')),
     h('div',{class:'toolbar'},h('button',{class:'btn',onclick:()=>{ location.hash='laboratorio' }},'Laboratorio de calibración')),
     h('p',{class:'hint'},'El laboratorio te pide tocar notas, pellizcos, acordes y ruidos, y guarda solo las tomas que confirmas: así tengo sonido real de tu guitarra y tu micrófono.'));
-  const list=h('div',{class:'dglist'}); box.append(h('span',{class:'lab',style:'margin-top:12px;display:block'},'Guardado para revisar'),list);
-  let recs=[]; try{ recs=await diagList() }catch(e){ list.append(h('p',{class:'hint'},'Este navegador no deja guardar reportes ('+e.message+').')); return }
-  if(!recs.length) list.append(h('p',{class:'hint'},'Nada todavía.'));
-  const cloud=S.get('cloud',null);
-  recs.forEach(rec=>{ const st=h('span',{class:'dgst'},rec.sent?'enviado':'');
-    const act=(lbl,fn)=>h('button',{class:'btn sm',onclick:async e=>{ const b=e.currentTarget; b.disabled=true; try{ await fn() }catch(er){ toast(er.message) } b.disabled=false }},lbl);
-    list.append(h('div',{class:'dgrow'},h('div',{},h('b',{},rec.title||rec.kind),h('small',{},`${new Date(rec.at).toLocaleString()} · ${kb(rec.size)} `),st),
-      h('div',{class:'dgact'},
-        act(rec.sent?'Reenviar':'Enviar',async()=>{ st.textContent='enviando…'; await diagSend(rec); st.textContent='enviado'; toast('Enviado a la nube') }),
-        act('Archivo',()=>diagFile(rec)),
-        act('Copiar',async()=>{ const t=await diagText(rec); await navigator.clipboard.writeText(t); toast(`Copiado (${kb(t.length)}, sin audio): pégalo en el chat`) }),
-        act('Borrar',async()=>{ if(!confirm('¿Borrar este reporte?')) return; await diagDel(rec.id); renderDiag() })))) });
-  if(recs.some(r=>!r.sent)) list.prepend(h('div',{class:'toolbar'},h('button',{class:'btn primary sm',disabled:!cloud,onclick:async e=>{ e.currentTarget.disabled=true; let ok=0,bad=0; for(const r of recs.filter(r=>!r.sent)){ try{ await diagSend(r); ok++ }catch(er){ bad++ } } toast(`Enviados ${ok}`+(bad?` · ${bad} con error`:'')); renderDiag() }},'Enviar todo a la nube'),cloud?null:h('small',{class:'hint'},' Conecta la nube para enviar; o usa Archivo.')));
+  const sum=h('p',{class:'hint'},'…');
+  box.append(h('span',{class:'lab',style:'margin-top:12px;display:block'},'Envíos'),h('p',{class:'hint'},'Arma un caso con lo que te falla (una cuerda, un acorde, un pellizco, un ruido…), con descripción y tomas grabadas, y mándamelo. Ahí ves todo lo enviado, mis respuestas, y puedes borrarlo.'),
+    h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ ENV.tab='nuevo'; location.hash='envios' }},'Enviar un caso'),h('button',{class:'btn',onclick:()=>{ ENV.tab='enviados'; location.hash='envios' }},'Lo que he enviado')),sum);
+  diagList().then(r=>{ const n=r.filter(x=>!x.sent).length; sum.textContent=`${r.length} guardado${r.length===1?'':'s'} en este equipo`+(n?` · ${n} sin enviar`:'') }).catch(()=>{ sum.textContent='' });
   // ajustes finos
   const ta=h('textarea',{rows:5,class:'mono',style:'width:100%;font-size:13px'}); ta.value=JSON.stringify(tuneDiff(),null,1);
   const det=h('details',{class:'dgtune'},h('summary',{},'Ajustes finos del juez (solo para pruebas)'),
@@ -4928,7 +4983,7 @@ $('#pRepBad').addEventListener('click',()=>diagReport('fail'));
 $('#pDiagT').addEventListener('click',()=>diagPanelToggle());
 document.addEventListener('keydown',e=>{ if(!PL.running||!DBG.on||PL.edit||e.target.matches('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return;
   if(e.key==='d'||e.key==='D') diagPanelToggle() });
-if(DBG.on) window.__TR={get PL(){ return PL },get LAB(){ return LAB },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats,
+if(DBG.on) window.__TR={get PL(){ return PL },get LAB(){ return LAB },get ENV(){ return ENV },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats,
   // para tools/juez (la app en Node): arrancar canciones sin tocar la pantalla
   sim:{startPlayer,stopPlayer,finishPlayer,skipHold,allSongs,songFromText,readGP5,gpToSong,gpTracks,gpRepeatsOk,playCfg,buildSong,toggleWait,songTime,lagT,MARG,get Mic(){ return Mic },get prefs(){ return prefs },get st(){ return st }}};
 diagButtons();
@@ -4944,7 +4999,7 @@ diagButtons();
    Cada toma se dibuja en un diapasón con las cuerdas numeradas y de distinto grosor, ordenado como la tablatura y la
    autopista: 1 = Mi agudo (delgada) arriba, 6 = Mi grave (gruesa) abajo.
    Teclado: Espacio = guardar, R = repetir, S = saltar, P = pausa. La sesión se guarda en IndexedDB (kind:'lab'). */
-const LAB={on:false,phase:'idle',ear:null,plan:[],i:0,takes:[],sel:null,session:null,last:null,paused:false,quiet0:0,armedAt:0,trig:0,dur:2,timer:null,fails:0,sound:true};
+const LAB={custom:null,on:false,phase:'idle',ear:null,plan:[],i:0,takes:[],sel:null,session:null,last:null,paused:false,quiet0:0,armedAt:0,trig:0,dur:2,timer:null,fails:0,sound:true};
 const STR_NAME=['Mi grave','La','Re','Sol','Si','Mi agudo'];
 const labNote=(s,f)=>{ const m=OPEN[s]+f; return {s,f,m,txt:`cuerda ${6-s} ${f?'traste '+f:'al aire'}`,name:nn(m)+(Math.floor(m/12)-1)} };
 const nmO=m=>nn(((Math.round(m)%12)+12)%12)+(Math.floor(Math.round(m)/12)-1);
@@ -4990,6 +5045,7 @@ function labFret(it){ const ds=it.dots||[], pre=it.pre||[], gh=it.ghost||[], all
 function labCheck(sum,ex,fr){ const pcs=sum.pcs||{}, has=(m,thr=.25)=>(pcs[((m%12)+12)%12]||0)>=thr, heard=sum.pitchMs||[];
   // misma nota, tolerando un error de octava del detector (no dos: E2 y E4 son cuerdas distintas)
   const hp=m=>heard.some(x=>((x-m)%12+12)%12===0&&Math.abs(x-m)<=12)||(!heard.length&&has(m,.5));
+  if(ex.kind==='free'||ex.loose) return sum.onsets?{ok:true,msg:ex.kind==='free'?'Grabado':'Grabado (debía fallar)'}:{ok:false,msg:'No escuché nada'};
   if(ex.kind==='silence') return sum.onsets===0?{ok:true,msg:'Silencio'}:{ok:false,msg:`Escuché ${sum.onsets} ataque(s)`};
   if(!sum.onsets) return {ok:false,msg:'No escuché nada'};
   if(ex.kind==='noise') return {ok:true,msg:'Ruido registrado'};
@@ -5019,7 +5075,7 @@ function labSummary(fr,ex){ if(!fr) return {onsets:0,chroma:[],pcs:{},pitchMs:[]
 
 /* ---- máquina de estados, cuadro a cuadro ---- */
 function labEnter(){ LAB.on=true; renderLab() }
-function labLeave(){ LAB.on=false; labClear(); LAB.phase='idle'; if(!DBG.on) tapStop(); if(Mic.on&&!testOn&&!tunerOn&&!Sess.running&&!PL.running) micStop() }
+function labLeave(){ LAB.on=false; if(LAB.custom){ const c=LAB.custom; LAB.custom=null; LAB.plan=[]; LAB.last=null; try{ c.onLeave&&c.onLeave() }catch(e){} } labClear(); LAB.phase='idle'; if(!DBG.on) tapStop(); if(Mic.on&&!testOn&&!tunerOn&&!Sess.running&&!PL.running) micStop() }
 function labClear(){ if(LAB.timer){ clearTimeout(LAB.timer); clearInterval(LAB.timer); LAB.timer=null } }
 const labQuiet=o=>o.rms<Math.max((o.noise||0)*3,6e-4);
 function labFrame(o){ LAB.ear=null; if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f) LAB.ear=69+12*Math.log2(f/440) }
@@ -5037,7 +5093,7 @@ function labArm(){ LAB.phase='armed'; LAB.armedAt=performance.now(); labStatus()
 function labStart(now){ const it=LAB.plan[LAB.i]; LAB.phase='rec'; LAB.trig=now; LAB.dur=it.dur||2; LAB.t0=it.ex.kind==='silence'?now:now-400; labStatus() }
 function labStop(){ LAB.phase='check'; const t1=performance.now(), t0=LAB.t0, it=LAB.plan[LAB.i];
   setTimeout(()=>{ const a=tapGrab(t0,t1), fr=framesPack(t0,t1), sum=labSummary(fr,it.ex), chk=labCheck(sum,it.ex,fr);
-    LAB.last={id:it.id,group:it.g,title:it.t,expect:it.ex,at:Date.now(),dur:Math.round(t1-t0)/1000,audio:a?pcmPack(a):null,frames:fr,summary:sum,check:chk};
+    LAB.last={id:it.id,group:it.g,title:it.t,expect:it.ex,dots:it.dots||null,at:Date.now(),dur:Math.round(t1-t0)/1000,audio:a?pcmPack(a):null,frames:fr,summary:sum,check:chk};
     if(!LAB.last.audio){ chk.ok=false; chk.msg='No llegó el audio; repitamos.' }
     labBeep(chk.ok); renderLab();
     if(chk.ok) labCountdown(1500,()=>labKeep(true,'auto'));
@@ -5050,17 +5106,20 @@ function labKeep(ok,how){ labClear(); if(ok&&LAB.last){ LAB.last.confirmed=how||
 function labPause(on){ LAB.paused=on==null?!LAB.paused:on;
   if(LAB.paused){ labClear(); renderLab(); return }
   if(LAB.last){ renderLab(); if(LAB.last.check.ok) labCountdown(1500,()=>labKeep(true,'auto')); else labCountdown(6000,()=>labWait()) } else labWait() }
-async function labPersist(){ if(!LAB.takes.length) return; if(!LAB.session) LAB.session={at:Date.now()};
+async function labPersist(){ if(!LAB.takes.length) return; if(LAB.custom){ try{ LAB.custom.onTake(LAB.takes.slice()) }catch(e){ toast(e.message) } return } if(!LAB.session) LAB.session={at:Date.now()};
   const pk=Object.assign(diagMeta('lab'),{at:LAB.session.at,label:{groups:[...LAB.sel],strings:'6=Mi grave'},takes:LAB.takes});
   try{ const rec=await diagSave(pk,`Laboratorio · ${LAB.takes.length} toma${LAB.takes.length>1?'s':''}`); LAB.session.rec=rec }catch(e){ toast('No pude guardar la sesión: '+e.message) } }
-async function labBegin(groups){ LAB.plan=groups.filter(g=>LAB.sel.has(g.id)).flatMap(g=>g.items.map(it=>Object.assign({g:g.id,gn:g.n},it)));
-  if(!LAB.plan.length){ toast('Elige al menos un grupo'); return } LAB.i=0; LAB.takes=[]; LAB.session=null; LAB.paused=false;
+async function labBegin(groups){ LAB.custom=null; return labRun(groups.filter(g=>LAB.sel.has(g.id)).flatMap(g=>g.items.map(it=>Object.assign({g:g.id,gn:g.n},it)))) }
+// corre un plan cualquiera (los casos de Envíos lo usan con LAB.custom = {title,onTake(takes),onDone(),onLeave()})
+async function labRun(plan){ LAB.plan=plan;
+  if(!LAB.plan.length){ toast('Elige al menos un grupo'); return } LAB.i=0; LAB.takes=[]; LAB.session=null; LAB.paused=false; LAB.last=null;
   if(!(Mic.on&&TAP.on)){ try{ LAB.on=true; ctx(); await micStart(); startLoop(); await tapStart() }catch(e){ const r=micReason(e); toast(MIC_MSG[r]||'No pude abrir el micrófono.'); LAB.plan=[]; renderLab(); return } }
   labWait() }
 function labStatus(){ const b=$('#labCue'); if(!b) return; const it=LAB.plan[LAB.i];
   const T={quiet:['wait','Apaga las cuerdas…'],armed:['go',it&&it.ex.kind==='silence'?'Silencio…':'Escuchando: toca cuando quieras'],rec:['rec','Grabando'],check:['wait','Revisando…']}[LAB.phase]||['','']; b.className='labcue '+T[0]; b.firstChild.textContent=LAB.paused?'En pausa · toca para seguir':T[1] }
 
 function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
+  const h1=$('#v-laboratorio .h1'); if(h1) h1.textContent=LAB.custom?'Grabando el caso':'Laboratorio de calibración';
   const groups=labPlan(); if(!LAB.sel) LAB.sel=new Set(groups.map(g=>g.id));
   if(!LAB.plan.length){ // portada
     box.append(h('p',{class:'sub'},'Toca «Empezar» y deja el equipo donde practicas. No necesitas volver a tocar la pantalla: cada toma empieza sola cuando suena la guitarra y, si lo que escuché calza con lo pedido, se guarda sola y pasa a la siguiente.'),
@@ -5073,6 +5132,8 @@ function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
     box.append(list,h('label',{class:'check'},snd,'Pitido al guardar o repetir'),h('div',{class:'toolbar'},h('button',{class:'btn primary big',onclick:()=>labBegin(groups)},'Empezar'),h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver')));
     return }
   const total=LAB.plan.length;
+  if(LAB.i>=total&&LAB.custom){ const c=LAB.custom; box.append(h('h2',{class:'h2'},`Listo: ${LAB.takes.length} de ${total} tomas`),h('p',{class:'hint'},'Volviendo al caso…'));
+    setTimeout(()=>{ if(LAB.custom===c){ LAB.custom=null; LAB.plan=[]; c.onDone&&c.onDone() } },700); return }
   if(LAB.i>=total){ // final
     const rec=LAB.session&&LAB.session.rec;
     box.append(h('h2',{class:'h2'},`Listo: ${LAB.takes.length} de ${total} tomas guardadas`),
@@ -5082,12 +5143,12 @@ function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
         h('button',{class:'btn primary',onclick:async e=>{ e.currentTarget.disabled=true; st.textContent='Enviando…'; try{ const p=await diagSend(rec); st.textContent='Enviado ('+p+').' }catch(er){ st.textContent='No se pudo enviar: '+er.message+'. Usa Archivo.'; e.currentTarget.disabled=false } }},'Enviar a la nube'),
         h('button',{class:'btn',onclick:()=>diagFile(rec)},'Archivo'),
         h('button',{class:'btn',onclick:async()=>{ const t=await diagText(rec); await navigator.clipboard.writeText(t); toast(`Copiado (${kb(t.length)}, sin audio)`) }},'Copiar sin audio')),st,
-        h('p',{class:'hint'},'También queda en Ajustes → Diagnóstico.')) }
+        h('p',{class:'hint'},'También queda en Envíos (Ajustes → Diagnóstico).')) }
     box.append(h('div',{class:'toolbar'},h('button',{class:'btn ghost',onclick:()=>{ LAB.plan=[]; renderLab() }},'Otra sesión'),h('button',{class:'btn ghost',onclick:()=>{ location.hash='ajustes' }},'Volver a Ajustes')));
     return }
   const it=LAB.plan[LAB.i], L=LAB.last;
   const stage=h('div',{class:'labstage'+(LAB.paused?' paused':''),onclick:e=>{ if(e.target.closest('button')) return; if(LAB.phase==='check'&&L&&L.check.ok){ labClear(); LAB.last=null; labWait(); toast('Descartada: repítela') } else labPause() }},
-    h('div',{class:'labprog'},h('i',{style:`width:${Math.round(LAB.i/total*100)}%`})),h('p',{class:'eyebrow'},`${it.gn} · ${LAB.i+1} de ${total}`),
+    h('div',{class:'labprog'},h('i',{style:`width:${Math.round(LAB.i/total*100)}%`})),h('p',{class:'eyebrow'},`${LAB.custom?LAB.custom.title:it.gn} · ${LAB.i+1} de ${total}`),
     h('h2',{class:'h2 labt'},it.t),h('p',{class:'labd'},it.d),
     ...[labFret(it),it.ex.pass===false&&it.ex.kind!=='silence'?h('p',{class:'hint bad'},'Esta toma le enseña a la app lo que NO debe aceptar.'):null,
       h('div',{class:'labmic'},h('div',{class:'lvl'},h('i',{id:'labLvl'})),h('b',{id:'labNow',class:'mono'},'–'))].filter(Boolean));
@@ -5104,6 +5165,294 @@ function renderLab(){ const box=$('#labBox'); if(!box) return; box.innerHTML='';
 document.addEventListener('keydown',e=>{ if(!LAB.on||!LAB.plan.length||LAB.i>=LAB.plan.length||e.target.matches('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey) return; const k=e.key.toLowerCase();
   if(k===' '){ e.preventDefault(); if(LAB.last&&LAB.last.audio) labKeep(true,LAB.last.check.ok?'auto':'manual') }
   else if(k==='r'){ labClear(); labWait() } else if(k==='s') labKeep(false); else if(k==='p') labPause() });
+
+/* ---------- Envíos (#envios): casos con descripción para Claude, y todo lo enviado ----------
+   Un «caso» = qué pasa (categoría + síntomas), lo que se toca (marcado en un diapasón), una descripción libre y, si
+   se quiere, tomas grabadas con el laboratorio manos libres (labRun con LAB.custom). Se guarda como paquete
+   kind:'case' en IndexedDB y se sube a trastero/debug/<id>.json del repo de la nube.
+   En la nube, además de los paquetes:
+     · trastero/debug/indice.json      {items:{id:{at,kind,title,desc,cat,device,size,takes}}}  (lo escribe la app; así
+                                        la lista muestra título y descripción sin bajar el audio)
+     · trastero/debug/respuestas.json  {items:{id:{st,nota,at}}}  (lo escribe Claude con tools/trdbg.cjs nota …)
+   «Enviados» junta lo de este equipo y lo de la nube: estado, respuesta de Claude, ver/escuchar, editar la
+   descripción (se vuelve a subir), reenviar, archivo, copiar y borrar (de aquí y de la nube). */
+const ENV_DIR='trastero/debug', ENV_IDX=ENV_DIR+'/indice.json', ENV_REP=ENV_DIR+'/respuestas.json';
+const ENV_CATS=[['nota','Una nota o cuerda'],['pellizco','Un pellizco'],['acorde','Un acorde'],['ruido','Un ruido pasa como nota'],['cancion','En una canción'],['otro','Otra cosa']];
+const ENV_SYM=[['no','No lo reconoce'],['aveces','A veces sí, a veces no'],['tarde','Lo reconoce tarde'],['otra','Reconoce otra cosa'],['mal','Lo acepta aunque lo toque mal'],['otro','Otra cosa']];
+const ENV_REPLY={visto:['Lo vi','info'],arreglado:['Arreglado','ok'],pregunta:['Tengo una pregunta','warn'],'no-sirve':['No me sirvió','muted'],trabajando:['Trabajando en esto','info']};
+const ENV_KIND={case:'Caso',report:'Reporte desde una canción',lab:'Laboratorio'};
+const envDraft0=()=>({cat:null,sym:[],dots:[],lib:'',desc:'',song:'',songAt:'',mode:'guiadas',reps:5,want:null,dur:4});
+const ENV={tab:'nuevo',d:null,takes:[],run:null,base:null,remote:null,remoteAt:0,filt:'todos',open:null,busy:false,lastRep:null};
+try{ ENV.d=Object.assign(envDraft0(),JSON.parse(localStorage.getItem('trastero.__envdraft')||'{}')) }catch(e){ ENV.d=envDraft0() }
+
+/* ---- GitHub (mismo repo y token que la nube) ---- */
+function envCloud(){ const c=S.get('cloud',null); return c&&c.repo&&c.token?c:null }
+async function dgGh(method,path,body,raw){ const c=envCloud(); if(!c) throw new Error('Conecta la nube en Ajustes → Nube');
+  const url=`https://api.github.com/repos/${c.repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`+(method==='GET'?`?t=${Date.now()}`:'');
+  try{ return await fetch(url,{method,cache:'no-store',headers:{Authorization:'Bearer '+c.token,Accept:raw?'application/vnd.github.raw+json':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined}) }
+  catch(e){ throw new Error('Sin internet') } }
+const ghMsg=r=>r.status===401?'el token venció':r.status===403?'el token no puede escribir':r.status===413?'muy grande: usa Archivo':'GitHub respondió '+r.status;
+async function dgSha(path){ const r=await dgGh('GET',path); if(r.status===404) return null; if(!r.ok) throw new Error(ghMsg(r)); return (await r.json()).sha }
+async function dgText(path){ const r=await dgGh('GET',path,null,true); if(r.status===404) return null; if(!r.ok) throw new Error(ghMsg(r)); return r.text() }
+async function dgJson(path){ const r=await dgGh('GET',path); if(r.status===404) return {sha:null,doc:null}; if(!r.ok) throw new Error(ghMsg(r));
+  const j=await r.json(); let txt=j.content&&j.encoding==='base64'?b64dec(j.content):await dgText(path); let doc=null; try{ doc=JSON.parse(txt) }catch(e){} return {sha:j.sha,doc} }
+// leer, cambiar y escribir un JSON pequeño con su sha (si otro equipo escribió entremedio, se reintenta)
+async function dgEdit(path,fn,msg){ for(let k=0;k<4;k++){ const {sha,doc}=await dgJson(path); const nd=fn(doc);
+    const r=await dgGh('PUT',path,{message:msg||'Diagnóstico · índice',content:b64enc(JSON.stringify(nd,null,1)),...(sha?{sha}:{})});
+    if(r.ok) return nd; if(r.status!==409&&r.status!==422) throw new Error(ghMsg(r)) } throw new Error('otro equipo estaba escribiendo; intenta de nuevo') }
+const envIdx=fn=>dgEdit(ENV_IDX,doc=>{ doc=doc&&doc.items?doc:{app:'trastero-debug-index',v:1,items:{}}; fn(doc.items); return doc });
+function envMetaOf(rec){ let pk={}; try{ pk=JSON.parse(rec.json) }catch(e){} const L=pk.label||{};
+  return {at:rec.at,kind:rec.kind,title:rec.title||'',desc:L.desc||'',cat:L.cat||(rec.kind==='report'?'cancion':rec.kind==='lab'?'laboratorio':''),device:pk.device||devName(),size:rec.size,takes:(pk.takes||[]).length} }
+
+/* envío: sube el paquete (con sha si ya estaba: así se puede reenviar con la descripción nueva) y lo anota en el índice */
+async function diagSend(rec){ const path=`${ENV_DIR}/${rec.id}.json`; let sha=rec.sha||null, ok=false;
+  for(let k=0;k<3&&!ok;k++){ const r=await dgGh('PUT',path,{message:`Diagnóstico · ${rec.kind} · ${devName()}`,content:b64enc(rec.json),...(sha?{sha}:{})});
+    if(r.ok){ const j=await r.json().catch(()=>({})); rec.sha=j.content&&j.content.sha||null; ok=true }
+    else if(r.status===409||r.status===422) sha=await dgSha(path);
+    else throw new Error(ghMsg(r)) }
+  if(!ok) throw new Error('no pude reemplazar el archivo en la nube');
+  rec.sent=path; rec.sentAt=Date.now(); await idbDo('readwrite',s=>s.put(rec));
+  try{ await envIdx(it=>{ it[rec.id]=envMetaOf(rec) }) }catch(e){} ENV.remote=null; return path }
+async function envRemote(force){ if(!envCloud()) return null; if(ENV.remote&&!force&&Date.now()-ENV.remoteAt<60000) return ENV.remote;
+  const out={files:{},index:{},replies:{},err:null};
+  try{ const [ls,ix,rp]=await Promise.all([dgGh('GET',ENV_DIR),dgJson(ENV_IDX),dgJson(ENV_REP)]);
+    if(ls.ok){ const a=await ls.json(); (Array.isArray(a)?a:[]).filter(f=>f.type==='file'&&/\.json$/.test(f.name)&&f.path!==ENV_IDX&&f.path!==ENV_REP).forEach(f=>out.files[f.name.replace(/\.json$/,'')]={sha:f.sha,size:f.size,path:f.path}) }
+    else if(ls.status!==404) throw new Error(ghMsg(ls));
+    out.index=ix.doc&&ix.doc.items||{}; out.replies=rp.doc&&rp.doc.items||{} }
+  catch(e){ out.err=e.message }
+  ENV.remote=out; ENV.remoteAt=Date.now(); return out }
+
+/* ---- el caso en preparación ---- */
+function envSaveDraft(){ try{ localStorage.setItem('trastero.__envdraft',JSON.stringify(ENV.d)) }catch(e){}
+  idbDo('readwrite',s=>ENV.takes.length?s.put({id:'__draft',at:Date.now(),kind:'draft',takes:ENV.takes}):s.delete('__draft')).catch(()=>{}) }
+function envClear(){ ENV.d=envDraft0(); ENV.takes=[]; try{ localStorage.removeItem('trastero.__envdraft') }catch(e){} idbDo('readwrite',s=>s.delete('__draft')).catch(()=>{}) }
+const envGuided=()=>['nota','pellizco','acorde','ruido'].includes(ENV.d.cat);
+const envWant=()=>ENV.d.want||(ENV.d.cat==='ruido'||(ENV.d.sym.includes('mal')&&!ENV.d.sym.some(x=>x==='no'||x==='aveces'||x==='tarde'))?'fail':'pass');
+const envDots=()=>ENV.d.dots.slice().sort((a,b)=>a.s-b.s);
+function envChordFrets(){ const f=[-1,-1,-1,-1,-1,-1]; ENV.d.dots.forEach(d=>f[d.s]=d.f); return f }
+function envChordName(){ const f=envChordFrets(), k=f.join(); const c=Object.values(LIB).find(c=>c.frets&&c.frets.join()===k); if(c) return c.name; try{ return guessName(f)||'?' }catch(e){ return '?' } }
+const envNoteTxt=d=>{ const m=OPEN[d.s]+d.f; return `${nmO(m)} (cuerda ${6-d.s}${d.f?', traste '+d.f:' al aire'})` };
+function envTargetTxt(){ const d=ENV.d, ds=envDots();
+  if(d.cat==='nota') return ds.length?envNoteTxt(ds[0]):'';
+  if(d.cat==='pellizco') return ds.length>1?ds.map(envNoteTxt).join(' + '):'';
+  if(d.cat==='acorde') return ds.length>=2?`${envChordName()} (${fretStr(envChordFrets())})`:'';
+  return '' }
+function envTitle(){ const d=ENV.d, ds=envDots(), s=d.sym.length?' · '+(ENV_SYM.find(x=>x[0]===d.sym[0])||['',''])[1].toLowerCase():'';
+  if(d.cat==='nota'&&ds.length) return `Nota ${nmO(OPEN[ds[0].s]+ds[0].f)} (cuerda ${6-ds[0].s})${s}`;
+  if(d.cat==='pellizco'&&ds.length>1) return `Pellizco ${ds.map(x=>nmO(OPEN[x.s]+x.f)).join(' + ')}${s}`;
+  if(d.cat==='acorde'&&ds.length>=2) return `Acorde ${envChordName()}${s}`;
+  if(d.cat==='ruido') return 'Un ruido pasa como nota';
+  if(d.cat==='cancion'){ const so=d.song&&getSong(d.song); return `En «${so?so.title:'una canción'}»${d.songAt?' '+d.songAt:''}${s}` }
+  const t=(d.desc||'').trim().split('\n')[0]; return t?(t.length>48?t.slice(0,46)+'…':t):'Otra cosa' }
+function envProblem(){ const d=ENV.d; if(!d.cat) return 'Elige qué te pasa.';
+  if(d.mode==='guiadas'&&envGuided()){ const n=d.dots.length;
+    if(d.cat==='nota'&&n!==1) return 'Marca en el diapasón la nota que tocas.';
+    if(d.cat==='pellizco'&&n<2) return 'Marca en el diapasón las cuerdas del pellizco (dos o más).';
+    if(d.cat==='acorde'&&n<2) return 'Marca el acorde en el diapasón o elígelo de la lista.' }
+  return null }
+function envPlan(){ const d=ENV.d, n=d.mode==='libre'?Math.min(3,d.reps):d.reps, k0=ENV.takes.length, want=envWant(), title=envTitle(), out=[];
+  for(let k=1;k<=n;k++){ const id='t'+(k0+k), it={id,g:'caso',gn:'Caso'};
+    if(d.mode==='libre'||!envGuided()){ Object.assign(it,{t:`Grabación libre ${k} de ${n}`,d:'Toca lo que quieres mostrarme. La grabación empieza con el primer sonido.',ex:{kind:'free'},dur:d.dur}) }
+    else { const ds=envDots(), ms=ds.map(x=>OPEN[x.s]+x.f), fail=want==='fail';
+      let ex; if(d.cat==='nota') ex={kind:'note',notes:[ms[0]],pass:!fail}; else if(d.cat==='pellizco') ex={kind:'pinch',notes:ms,played:ms,pass:!fail};
+      else if(d.cat==='acorde') ex={kind:'chord',name:envChordName(),frets:envChordFrets(),pass:!fail}; else ex={kind:'noise',pass:false};
+      if(fail&&d.cat!=='ruido') ex.loose=true;
+      const how=d.cat==='ruido'?'Haz el ruido que la app confunde con una nota.':fail?'Tócalo como cuando la app lo acepta y no debería (lo mal tocado).':d.cat==='nota'?'Tócala una vez y déjala sonar.':d.cat==='pellizco'?`Las ${ms.length} a la vez, como las tocas normalmente.`:'Un rasgueo hacia abajo y déjalo sonar.';
+      Object.assign(it,{t:`${envTargetTxt()||title} · ${k} de ${n}`,d:how,dots:d.cat==='ruido'?null:ds,mute:d.cat==='acorde'?[0,1,2,3,4,5].filter(s=>!ds.some(x=>x.s===s)):null,ex,dur:d.cat==='acorde'||d.cat==='ruido'?2.5:d.cat==='pellizco'?2.2:2}) }
+    out.push(it) }
+  return out }
+function envRecord(){ const p=envProblem(); if(p){ toast(p); return } const plan=envPlan(); envSaveDraft();
+  ENV.base=ENV.takes.slice(); ENV.run=[];
+  LAB.custom={title:envTitle(),onTake:tk=>{ ENV.run=tk; ENV.takes=ENV.base.concat(tk); envSaveDraft() },onDone:()=>envRunEnd(true),onLeave:()=>envRunEnd(false)};
+  location.hash='laboratorio'; labRun(plan) }
+function envRunEnd(nav){ if(ENV.base){ ENV.takes=ENV.base.concat(ENV.run||[]); ENV.base=null; ENV.run=null; envSaveDraft() } ENV.tab='nuevo'; if(nav) location.hash='envios' }
+async function envSendCase(){ const p=envProblem(); if(p&&!(ENV.d.mode==='sin')){ toast(p); return } if(!ENV.d.cat){ toast('Elige qué te pasa.'); return }
+  if(!ENV.d.desc.trim()&&!ENV.takes.length){ toast('Cuéntame qué pasa o graba algo.'); return }
+  const d=ENV.d, so=d.song&&getSong(d.song), ds=envDots();
+  const label={cat:d.cat,sym:d.sym,desc:d.desc.trim(),want:envGuided()?envWant():null,title:envTitle(),
+    target:d.cat==='acorde'&&ds.length>=2?{kind:'chord',name:envChordName(),frets:envChordFrets()}:ds.length?{kind:d.cat==='nota'?'note':'pinch',dots:ds,notes:ds.map(x=>OPEN[x.s]+x.f)}:null,
+    song:so?{id:so.id,title:so.title,src:so.src||'demo',at:d.songAt||''}:null,strings:'6=Mi grave'};
+  const pk=Object.assign(diagMeta('case'),{label,takes:ENV.takes});
+  ENV.busy=true; renderEnvios();
+  let rec; try{ rec=await diagSave(pk,label.title) }catch(e){ ENV.busy=false; toast('No pude guardar: '+e.message); renderEnvios(); return }
+  envClear(); ENV.tab='enviados'; ENV.open=rec.id;
+  if(envCloud()){ try{ await diagSend(rec); toast('Enviado. Lo verás en «Enviados».') }catch(e){ toast('Guardado aquí; no se pudo enviar: '+e.message) } }
+  else toast('Guardado aquí. Conecta la nube para enviarlo (o usa Archivo).');
+  ENV.busy=false; renderEnvios() }
+
+/* ---- diapasón para marcar lo que se toca (trastes 0–12) ---- */
+function envFret(){ const d=ENV.d, ds=d.dots, W=420, H=170, x0=46, x1=W-8, y0=16, gap=(H-y0*2-12)/5, fw=(x1-x0)/12;
+  const fx=f=>f===0?x0-15:x0+(f-.5)*fw, sy=s=>y0+(5-s)*gap;
+  const NS='http://www.w3.org/2000/svg', el=(t,a,txt)=>{ const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!=null) e.textContent=txt; return e };
+  const svg=el('svg',{viewBox:`-28 0 ${W+28} ${H}`,class:'labfret envfret',role:'img','aria-label':'Diapasón: toca para marcar'});
+  svg.append(el('rect',{x:x0-30,y:0,width:x1-x0+30,height:H-14,class:'hit'}));
+  for(let f=0;f<=12;f++){ const x=x0+f*fw; svg.append(el('line',{x1:x,y1:y0-6,x2:x,y2:sy(0)+6,class:f===0?'nut':'fret'})) }
+  [3,5,7,9,12].forEach(f=>svg.append(el('text',{x:fx(f),y:H-2,class:'fnum'},String(f))));
+  for(let s=0;s<6;s++){ svg.append(el('line',{x1:x0-26,y1:sy(s),x2:x1,y2:sy(s),class:'str'+(s<3?' wound':''),'stroke-width':[4.2,3.3,2.6,1.7,1.3,1][s]}));
+    svg.append(el('text',{x:-24,y:sy(s)+4,class:'snum'},String(6-s))); svg.append(el('text',{x:-10,y:sy(s)+4,class:'sname'},['E','A','D','G','B','e'][s])) }
+  if(d.cat==='acorde'&&ds.length) for(let s=0;s<6;s++) if(!ds.some(x=>x.s===s)) svg.append(el('text',{x:fx(0),y:sy(s)+5,class:'mute'},'×'));
+  ds.forEach(x=>{ const g=el('g',{class:'dot'}); g.append(el('circle',{cx:fx(x.f),cy:sy(x.s),r:10})); g.append(el('text',{x:fx(x.f),y:sy(x.s)+4},String(x.f))); svg.append(g) });
+  svg.addEventListener('click',e=>{ const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; const m=svg.getScreenCTM(); if(!m) return; const p=pt.matrixTransform(m.inverse());
+    const s=Math.max(0,Math.min(5,Math.round(5-(p.y-y0)/gap))), f=p.x<x0?0:Math.max(1,Math.min(12,Math.ceil((p.x-x0)/fw)));
+    const i=ds.findIndex(x=>x.s===s);
+    if(d.cat==='nota') d.dots=i>=0&&ds[i].f===f?[]:[{s,f}];
+    else if(i>=0&&ds[i].f===f) d.dots=ds.filter((x,k)=>k!==i);
+    else if(i>=0) d.dots=ds.map((x,k)=>k===i?{s,f}:x);
+    else if(d.cat==='pellizco'&&ds.length>=4) { toast('Hasta 4 cuerdas'); return }
+    else d.dots=ds.concat([{s,f}]);
+    d.lib=''; envSaveDraft(); renderEnvios() });
+  return svg }
+
+/* ---- escuchar lo grabado ---- */
+let envSrc=null;
+function envPlay(a,btn){ const ac=ctx(); if(!ac||!a||!a.data) return;
+  if(envSrc){ const was=envSrc.btn; try{ envSrc.stop() }catch(e){} envSrc=null; if(was===btn) return }
+  const b=atob(a.data), n=b.length>>1, buf=ac.createBuffer(1,n,a.sr), ch=buf.getChannelData(0);
+  for(let i=0;i<n;i++){ let v=b.charCodeAt(2*i)|(b.charCodeAt(2*i+1)<<8); if(v>32767) v-=65536; ch[i]=v/32767 }
+  const s=ac.createBufferSource(); s.buffer=buf; s.connect(ac.destination); s.btn=btn; btn.textContent='■'; s.onended=()=>{ btn.textContent='▶'; if(envSrc===s) envSrc=null }; s.start(); envSrc=s }
+const playBtn=a=>a&&a.data?h('button',{class:'btn sm envplay',title:'Escuchar',onclick:e=>{ e.stopPropagation(); envPlay(a,e.currentTarget) }},'▶'):null;
+function envTakeRow(t,onDel){ const c=t.check||{}, sec=t.audio&&t.audio.n?(t.audio.n/t.audio.sr).toFixed(1)+' s':'sin audio';
+  return h('div',{class:'envtake'},h('div',{class:'envtk'},h('b',{},t.title||t.id),h('small',{},`${c.ok?'✓':'·'} ${c.msg||''} · ${t.confirmed==='manual'?'confirmada por ti':t.confirmed?'automática':''} · ${sec}`)),
+    h('div',{class:'dgact'},playBtn(t.audio),onDel?h('button',{class:'btn sm ghost',title:'Quitar esta toma',onclick:onDel},'✕'):null)) }
+
+/* ---- vista ---- */
+const segOpt=(name,type,val,label,checked,fn)=>{ const i=h('input',{type,name,value:val}); i.checked=checked; i.addEventListener('change',()=>fn(i.checked)); return h('label',{},i,h('span',{},label)) };
+function envEnter(){ if(!ENV.takes.length) idbDo('readonly',s=>s.get('__draft')).then(r=>{ if(r&&r.takes&&!ENV.takes.length){ ENV.takes=r.takes; renderEnvios() } }).catch(()=>{}); renderEnvios() }
+function renderEnvios(){ const box=$('#envBox'); if(!box) return; box.innerHTML='';
+  const tabs=h('div',{class:'seg envtabs',role:'tablist'},segOpt('envtab','radio','nuevo','Nuevo caso',ENV.tab==='nuevo',()=>{ ENV.tab='nuevo'; renderEnvios() }),
+    segOpt('envtab','radio','enviados','Enviados',ENV.tab==='enviados',()=>{ ENV.tab='enviados'; renderEnvios() }));
+  box.append(tabs); if(ENV.tab==='nuevo') envNew(box); else envSent(box) }
+function envNew(box){ const d=ENV.d, up=()=>{ envSaveDraft(); renderEnvios() };
+  const step=(n,t,...kids)=>h('section',{class:'envstep'},h('h3',{class:'envh'},h('i',{},String(n)),t),...kids);
+  box.append(h('p',{class:'hint'},'Arma un caso con lo que te está fallando: qué tocas, qué hace la app y, si quieres, unas tomas grabadas. Me llega a la nube y lo ves en «Enviados», con mi respuesta cuando lo revise.'));
+  box.append(step(1,'¿Qué te pasa?',h('div',{class:'seg'},...ENV_CATS.map(([v,l])=>segOpt('envcat','radio',v,l,d.cat===v,()=>{ if(d.cat!==v){ d.cat=v; if(v==='nota'&&d.dots.length>1) d.dots=d.dots.slice(0,1); if(!['nota','pellizco','acorde'].includes(v)) d.dots=[]; d.mode=['nota','pellizco','acorde','ruido'].includes(v)?'guiadas':d.mode==='guiadas'?'libre':d.mode; d.want=null } up() })))));
+  if(!d.cat) return;
+  if(d.cat!=='ruido') box.append(step(2,'¿Qué hace la app?',h('div',{class:'seg'},...ENV_SYM.map(([v,l])=>segOpt('envsym','checkbox',v,l,d.sym.includes(v),on=>{ d.sym=on?[...new Set(d.sym.concat(v))]:d.sym.filter(x=>x!==v); d.want=null; up() })))));
+  let n=d.cat==='ruido'?2:3;
+  if(['nota','pellizco','acorde'].includes(d.cat)){
+    const kids=[h('p',{class:'hint'},d.cat==='nota'?'Toca en el diapasón la nota que tocas. La cuerda 1 es la más delgada (arriba), la 6 la más gruesa (abajo).':d.cat==='pellizco'?'Toca las cuerdas del pellizco (una por cuerda). Toca de nuevo para quitarla.':'Toca una posición por cuerda; las que no marques van apagadas (×). O elígelo de la lista.'),envFret()];
+    if(d.cat==='acorde'){ const sel=h('select',{class:'envlib'},h('option',{value:''},'Elegir de la biblioteca…'));
+      const groups={}; Object.values(LIB).filter(c=>c.frets).forEach(c=>(groups[c.group||'Otros']=groups[c.group||'Otros']||[]).push(c));
+      Object.entries(groups).forEach(([g,cs])=>sel.append(h('optgroup',{label:g},...cs.map(c=>h('option',{value:c.id},`${c.name}  (${fretStr(c.frets)})`)))));
+      sel.value=d.lib||''; sel.addEventListener('change',()=>{ const c=LIB[sel.value]; if(!c) return; d.lib=c.id; d.dots=c.frets.map((f,s)=>({s,f})).filter(x=>x.f>=0&&x.f<=12); up() }); kids.push(sel) }
+    const tt=envTargetTxt(); kids.push(h('p',{class:'envtarget'},tt?h('span',{},'Vas a tocar: ',h('b',{},tt)):h('span',{class:'hint'},'Nada marcado todavía.'),d.dots.length?h('button',{class:'btn sm ghost',onclick:()=>{ d.dots=[]; d.lib=''; up() }},'Borrar marcas'):null));
+    box.append(step(n++,'Lo que tocas',...kids)) }
+  // descripción
+  const ta=h('textarea',{rows:4,class:'envdesc',placeholder:{nota:'Ej.: en Pellizcos 2 la cuerda 3 al aire casi nunca me la toma, aunque suena clara.',pellizco:'Ej.: la de abajo la toco más fuerte y casi nunca pasa a la primera.',acorde:'Ej.: el D me lo marca como fallado aunque suena bien; con el pulgar sobre la 6.',ruido:'Ej.: al cambiar de posición el roce de la mano me cuenta como nota.',cancion:'Ej.: en el coro, después del cambio de G a C, me lo marca tarde aunque voy a tiempo.',otro:'Cuéntame qué pasa, qué esperabas y qué hizo la app.'}[d.cat]});
+  ta.value=d.desc; ta.addEventListener('input',()=>{ d.desc=ta.value; try{ localStorage.setItem('trastero.__envdraft',JSON.stringify(d)) }catch(e){} });
+  const dk=[ta];
+  if(d.cat==='cancion'){ const sel=h('select',{},h('option',{value:''},'¿En qué canción?'),...allSongs().map(s=>h('option',{value:s.id},s.title))); sel.value=d.song||''; sel.addEventListener('change',()=>{ d.song=sel.value; envSaveDraft() });
+    const at=h('input',{type:'text',placeholder:'minuto (ej. 1:20)',class:'envat',value:d.songAt||''}); at.addEventListener('input',()=>{ d.songAt=at.value.trim(); envSaveDraft() });
+    dk.unshift(h('div',{class:'row envsong'},sel,at)); dk.push(h('p',{class:'hint'},'Lo más útil desde una canción: activa el modo diagnóstico (Ajustes) y toca «✓ Estaba bien» o «✗ No debía» justo después del error. Guarda los últimos 8 s con lo que decidió el juez, y ahí mismo puedes escribir qué pasó.')) }
+  box.append(step(n++,'Cuéntame',...dk));
+  // grabación
+  const gk=[]; const modes=envGuided()?[['guiadas','Tomas guiadas'],['libre','Grabación libre'],['sin','Sin audio']]:[['libre','Grabación libre'],['sin','Sin audio']];
+  if(!modes.some(m=>m[0]===d.mode)) d.mode=modes[0][0];
+  gk.push(h('div',{class:'seg'},...modes.map(([v,l])=>segOpt('envmode','radio',v,l,d.mode===v,()=>{ d.mode=v; up() }))));
+  if(d.mode==='guiadas'){ gk.push(h('p',{class:'hint'},'Manos libres: cada toma empieza sola cuando suena la guitarra. Varias tomas del mismo error me sirven más que una.'),
+      h('div',{class:'envrow'},h('span',{},'¿Cuántas veces?'),h('div',{class:'seg'},...[3,5,8].map(k=>segOpt('envreps','radio',k,String(k),d.reps===k,()=>{ d.reps=k; up() })))));
+    if(d.cat!=='ruido') gk.push(h('div',{class:'envrow'},h('span',{},'Al tocarlo, la app debería…'),h('div',{class:'seg'},segOpt('envwant','radio','pass','Aceptarlo',envWant()==='pass',()=>{ d.want='pass'; up() }),segOpt('envwant','radio','fail','Rechazarlo',envWant()==='fail',()=>{ d.want='fail'; up() })))) }
+  else if(d.mode==='libre'){ gk.push(h('p',{class:'hint'},'Graba lo que quieras mostrarme, empezando con el primer sonido.'),
+      h('div',{class:'envrow'},h('span',{},'Duración'),h('div',{class:'seg'},...[[4,'4 s'],[8,'8 s']].map(([k,l])=>segOpt('envdur','radio',k,l,d.dur===k,()=>{ d.dur=k; up() })))),
+      h('div',{class:'envrow'},h('span',{},'Grabaciones'),h('div',{class:'seg'},...[1,3].map(k=>segOpt('envreps2','radio',k,String(k),Math.min(3,d.reps)===k||(k===1&&d.reps<3),()=>{ d.reps=k; up() }))))) }
+  if(d.mode!=='sin'){ if(ENV.takes.length){ const list=h('div',{class:'envtakes'}); ENV.takes.forEach((t,i)=>list.append(envTakeRow(t,()=>{ ENV.takes.splice(i,1); up() }))); gk.push(h('p',{class:'envcount'},`${ENV.takes.length} toma${ENV.takes.length>1?'s':''} lista${ENV.takes.length>1?'s':''}`),list) }
+    const prob=envProblem(); gk.push(h('div',{class:'toolbar'},h('button',{class:'btn'+(ENV.takes.length?'':' primary'),disabled:!!prob,onclick:envRecord},ENV.takes.length?'Grabar más':'Grabar'),prob?h('small',{class:'hint'},prob):null)) }
+  box.append(step(n++,'Grabación',...gk));
+  // enviar
+  const aud=ENV.takes.reduce((a,t)=>a+(t.audio&&t.audio.n?t.audio.n/t.audio.sr:0),0), size=ENV.takes.reduce((a,t)=>a+(t.audio&&t.audio.data?t.audio.data.length:0)+3000,2000);
+  const cl=envCloud();
+  box.append(step(n++,'Enviar',h('p',{class:'envsum'},h('b',{},envTitle()),h('br'),`Descripción${d.desc.trim()?'':' (vacía)'} · ${ENV.takes.length} toma${ENV.takes.length===1?'':'s'}${aud?` · ${aud.toFixed(1)} s de audio`:''} · ~${kb(size)}`,h('br'),
+      h('small',{class:'hint'},cl?`Va a ${ENV_DIR}/ en ${cl.repo}.`:'La nube no está conectada: se guarda aquí y lo mandas con Archivo.')),
+    h('div',{class:'toolbar'},h('button',{class:'btn primary big',disabled:ENV.busy,onclick:envSendCase},ENV.busy?'Enviando…':cl?'Enviar caso':'Guardar caso'),
+      h('button',{class:'btn ghost',onclick:e=>{ const sp=e.currentTarget.parentNode; sp.replaceChildren(h('span',{class:'confirm'},'¿Descartar este caso?',h('button',{class:'btn danger sm',onclick:()=>{ envClear(); renderEnvios() }},'Sí'),h('button',{class:'btn ghost sm',onclick:renderEnvios},'No'))) }},'Descartar')))) }
+
+/* ---- Enviados ---- */
+async function envItems(force){ let recs=[]; try{ recs=(await diagList()).filter(r=>r.id!=='__draft'&&r.kind!=='draft') }catch(e){}
+  const R=await envRemote(force), map={};
+  recs.forEach(r=>map[r.id]={id:r.id,rec:r});
+  if(R) Object.keys(R.files).forEach(id=>(map[id]=map[id]||{id}).file=R.files[id]);
+  const fromId=id=>{ const m=/-(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)(\d\d)-(\w+)$/.exec(id); return m?{at:new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]).getTime(),kind:m[7]}:{at:0,kind:''} };
+  return Object.values(map).map(it=>{ const meta=R&&R.index[it.id]||{}, r=it.rec, f=fromId(it.id); let L={}; if(r) try{ L=JSON.parse(r.json).label||{} }catch(e){}
+    return Object.assign(it,{meta,reply:R&&R.replies[it.id]||null,at:r?r.at:meta.at||f.at,kind:r?r.kind:meta.kind||f.kind,title:(r&&r.title)||meta.title||it.id,desc:r?(L.desc||''):(meta.desc||''),
+      cat:L.cat||meta.cat||'',device:meta.device||(r?devName():it.id.split('-')[0]),size:r?r.size:meta.size||it.file&&it.file.size||0,inCloud:!!it.file,cloudKnown:!!(R&&!R.err)}) }).sort((a,b)=>b.at-a.at) }
+async function envGetPk(it){ if(it.rec) return JSON.parse(it.rec.json); const t=await dgText(`${ENV_DIR}/${it.id}.json`); if(t==null) throw new Error('ya no está en la nube'); return JSON.parse(t) }
+async function envSetDesc(it,txt){ const pk=await envGetPk(it); pk.label=Object.assign({},pk.label||{},{desc:txt});
+  if(it.rec){ const r=it.rec; r.json=JSON.stringify(pk); r.size=r.json.length; r.desc=txt; await idbDo('readwrite',s=>s.put(r)); if(r.sent||it.inCloud) await diagSend(r); return }
+  // solo está en la nube: se reescribe allá
+  const path=`${ENV_DIR}/${it.id}.json`, sha=it.file.sha, js=JSON.stringify(pk);
+  const res=await dgGh('PUT',path,{message:'Diagnóstico · descripción',content:b64enc(js),sha}); if(!res.ok) throw new Error(ghMsg(res));
+  try{ await envIdx(x=>{ x[it.id]=Object.assign({},x[it.id]||{},{desc:txt}) }) }catch(e){} ENV.remote=null }
+async function envDelete(it){ if(it.inCloud||(it.rec&&it.rec.sent&&envCloud())){ const path=`${ENV_DIR}/${it.id}.json`;
+    const sha=it.file?it.file.sha:await dgSha(path);
+    if(sha){ const r=await dgGh('DELETE',path,{message:'Diagnóstico · borrado',sha}); if(!r.ok&&r.status!==404) throw new Error(ghMsg(r)) }
+    try{ await envIdx(x=>{ delete x[it.id] }) }catch(e){} }
+  if(it.rec) await diagDel(it.rec.id); ENV.remote=null }
+const envAct=(lbl,fn,cls)=>h('button',{class:'btn sm'+(cls?' '+cls:''),onclick:async e=>{ e.stopPropagation(); const b=e.currentTarget; b.disabled=true; try{ await fn(b) }catch(er){ toast(er.message) } if(b.isConnected) b.disabled=false }},lbl);
+function envConfirm(btn,msg,yes,fn){ const sp=btn.parentNode, keep=[...sp.childNodes];
+  sp.replaceChildren(h('span',{class:'confirm'},msg,envAct(yes,async()=>{ await fn() },'danger'),h('button',{class:'btn sm ghost',onclick:e=>{ e.stopPropagation(); sp.replaceChildren(...keep) }},'No'))) }
+async function envSent(box){ const head=h('div',{class:'envhead'}), list=h('div',{class:'envlist'},h('p',{class:'hint'},'Cargando…'));
+  box.append(head,list);
+  const items=await envItems(ENV.forceLoad); ENV.forceLoad=false; if(!list.isConnected) return; list.innerHTML='';
+  const R=ENV.remote, cl=envCloud();
+  const pend=items.filter(i=>i.rec&&!i.rec.sent&&!i.inCloud), withRep=items.filter(i=>i.reply), done=items.filter(i=>i.reply&&['arreglado','no-sirve','visto'].includes(i.reply.st));
+  const local=items.reduce((a,i)=>a+(i.rec?i.rec.size:0),0);
+  head.append(h('div',{class:'seg'},...[['todos',`Todo (${items.length})`],['sin',`Sin enviar (${pend.length})`],['resp',`Con respuesta (${withRep.length})`]].map(([v,l])=>segOpt('envfilt','radio',v,l,ENV.filt===v,()=>{ ENV.filt=v; renderEnvios() }))),
+    h('p',{class:'hint envstat'},!cl?'La nube no está conectada: solo ves lo de este equipo.':R&&R.err?`No pude leer la nube (${R.err}): muestro lo de este equipo.`:`Nube: ${cl.repo}. En este equipo: ${kb(local)}.`),
+    h('div',{class:'toolbar'},envAct('Actualizar',async()=>{ ENV.forceLoad=true; renderEnvios() },'ghost'),
+      pend.length&&cl?envAct(`Enviar ${pend.length} pendiente${pend.length>1?'s':''}`,async()=>{ let ok=0,bad=0; for(const i of pend){ try{ await diagSend(i.rec); ok++ }catch(e){ bad++ } } toast(`Enviados ${ok}`+(bad?` · ${bad} con error`:'')); ENV.forceLoad=true; renderEnvios() },'primary'):null,
+      done.length?envAct(`Borrar ${done.length} ya revisado${done.length>1?'s':''}`,async b=>envConfirm(b,`¿Borrar ${done.length} de aquí y de la nube?`,'Sí, borrar',async()=>{ let bad=0; for(const i of done){ try{ await envDelete(i) }catch(e){ bad++ } } toast(bad?`${bad} no se pudieron borrar`:'Borrados'); ENV.forceLoad=true; renderEnvios() }),'ghost'):null));
+  const shown=items.filter(i=>ENV.filt==='sin'?pend.includes(i):ENV.filt==='resp'?!!i.reply:true);
+  if(!shown.length) list.append(h('p',{class:'hint'},ENV.filt==='todos'?'Nada todavía. Arma un caso en «Nuevo caso», o reporta desde una canción con el modo diagnóstico.':'Nada aquí.'));
+  shown.forEach(it=>list.append(envRow(it))) }
+function envRow(it){ const r=it.rec, rp=it.reply, open=ENV.open===it.id;
+  const badges=[];
+  if(!it.inCloud&&!(r&&r.sent)) badges.push(['Solo en este equipo','warn']);
+  else if(it.cloudKnown&&!it.inCloud) badges.push(['Ya no está en la nube','muted']);
+  else if(it.inCloud&&!r) badges.push([`En la nube · desde ${it.device}`,'info']);
+  else badges.push(['En la nube','ok']);
+  if(rp){ const [l,c]=ENV_REPLY[rp.st]||[rp.st,'info']; badges.unshift(['Claude: '+l,c]) }
+  const row=h('article',{class:'envitem'+(open?' open':'')+(rp?' replied':'')});
+  const top=h('button',{class:'envtop',onclick:()=>{ ENV.open=open?null:it.id; renderEnvios() },'aria-expanded':String(open)},
+    h('span',{class:'envkind'},(ENV_KIND[it.kind]||it.kind)+(it.cat&&it.kind==='case'?' · '+((ENV_CATS.find(c=>c[0]===it.cat)||[])[1]||it.cat):'')),
+    h('b',{class:'envtitle'},it.title),it.desc?h('span',{class:'envdx'},it.desc):null,
+    h('span',{class:'envmeta'},`${new Date(it.at).toLocaleString([], {dateStyle:'short',timeStyle:'short'})} · ${kb(it.size||0)}`,...badges.map(([l,c])=>h('span',{class:'envb '+c},l))));
+  row.append(top);
+  if(rp&&rp.nota) row.append(h('div',{class:'envreply'},h('b',{},'Claude: '),rp.nota,rp.at?h('small',{},' · '+new Date(rp.at).toLocaleDateString()):null));
+  if(open) envDetail(it,row);
+  return row }
+async function envDetail(it,row){ const body=h('div',{class:'envbody'},h('p',{class:'hint'},'Abriendo…')); row.append(body);
+  let pk=null; try{ pk=await envGetPk(it) }catch(e){ body.innerHTML=''; body.append(h('p',{class:'hint'},'No pude abrirlo: '+e.message)) }
+  if(pk){ body.innerHTML=''; const L=pk.label||{};
+    // descripción editable
+    const ta=h('textarea',{rows:3,class:'envdesc',placeholder:'¿Qué pasó? ¿Qué esperabas?'}); ta.value=L.desc||'';
+    const sv=envAct(it.inCloud||(it.rec&&it.rec.sent)?'Guardar y reenviar':'Guardar',async()=>{ await envSetDesc(it,ta.value.trim()); toast('Descripción guardada'); ENV.forceLoad=!it.rec; renderEnvios() });
+    body.append(h('label',{class:'lab'},'Descripción'),ta,h('div',{class:'toolbar'},sv));
+    const facts=[];
+    if(L.sym&&L.sym.length) facts.push(['Qué hace la app',L.sym.map(s=>(ENV_SYM.find(x=>x[0]===s)||[0,s])[1]).join(', ')]);
+    if(L.target) facts.push(['Lo que toca',L.target.kind==='chord'?`${L.target.name} (${fretStr(L.target.frets)})`:(L.target.dots||[]).map(envNoteTxt).join(' + ')]);
+    if(L.want) facts.push(['La app debería',L.want==='pass'?'aceptarlo':'rechazarlo']);
+    if(L.song) facts.push(['Canción',L.song.title+(L.song.at?' · '+L.song.at:'')]);
+    if(pk.kind==='report'&&pk.ctx){ const c=pk.ctx; facts.push(['Canción',`${c.song&&c.song.title} · ${c.mode==='test'?'Prueba':'Práctica'}${c.wait?' · nota a nota':''} · ${fmtT(c.songT||0)}`],['Veredicto',L.verdict==='pass'?'✓ Lo toqué bien y no lo aceptó':'✗ Lo aceptó y no debía']);
+      const want=(c.hold?c.notes.filter(n=>Math.abs(n.t-c.hold.t)<.02):c.notes.filter(n=>Math.abs(n.t-c.songT)<.6)).map(n=>nmO(n.m)); if(want.length) facts.push(['Notas en juego',[...new Set(want)].join(' + ')]) }
+    facts.push(['Equipo',`${pk.device} · ${pk.build||''}`]);
+    body.append(h('dl',{class:'envfacts'},...facts.flatMap(([k,v])=>[h('dt',{},k),h('dd',{},v)])));
+    if(pk.kind==='report'&&pk.audio) body.append(h('div',{class:'envtake'},h('div',{class:'envtk'},h('b',{},'Los últimos 8 s'),h('small',{},'lo que oyó el micrófono')),h('div',{class:'dgact'},playBtn(pk.audio))));
+    if(pk.takes&&pk.takes.length){ const tl=h('div',{class:'envtakes'}); pk.takes.forEach(t=>{ tl.append(envTakeRow(t)) }); body.append(h('label',{class:'lab'},`${pk.takes.length} toma${pk.takes.length>1?'s':''}`),tl);
+      const f=pk.takes.find(t=>t.dots&&t.dots.length); if(f){ const sv=labFret({dots:f.dots,mute:pk.label&&pk.label.target&&pk.label.target.kind==='chord'?pk.label.target.frets.map((v,s)=>v<0?s:-1).filter(s=>s>=0):[],t:'lo que se toca'}); if(sv) body.insertBefore(sv,tl.previousSibling) } } }
+  const acts=h('div',{class:'toolbar envacts'});
+  if(it.rec) acts.append(envAct(it.rec.sent||it.inCloud?'Reenviar':'Enviar',async()=>{ await diagSend(it.rec); toast('Enviado'); ENV.forceLoad=true; renderEnvios() },it.rec.sent?'':'primary'),
+    envAct('Archivo',()=>diagFile(it.rec)),envAct('Copiar sin audio',async()=>{ const t=await diagText(it.rec); await navigator.clipboard.writeText(t); toast(`Copiado (${kb(t.length)})`) }));
+  const where=it.rec&&(it.inCloud||it.rec.sent)?'de este equipo y de la nube':it.rec?'de este equipo':'de la nube';
+  acts.append(envAct('Borrar',async b=>envConfirm(b,`¿Borrar ${where}?`,'Sí, borrar',async()=>{ await envDelete(it); ENV.open=null; toast('Borrado'); renderEnvios() }),'ghost danger'));
+  body.append(acts) }
+
+/* ---- nota rápida después de «✓ Estaba bien» / «✗ No debía» en el reproductor ---- */
+function envAfterReport(rec){ const bar=$('#pDiagBar'); if(!bar) return; let inp=$('#pRepNote');
+  if(!inp){ inp=h('input',{id:'pRepNote',class:'pdgnote',type:'text',enterkeyhint:'send',placeholder:'¿Qué pasó? (opcional) · Enter'}); bar.prepend(inp);
+    inp.addEventListener('keydown',async e=>{ e.stopPropagation(); if(e.key==='Escape'){ inp.hidden=true; inp.blur() } if(e.key!=='Enter') return; const r=ENV.lastRep, t=inp.value.trim(); inp.value=''; inp.hidden=true; inp.blur(); if(!r||!t) return;
+      try{ await envSetDesc({rec:r,id:r.id,inCloud:!!r.sent},t); toast(r.sent?'Nota agregada y reenviada':'Nota agregada') }catch(er){ toast('Nota guardada aquí ('+er.message+')') } });
+    inp.addEventListener('blur',()=>{ if(!inp.value.trim()) setTimeout(()=>{ if(document.activeElement!==inp) inp.hidden=true },8000) }) }
+  ENV.lastRep=rec; inp.hidden=false; inp.value=''; clearTimeout(ENV.noteT); ENV.noteT=setTimeout(()=>{ if(document.activeElement!==inp&&!inp.value) inp.hidden=true },15000) }
 
 /* ---------- inicio ---------- */
 buildLib(); applyPrefs(); buildChroma(); edLoad(null);
