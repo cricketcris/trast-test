@@ -688,7 +688,7 @@ a.btn.primary{color:var(--accent-ink)}
 .cstat.sync::before{content:'⟳ ';display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* tarjeta del acorde: esquina inferior izquierda, en la zona de lo que ya pasó */
-.pchord{position:absolute;z-index:2;left:6px;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 4px 2px;border-radius:12px;background:color-mix(in oklab,var(--surface) 82%,transparent);border:1px solid var(--accent);pointer-events:none;box-shadow:0 0 18px color-mix(in oklab,var(--accent) 35%,transparent)}
+.pchord{position:absolute;z-index:2;left:6px;bottom:calc(18px + var(--lyh,0px));display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 4px 2px;border-radius:12px;background:color-mix(in oklab,var(--surface) 82%,transparent);border:1px solid var(--accent);pointer-events:none;box-shadow:0 0 18px color-mix(in oklab,var(--accent) 35%,transparent)}
 .pchord.next{border-style:dashed;opacity:.9}
 .pchord .k{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .pchord b{font-family:var(--display);font-size:1rem;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg)}
@@ -783,6 +783,10 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
   .controls #pReset[data-sure] .ico{display:none}
 }
 .sloop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0}
+.supd-box{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.supd summary{cursor:pointer;font-weight:700}
+.supd[open]{display:flex;flex-direction:column;gap:8px}
+.supd-prev .toolbar{margin-top:6px}
 
 /* ---------- diagnóstico: panel en vivo, botones de reporte, Ajustes → Diagnóstico y laboratorio ---------- */
 .btn.sm{padding:6px 10px;font-size:13px;min-height:0}
@@ -1327,6 +1331,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
         </fieldset>
         <fieldset><legend class="lab">Sonido</legend>
           <label class="check"><input type="checkbox" id="sClick">Clic de metrónomo</label>
+          <label class="check" id="sLyricsRow" hidden><input type="checkbox" id="sLyrics">Mostrar la letra abajo de la autopista (cada palabra se enciende al cantarla)</label>
           <label class="check"><input type="checkbox" id="sAmb">Ambiente por sección: al pasar a otra parte (verso, coro, puente…) cambia el fondo y aparece su nombre</label>
           <div class="speedrow" style="margin-top:10px"><label for="sLat">Latencia del micrófono</label><input type="range" id="sLat" min="0" max="400" step="10"><b id="sLatV" class="mono">120 ms</b></div>
           <p class="hint">Si las notas que tocas a tiempo salen "tarde", sube la latencia.</p>
@@ -1381,6 +1386,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
           <div class="row" style="margin-top:8px"><label for="sBpm">BPM</label><input type="number" id="sBpm" min="30" max="260" style="width:96px"></div>
         </details>
         <div id="sFlSend" class="sfl-box" hidden></div>
+        <div id="sUpdBox" class="supd-box" hidden></div>
         <div class="toolbar" id="sDangerZone"></div>
       </div>
     </div>
@@ -1558,7 +1564,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-24 03:27 · e1cfdf5";
+const BUILD="2026-11-24 03:43 · 28b7ac9";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -2695,23 +2701,28 @@ function leaveTuner(){ if(tunerOn){ tunerOn=false; if(!Sess.running&&!testOn) mi
 /* ---------- canciones: importador Fretline, biblioteca y línea de tiempo ---------- */
 /* PARSER-START */
 /* Lee el texto que exporta Fretline. Devuelve secciones con eventos por columna:
-   note (una cuerda), chord (2+ cuerdas = rasgueo) y chuck (solo x). Cuerdas: 0 = E grave … 5 = e aguda. */
+   note (una cuerda), chord (2+ cuerdas = rasgueo) y chuck (solo x). Cuerdas: 0 = E grave … 5 = e aguda.
+   Letra (extensión propia, Fretline no la tiene): líneas «L|» alineadas por columnas con la tablatura, encima del
+   bloque (como los nombres de acordes) o justo debajo; cada palabra o sílaba empieza en la columna donde se canta.
+   Si se canta rápido y las palabras no caben, se reparten en varias líneas L| (se juntan todas). */
 function parseFretline(txt){
   const STR={e:5,B:4,G:3,D:2,A:1,E:0}, isTab=l=>/^\s*[eBGDAE]\s*\|/.test(l);
   const lines=String(txt||'').replace(/\r/g,'').replace(/\t/g,'    ').split('\n');
   const out={title:'',bpm:null,len:null,tuning:'E A D G B E',sections:[],warnings:[]};
-  let cur=null,names=null,arrows=null;
+  let cur=null,names=null,arrows=null,lyr=null,prevTab=false,below=null;
   for(let i=0;i<lines.length;i++){
     const raw=lines[i],l=raw.trimEnd();
     if(!l.trim()) continue;
+    const wasTab=prevTab, wasBelow=below; prevTab=false; below=null;
     if(/^\s*key\s*:/i.test(l)) continue;
     const sec=/^\s*\[(.+?)\]\s*$/.exec(l);
-    if(sec){cur={name:sec[1].trim(),blocks:[]};out.sections.push(cur);names=arrows=null;continue}
+    if(sec){cur={name:sec[1].trim(),blocks:[]};out.sections.push(cur);names=arrows=lyr=null;continue}
+    if(/^\s*L\s*\|/.test(l)){const lb=cur&&cur.blocks[cur.blocks.length-1];if((wasTab||wasBelow)&&lb&&!lyr){(lb.lyrics=lb.lyrics||[]).push(raw);below=lb}else (lyr=lyr||[]).push(raw);continue}
     if(isTab(l)){
       const blk=[];let j=i;while(j<lines.length&&isTab(lines[j])){blk.push(lines[j]);j++}
       i=j-1;
       if(!cur){cur={name:'Parte 1',blocks:[]};out.sections.push(cur)}
-      cur.blocks.push({lines:blk,names,arrows});names=arrows=null;continue}
+      cur.blocks.push({lines:blk,names,arrows,lyrics:lyr});names=arrows=lyr=null;prevTab=true;continue}
     const meta=/(\d+(?:[.,]\d+)?)\s*BPM/i.exec(l);
     if(meta){out.bpm=parseFloat(meta[1].replace(',','.'));const lm=/length\s*(\d+):(\d{1,2})/i.exec(l);if(lm)out.len=+lm[1]*60+ +lm[2];const tu=/\(([A-Ga-g#b ]{5,})\)/.exec(l);if(tu)out.tuning=tu[1].trim();continue}
     if(/[↓↑]/.test(l)){arrows=raw;continue}
@@ -2744,6 +2755,8 @@ function parseFretline(txt){
         if(b.arrows){for(const d of [0,-1,1]){const ch=absChar(b.arrows,col+d);if(ch==='↓'){ev.dir='d';break}if(ch==='↑'){ev.dir='u';break}}}
         if(nameTokens.length&&ev.type==='chord'){let lab=null;for(const t of nameTokens) if(t.col<=col+1) lab=t.name;ev.label=lab}
         s.events.push(ev)});
+      if(b.lyrics){let over=false;for(const ln of b.lyrics){const m=/^\s*L\s*\|/.exec(ln),body=ln.slice(m[0].length).replace(/\|\s*$/,''),re=/\S+/g;let mm;while((mm=re.exec(body))){let c=mm.index;if(c>=width){over=true;c=Math.max(0,width-1)}(s.lyrics=s.lyrics||[]).push({col:off+c,w:mm[0]})}}
+        if(s.lyrics)s.lyrics.sort((a,b)=>a.col-b.col);if(over)out.warnings.push(`${s.name}: la letra pasa del largo de la tablatura (lo que sobra quedó al final del bloque)`)}
       off+=width;
     }
     s.cols=off;delete s.blocks;
@@ -2768,12 +2781,13 @@ function chordForFrets(fr,label,tune){
 }
 /* convierte el resultado del parser en una canción con tiempos en segundos (a velocidad 1) */
 function buildSong(song){
-  const bpm=song.bpm||90,cpb=song.cpb||4,spc=60/(bpm*cpb),TU=song.tune||OPEN;let t=0;const sections=[],notes=[],blocks=[],strums=[],chucks=[],csegs=[];
+  const bpm=song.bpm||90,cpb=song.cpb||4,spc=60/(bpm*cpb),TU=song.tune||OPEN;let t=0;const sections=[],notes=[],blocks=[],strums=[],chucks=[],csegs=[],lyrics=[];
   song.raw.sections.forEach((s,si)=>{
     // BPM propio de la sección (Fretline): proporcional al BPM de la canción, por si lo cambias en la ficha
     const sp=s.bpm&&song.raw.bpm?spc*song.raw.bpm/s.bpm:spc;
     const t0=t,dur=s.cols*sp;sections.push({i:si,name:s.name,start:t0,end:t0+dur});
     const segs=[];
+    (s.lyrics||[]).forEach(w=>lyrics.push({t:t0+w.col*sp,w:w.w,sec:si}));
     s.events.forEach(e=>{const et=t0+e.col*sp;
       if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:TU[e.s]+e.f,tech:e.tech||'',sec:si,col:e.col});
       else if(e.type==='chuck') chucks.push({t:et,sec:si,col:e.col,strings:e.strings});
@@ -2789,7 +2803,8 @@ function buildSong(song){
     if(cur) blocks.push(cur);
     t+=dur;
   });
-  return {sections,notes,blocks,strums,chucks,csegs,len:t,spc,tune:TU};
+  lyrics.sort((a,b)=>a.t-b.t);
+  return {sections,notes,blocks,strums,chucks,csegs,lyrics,len:t,spc,tune:TU};
 }
 
 /* almacenamiento: canciones importadas + demos originales */
@@ -2910,6 +2925,9 @@ function rawToText(song){
           if(free&&/^[A-G]/.test(name)){ for(let i=0;i<name.length;i++){ if(at+i>=nm.length) nm.push(' '); nm[at+i]=name[i] } last=key } } } }
     out.push(`[${sec.name}]`);
     if(hasCh){ out.push(nm.join('').trimEnd()||'  '); if(ar.some(c=>c!==' ')) out.push(ar.join('').trimEnd()) }
+    // letra: cada palabra en su columna; si no cabe en una línea (se canta rápido), va a otra línea L|
+    if(sec.lyrics&&sec.lyrics.length){ const lines=[]; for(const w of sec.lyrics){ const at=w.col+2; let ln=lines.find(x=>x.length<=at); if(!ln){ ln=['L','|']; lines.push(ln) }
+        while(ln.length<at) ln.push(' '); for(const ch of w.w) ln.push(ch); ln.push(' ') } lines.forEach(ln=>out.push(ln.join('').trimEnd())) }
     for(let s=5;s>=0;s--) out.push(SN[s]+'|'+L[s].join('')+'|');
     out.push('');
   }
@@ -2918,7 +2936,7 @@ function rawToText(song){
 
 /* ---------- reproductor de canciones: autopista, prueba y práctica ---------- */
 let curSongId=null, songFilter='all';
-const PLAY_DEF={mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait:false,waitJump:false,loopA:null,loopB:null,delay:0,margin:'normal',prog:false,progPct:90,progStep:5,progMax:100,rescue:true,rsStreak:3,rsWin:8,rsPct:50,rsBack:2,rsWait:2};
+const PLAY_DEF={lyrics:true,mode:'test',sel:null,speed:100,loop:true,click:true,lat:120,wait:false,waitJump:false,loopA:null,loopB:null,delay:0,margin:'normal',prog:false,progPct:90,progStep:5,progMax:100,rescue:true,rsStreak:3,rsWin:8,rsPct:50,rsBack:2,rsWait:2};
 const playCfg=s=>{ const c=Object.assign({},PLAY_DEF,s.play||{}); if(c.lat===140&&!c.latUser) c.lat=120; return c };
 function openSong(id){ curSongId=id; if(location.hash==='#cancion') renderSongDetail(); else location.hash='cancion' }
 
@@ -3016,6 +3034,29 @@ function importParse(){
   const s=songFromText($('#importTxt').value);
   if(!s.raw.sections.length){ box.append(h('p',{class:'err',text:s.raw.warnings[0]||'No pude leer la tablatura.'})); importDraft=null; return }
   showDraft(s) }
+/* actualizar una canción importada por texto pegando el texto nuevo: misma id, carpeta, ajustes, video y récords.
+   Guarda la versión anterior (una) para poder volver. */
+function updFromText(s,box,tl){
+  const ta=h('textarea',{rows:6,class:'envdesc',placeholder:'Pega aquí el texto nuevo (el mismo formato con que la importaste)'}), prev=h('div',{class:'supd-prev'});
+  let nr=null;
+  const look=()=>{ prev.innerHTML=''; nr=null; const t=ta.value.trim(); if(!t) return; const r=parseFretline(t);
+    if(!r.sections.length){ prev.append(h('p',{class:'hint',text:r.warnings[0]||'No encontré tablatura.'})); return }
+    nr=r; const ns=Object.assign({},s,{raw:r,bpm:r.bpm||s.bpm,cpb:guessCpb(r)}), t2=buildSong(ns);
+    const d=(a,b,n)=>a===b?`${b} ${n}`:`${n} ${a} → ${b}`;
+    prev.append(...[h('p',{class:'hint',text:[`«${r.title||s.title}»`,d(s.bpm,ns.bpm,'BPM'),d(tl.sections.length,t2.sections.length,'secciones'),d(tl.notes.length,t2.notes.length,'notas'),d(tl.strums.length,t2.strums.length,'rasgueos'),t2.lyrics.length||tl.lyrics.length?d(tl.lyrics.length,t2.lyrics.length,'palabras de letra'):''].filter(Boolean).join(' · ')}),
+      ...r.warnings.map(w=>h('p',{class:'hint',text:'⚠ '+w})),
+      s.edited?h('p',{class:'hint',text:'Las correcciones que hiciste en el editor se reemplazan (quedan en la versión anterior).'}):null,
+      t2.sections.length!==tl.sections.length?h('p',{class:'hint',text:'Cambió la cantidad de secciones: se vuelven a elegir todas y se borra el tramo guardado.'}):null,
+      h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ const old={raw:s.raw,bpm:s.bpm,cpb:s.cpb,edited:!!s.edited,raw0:s.raw0||null,at:Date.now()};
+        s.rawPrev=old; s.raw=nr; s.bpm=nr.bpm||s.bpm; s.cpb=guessCpb(nr); delete s.raw0; s.edited=false; s.updated=Date.now();
+        if(t2.sections.length!==tl.sections.length&&s.play){ s.play.sel=null; s.play.loopA=s.play.loopB=null }
+        saveSongMeta(s); toast('Canción actualizada'); renderSongDetail() }},'Reemplazar con este texto'))].filter(Boolean)) };
+  ta.addEventListener('input',()=>{ clearTimeout(ta._t); ta._t=setTimeout(look,250) });
+  box.append(h('details',{class:'supd'},h('summary',{},'Actualizar con texto nuevo'),
+    h('p',{class:'hint',text:'Si corregiste la tablatura (o le agregaste letra), pega el texto nuevo: se reemplaza esta misma canción y se conservan su carpeta, ajustes, video y récords.'}),ta,prev));
+  if(s.rawPrev) box.append(h('div',{class:'toolbar'},h('span',{class:'hint',style:'margin:0',text:`Actualizada el ${new Date(s.updated||s.rawPrev.at).toLocaleDateString()}.`}),
+    h('button',{class:'btn sm ghost',onclick:()=>{ const p=s.rawPrev; delete s.rawPrev; Object.assign(s,{raw:p.raw,bpm:p.bpm,cpb:p.cpb,edited:p.edited}); if(p.raw0) s.raw0=p.raw0; saveSongMeta(s); toast('Volviste a la versión anterior'); renderSongDetail() }},'Volver a la versión anterior')));
+}
 function showDraft(s,extra){
   const box=$('#importPreview'); box.innerHTML=''; if(extra) box.append(extra);
   importDraft=s; const tl=buildSong(s);
@@ -3025,7 +3066,7 @@ function showDraft(s,extra){
   let impFolder=folders[0]||'Sin carpeta'; const fsel=folderSelect(impFolder,v=>{ impFolder=v; },'importFolder');
   box.append(h('div',{class:'impprev'},
     h('div',{class:'row'},h('div',{style:'flex:1;min-width:180px'},h('label',{class:'lab',for:'importName',text:'Nombre'}),name),h('div',{},h('label',{class:'lab',for:'importCat',text:'Tipo'}),cat),h('div',{},h('label',{class:'lab',for:'importFolder',text:'Carpeta'}),fsel)),
-    h('p',{class:'hint',text:`${s.bpm} BPM · ${tl.sections.length} secciones · ${tl.notes.length} notas · ${tl.strums.length} rasgueos · dura ${fmtClock(tl.len*1000)} (cada columna = 1/${s.cpb} de tiempo)`}),
+    h('p',{class:'hint',text:`${s.bpm} BPM · ${tl.sections.length} secciones · ${tl.notes.length} notas · ${tl.strums.length} rasgueos${tl.lyrics.length?` · letra (${tl.lyrics.length} palabras)`:''} · dura ${fmtClock(tl.len*1000)} (cada columna = 1/${s.cpb} de tiempo)`}),
     s.src==='gp5'?h('p',{class:'hint',text:[s.artist?'De '+s.artist:'',s.gpTrack?'pista '+s.gpTrack:'',s.tune?'afinación '+s.raw.tuning:'afinación estándar',s.capo?'cejilla '+s.capo:'',s.repInfo||''].filter(Boolean).join(' · ')}):null,
     h('div',{class:'secline'},tl.sections.map(x=>h('i',{text:x.name}))),
     chords.length?h('p',{class:'hint'},'Acordes: ',chords.map((c,i)=>h('span',{class:'mono'},(i?', ':'')+c.name+(c.id.startsWith('f:')?' (nuevo)':'')))):null,
@@ -3071,6 +3112,7 @@ function renderSongDetail(){
   $('#sDelay').value=cfg.delay||0; $('#sDelayV').textContent=(cfg.delay||0)+' s'; $('#sDelay').oninput=e=>{cfg.delay=+e.target.value;$('#sDelayV').textContent=cfg.delay+' s'}; $('#sDelay').onchange=save;
   $('#latBtn').onclick=()=>latStart(cfg,save); $('#latAgain').onclick=()=>latStart(cfg,save);
   $('#sChordCard').checked=cfg.chordCard!==false; $('#sChordCard').onchange=e=>{ cfg.chordCard=e.target.checked; save() };
+  $('#sLyricsRow').hidden=!tl.lyrics.length; $('#sLyrics').checked=cfg.lyrics!==false; $('#sLyrics').onchange=e=>{ cfg.lyrics=e.target.checked; save() };
   const pg=$('#sProg'); pg.checked=!!cfg.prog; pg.onchange=e=>{ cfg.prog=e.target.checked; save(); $('#sProgOpts').hidden=!cfg.prog }; $('#sProgOpts').hidden=!cfg.prog;
   [['progPct',50,100],['progStep',1,25],['progMax',40,125]].forEach(([k,lo,hi])=>{ const el=$('#s_'+k); el.value=cfg[k]; el.onchange=e=>{ let v=Math.round(+e.target.value); if(!(v>=lo)) v=lo; if(v>hi) v=hi; e.target.value=v; cfg[k]=v; save() } });
   $('#sRsConfirm').checked=!!cfg.rsConfirm; $('#sRsConfirm').onchange=e=>{ cfg.rsConfirm=e.target.checked; save() };
@@ -3090,6 +3132,7 @@ function renderSongDetail(){
   $('#sListen').onclick=()=>startPlayer(s,{listen:true});
   $('#sEdit').onclick=()=>startEditor(s,0);
   dz.prepend(h('button',{class:'btn ghost',onclick:()=>copyText(rawToText(s),'Texto copiado: pégalo en Fretline')},'Copiar texto para Fretline'));
+  const ub=$('#sUpdBox'); ub.innerHTML=''; ub.hidden=!(!s.demo&&!s.fl&&!s.flLive&&s.src!=='gp5'&&s.raw); if(!ub.hidden) updFromText(s,ub,tl);
   if(s.raw0) dz.prepend(h('button',{class:'btn ghost',onclick:()=>{ s.raw=s.raw0; delete s.raw0; s.edited=s.demo?false:true; if(s.demo){ const m=S.get('songmeta',{}); if(m[s.id]){ delete m[s.id].raw; delete m[s.id].raw0; delete m[s.id].edited; S.set('songmeta',m) } } else saveSongMeta(s); toast('Volviste a la versión importada'); renderSongDetail() }},'Deshacer todas las ediciones'));
   $('#sPlayHint').textContent=cfg.mode==='test'?`Prueba de ${cfg.sel.length===tl.sections.length?'la canción completa':cfg.sel.map(i=>tl.sections[i].name).join(' + ')}`:`Práctica al ${cfg.speed}%${cfg.loop?' en bucle':''}`;
 }
@@ -3540,8 +3583,10 @@ function drawHighway(t){
   PL.shake*=.86; if(PL.shake>.3){ c.translate((Math.random()-.5)*PL.shake,(Math.random()-.5)*PL.shake) }
   const C=PL.col, fam=getComputedStyle(document.body).fontFamily, hx=Math.max(78,Math.min(190,W*.22)), pxs=Math.max(130,Math.min(260,W*.33)),
     hasCh=PL.csegs.length>0, hh=Math.round(Math.max(22,Math.min(38,H*.075))), he=document.getElementById('phud'), hudOn=!PL.edit&&he&&he.offsetHeight, hudH=hudOn?he.offsetTop+he.offsetHeight+4:4, side=hudOn&&he.offsetLeft>140, secB=side?0:15,
-    head=hudH+secB+(hasCh?hh+4:0), rN=Math.max(9,Math.min(19,(H-head)/5.8*.4)), top=head+rN+2, bot=H-rN-8, gap=(bot-top)/5, y=s=>top+(5-s)*gap, x=tt=>hx+(tt-t)*pxs;
+    LY=PL.cfg.lyrics!==false&&PL.tl.lyrics&&PL.tl.lyrics.length?PL.tl.lyrics:null, lyH=LY?Math.round(Math.max(30,Math.min(46,H*.1))):0,
+    head=hudH+secB+(hasCh?hh+4:0), rN=Math.max(9,Math.min(19,(H-head-lyH)/5.8*.4)), top=head+rN+2, bot=H-rN-8-lyH, gap=(bot-top)/5, y=s=>top+(5-s)*gap, x=tt=>hx+(tt-t)*pxs;
   PL.lay={hx,top,bot,y,pxs,gap,rN,t,W,H};
+  if(PL.lyH!==lyH){ PL.lyH=lyH; const hw=$('#hwrap'); if(hw) hw.style.setProperty('--lyh',lyH?lyH+4+'px':'0px') }
   const tmin=t-hx/pxs-.2, tmax=t+(W-hx)/pxs+.2, bs=beatSec(); PL.view=[t-hx/pxs,t+(W-hx)/pxs];
   PL.beatPulse=(PL.beatPulse||0)*.9; PL.hitGlow*=.88; PL.missGlow*=.85;
   // zona fuera del loop / tramo
@@ -3619,6 +3664,17 @@ function drawHighway(t){
   c.beginPath(); c.moveTo(hx,top-14); c.lineTo(hx,bot+8); c.stroke(); c.shadowBlur=0;
   if(hg>.05){ const gr=c.createLinearGradient(hx-60,0,hx+20,0); gr.addColorStop(0,'transparent'); gr.addColorStop(1,C.acc); c.fillStyle=gr; c.globalAlpha=hg*.35; c.fillRect(hx-60,top-14,80,bot-top+22); c.globalAlpha=1 }
   if(mg>.05){ c.fillStyle=C.bad; c.globalAlpha=mg*.22; c.fillRect(0,0,hx+10,H); c.globalAlpha=1 }
+  // letra: franja abajo; cada palabra avanza con las notas y se enciende al pasar por la línea de golpe (karaoke)
+  // dos filas: cada palabra va en su tiempo; si choca con la anterior de su fila, baja a la otra (y solo si chocan las dos se corre)
+  if(LY){ const fs=Math.round(lyH*.36), rowY=[H-10-lyH*.72,H-10-lyH*.27]; c.save(); c.font=`700 ${fs}px ${fam}`; c.textBaseline='middle';
+    c.fillStyle=C.fg; c.globalAlpha=.07; c.fillRect(0,H-10-lyH,W,lyH); c.globalAlpha=1;
+    let cur=-1; for(let i=0;i<LY.length&&LY[i].t<=t+.03;i++) cur=i;
+    const end=[-1e9,-1e9]; for(let i=0;i<LY.length;i++){ const w=LY[i]; if(w.t<tmin-4) continue; if(w.t>tmax) break;
+      const tw=c.measureText(w.w).width, gp=fs*.35, x0=x(w.t); let r=end[0]+gp<=x0?0:end[1]+gp<=x0?1:(end[0]<=end[1]?0:1);
+      const xx=Math.max(x0,end[r]+gp), yb=rowY[r]; end[r]=xx+tw; if(xx>W) continue; if(end[r]<0) continue;
+      const on=i===cur&&t-w.t<2.5&&(!LY[i+1]||t<LY[i+1].t);
+      c.fillStyle=on?C.acc:C.fg; c.globalAlpha=on?1:w.t<t?.35:.85; if(on){ c.shadowColor=C.acc; c.shadowBlur=12 } c.fillText(w.w,xx,yb); c.shadowBlur=0 }
+    c.restore() }
   // medidor de tiempo: a la derecha de la línea = antes, a la izquierda = tarde
   if(!PL.edit){ const M=mgOf(), half=Math.min(70,hx-12), sc=half/(M.l/1000*1.2), my=H-4;
     const zone=(a,b,col,al)=>{ c.fillStyle=col; c.globalAlpha=al; c.fillRect(hx-b*sc/1000,my-2,(b-a)*sc/1000,4); c.fillRect(hx+a*sc/1000,my-2,(b-a)*sc/1000,4) };
@@ -5048,7 +5104,7 @@ document.addEventListener('keydown',e=>{ if(!PL.running||!DBG.on||PL.edit||e.tar
   if(e.key==='d'||e.key==='D') diagPanelToggle() });
 if(DBG.on) window.__TR={get PL(){ return PL },get LAB(){ return LAB },get ENV(){ return ENV },TUNE,TUNE_DEF,DBG,DIAG,TAP,get Mic(){ return Mic },Ear,diagReport,tuneLoad,perfStats,
   // para tools/juez (la app en Node): arrancar canciones sin tocar la pantalla
-  sim:{startPlayer,stopPlayer,finishPlayer,skipHold,allSongs,songFromText,readGP5,gpToSong,gpTracks,gpRepeatsOk,playCfg,buildSong,toggleWait,songTime,lagT,MARG,get Mic(){ return Mic },get prefs(){ return prefs },get st(){ return st }}};
+  sim:{rawToText,parseFretline,startPlayer,stopPlayer,finishPlayer,skipHold,allSongs,songFromText,readGP5,gpToSong,gpTracks,gpRepeatsOk,playCfg,buildSong,toggleWait,songTime,lagT,MARG,get Mic(){ return Mic },get prefs(){ return prefs },get st(){ return st }}};
 diagButtons();
 
 /* ---------- laboratorio de calibración (#laboratorio), manos libres ----------
