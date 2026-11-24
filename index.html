@@ -1542,7 +1542,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-16 22:37 · cb4831b";
+const BUILD="2026-11-24 02:11 · 1dca23e";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -5228,17 +5228,18 @@ function envSaveDraft(){ try{ localStorage.setItem('trastero.__envdraft',JSON.st
 function envClear(){ ENV.d=envDraft0(); ENV.takes=[]; try{ localStorage.removeItem('trastero.__envdraft') }catch(e){} idbDo('readwrite',s=>s.delete('__draft')).catch(()=>{}) }
 const envGuided=()=>['nota','pellizco','acorde','ruido'].includes(ENV.d.cat);
 const envWant=()=>ENV.d.want||(ENV.d.cat==='ruido'||(ENV.d.sym.includes('mal')&&!ENV.d.sym.some(x=>x==='no'||x==='aveces'||x==='tarde'))?'fail':'pass');
-const envDots=()=>ENV.d.dots.slice().sort((a,b)=>a.s-b.s);
+const envDots=()=>ENV.d.dots.slice().sort((a,b)=>a.s-b.s||a.f-b.f);
 function envChordFrets(){ const f=[-1,-1,-1,-1,-1,-1]; ENV.d.dots.forEach(d=>f[d.s]=d.f); return f }
 function envChordName(){ const f=envChordFrets(), k=f.join(); const c=Object.values(LIB).find(c=>c.frets&&c.frets.join()===k); if(c) return c.name; try{ return guessName(f)||'?' }catch(e){ return '?' } }
 const envNoteTxt=d=>{ const m=OPEN[d.s]+d.f; return `${nmO(m)} (cuerda ${6-d.s}${d.f?', traste '+d.f:' al aire'})` };
 function envTargetTxt(){ const d=ENV.d, ds=envDots();
-  if(d.cat==='nota') return ds.length?envNoteTxt(ds[0]):'';
+  if(d.cat==='nota') return ds.map(envNoteTxt).join(' · ');
   if(d.cat==='pellizco') return ds.length>1?ds.map(envNoteTxt).join(' + '):'';
   if(d.cat==='acorde') return ds.length>=2?`${envChordName()} (${fretStr(envChordFrets())})`:'';
   return '' }
 function envTitle(){ const d=ENV.d, ds=envDots(), s=d.sym.length?' · '+(ENV_SYM.find(x=>x[0]===d.sym[0])||['',''])[1].toLowerCase():'';
-  if(d.cat==='nota'&&ds.length) return `Nota ${nmO(OPEN[ds[0].s]+ds[0].f)} (cuerda ${6-ds[0].s})${s}`;
+  if(d.cat==='nota'&&ds.length===1) return `Nota ${nmO(OPEN[ds[0].s]+ds[0].f)} (cuerda ${6-ds[0].s})${s}`;
+  if(d.cat==='nota'&&ds.length) return `Notas ${ds.map(x=>nmO(OPEN[x.s]+x.f)).join(', ')} (cuerda${new Set(ds.map(x=>x.s)).size>1?'s':''} ${[...new Set(ds.map(x=>6-x.s))].join(' y ')})${s}`;
   if(d.cat==='pellizco'&&ds.length>1) return `Pellizco ${ds.map(x=>nmO(OPEN[x.s]+x.f)).join(' + ')}${s}`;
   if(d.cat==='acorde'&&ds.length>=2) return `Acorde ${envChordName()}${s}`;
   if(d.cat==='ruido') return 'Un ruido pasa como nota';
@@ -5246,11 +5247,15 @@ function envTitle(){ const d=ENV.d, ds=envDots(), s=d.sym.length?' · '+(ENV_SYM
   const t=(d.desc||'').trim().split('\n')[0]; return t?(t.length>48?t.slice(0,46)+'…':t):'Otra cosa' }
 function envProblem(){ const d=ENV.d; if(!d.cat) return 'Elige qué te pasa.';
   if(d.mode==='guiadas'&&envGuided()){ const n=d.dots.length;
-    if(d.cat==='nota'&&n!==1) return 'Marca en el diapasón la nota que tocas.';
+    if(d.cat==='nota'&&!n) return 'Marca en el diapasón la nota (o las notas) que tocas.';
     if(d.cat==='pellizco'&&n<2) return 'Marca en el diapasón las cuerdas del pellizco (dos o más).';
     if(d.cat==='acorde'&&n<2) return 'Marca el acorde en el diapasón o elígelo de la lista.' }
   return null }
-function envPlan(){ const d=ENV.d, n=d.mode==='libre'?Math.min(3,d.reps):d.reps, k0=ENV.takes.length, want=envWant(), title=envTitle(), out=[];
+function envPlan(){ const d=ENV.d, want=envWant(), title=envTitle(), out=[];
+  // varias notas sueltas: una tanda de tomas por cada nota (las demás categorías: una sola tanda)
+  if(d.mode==='guiadas'&&d.cat==='nota'&&d.dots.length>1){ const all=envDots(); let k0=ENV.takes.length;
+    for(const dot of all){ d.dots=[dot]; const sub=envPlan(); sub.forEach((it,i)=>{ it.id='t'+(++k0) }); out.push(...sub) } d.dots=all; return out }
+  const n=d.mode==='libre'?Math.min(3,d.reps):d.reps, k0=ENV.takes.length;
   for(let k=1;k<=n;k++){ const id='t'+(k0+k), it={id,g:'caso',gn:'Caso'};
     if(d.mode==='libre'||!envGuided()){ Object.assign(it,{t:`Grabación libre ${k} de ${n}`,d:'Toca lo que quieres mostrarme. La grabación empieza con el primer sonido.',ex:{kind:'free'},dur:d.dur}) }
     else { const ds=envDots(), ms=ds.map(x=>OPEN[x.s]+x.f), fail=want==='fail';
@@ -5270,7 +5275,7 @@ async function envSendCase(){ const p=envProblem(); if(p&&!(ENV.d.mode==='sin'))
   if(!ENV.d.desc.trim()&&!ENV.takes.length){ toast('Cuéntame qué pasa o graba algo.'); return }
   const d=ENV.d, so=d.song&&getSong(d.song), ds=envDots();
   const label={cat:d.cat,sym:d.sym,desc:d.desc.trim(),want:envGuided()?envWant():null,title:envTitle(),
-    target:d.cat==='acorde'&&ds.length>=2?{kind:'chord',name:envChordName(),frets:envChordFrets()}:ds.length?{kind:d.cat==='nota'?'note':'pinch',dots:ds,notes:ds.map(x=>OPEN[x.s]+x.f)}:null,
+    target:d.cat==='nota'&&ds.length>1?{kind:'notes',dots:ds,notes:ds.map(x=>OPEN[x.s]+x.f)}:d.cat==='acorde'&&ds.length>=2?{kind:'chord',name:envChordName(),frets:envChordFrets()}:ds.length?{kind:d.cat==='nota'?'note':'pinch',dots:ds,notes:ds.map(x=>OPEN[x.s]+x.f)}:null,
     song:so?{id:so.id,title:so.title,src:so.src||'demo',at:d.songAt||''}:null,strings:'6=Mi grave'};
   const pk=Object.assign(diagMeta('case'),{label,takes:ENV.takes});
   ENV.busy=true; renderEnvios();
@@ -5295,7 +5300,7 @@ function envFret(){ const d=ENV.d, ds=d.dots, W=420, H=170, x0=46, x1=W-8, y0=16
   svg.addEventListener('click',e=>{ const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; const m=svg.getScreenCTM(); if(!m) return; const p=pt.matrixTransform(m.inverse());
     const s=Math.max(0,Math.min(5,Math.round(5-(p.y-y0)/gap))), f=p.x<x0?0:Math.max(1,Math.min(12,Math.ceil((p.x-x0)/fw)));
     const i=ds.findIndex(x=>x.s===s);
-    if(d.cat==='nota') d.dots=i>=0&&ds[i].f===f?[]:[{s,f}];
+    if(d.cat==='nota'){ const j=ds.findIndex(x=>x.s===s&&x.f===f); if(j>=0) d.dots=ds.filter((x,k)=>k!==j); else if(ds.length>=6){ toast('Hasta 6 notas'); return } else d.dots=ds.concat([{s,f}]) }
     else if(i>=0&&ds[i].f===f) d.dots=ds.filter((x,k)=>k!==i);
     else if(i>=0) d.dots=ds.map((x,k)=>k===i?{s,f}:x);
     else if(d.cat==='pellizco'&&ds.length>=4) { toast('Hasta 4 cuerdas'); return }
@@ -5325,12 +5330,12 @@ function renderEnvios(){ const box=$('#envBox'); if(!box) return; box.innerHTML=
 function envNew(box){ const d=ENV.d, up=()=>{ envSaveDraft(); renderEnvios() };
   const step=(n,t,...kids)=>h('section',{class:'envstep'},h('h3',{class:'envh'},h('i',{},String(n)),t),...kids);
   box.append(h('p',{class:'hint'},'Arma un caso con lo que te está fallando: qué tocas, qué hace la app y, si quieres, unas tomas grabadas. Me llega a la nube y lo ves en «Enviados», con mi respuesta cuando lo revise.'));
-  box.append(step(1,'¿Qué te pasa?',h('div',{class:'seg'},...ENV_CATS.map(([v,l])=>segOpt('envcat','radio',v,l,d.cat===v,()=>{ if(d.cat!==v){ d.cat=v; if(v==='nota'&&d.dots.length>1) d.dots=d.dots.slice(0,1); if(!['nota','pellizco','acorde'].includes(v)) d.dots=[]; d.mode=['nota','pellizco','acorde','ruido'].includes(v)?'guiadas':d.mode==='guiadas'?'libre':d.mode; d.want=null } up() })))));
+  box.append(step(1,'¿Qué te pasa?',h('div',{class:'seg'},...ENV_CATS.map(([v,l])=>segOpt('envcat','radio',v,l,d.cat===v,()=>{ if(d.cat!==v){ d.cat=v; if(!['nota','pellizco','acorde'].includes(v)) d.dots=[]; d.mode=['nota','pellizco','acorde','ruido'].includes(v)?'guiadas':d.mode==='guiadas'?'libre':d.mode; d.want=null } up() })))));
   if(!d.cat) return;
   if(d.cat!=='ruido') box.append(step(2,'¿Qué hace la app?',h('div',{class:'seg'},...ENV_SYM.map(([v,l])=>segOpt('envsym','checkbox',v,l,d.sym.includes(v),on=>{ d.sym=on?[...new Set(d.sym.concat(v))]:d.sym.filter(x=>x!==v); d.want=null; up() })))));
   let n=d.cat==='ruido'?2:3;
   if(['nota','pellizco','acorde'].includes(d.cat)){
-    const kids=[h('p',{class:'hint'},d.cat==='nota'?'Toca en el diapasón la nota que tocas. La cuerda 1 es la más delgada (arriba), la 6 la más gruesa (abajo).':d.cat==='pellizco'?'Toca las cuerdas del pellizco (una por cuerda). Toca de nuevo para quitarla.':'Toca una posición por cuerda; las que no marques van apagadas (×). O elígelo de la lista.'),envFret()];
+    const kids=[h('p',{class:'hint'},d.cat==='nota'?'Toca en el diapasón la nota que tocas; puedes marcar varias (también en la misma cuerda) y las grabas una por una. La cuerda 1 es la más delgada (arriba), la 6 la más gruesa (abajo).':d.cat==='pellizco'?'Toca las cuerdas del pellizco (una por cuerda). Toca de nuevo para quitarla.':'Toca una posición por cuerda; las que no marques van apagadas (×). O elígelo de la lista.'),envFret()];
     if(d.cat==='acorde'){ const sel=h('select',{class:'envlib'},h('option',{value:''},'Elegir de la biblioteca…'));
       const groups={}; Object.values(LIB).filter(c=>c.frets).forEach(c=>(groups[c.group||'Otros']=groups[c.group||'Otros']||[]).push(c));
       Object.entries(groups).forEach(([g,cs])=>sel.append(h('optgroup',{label:g},...cs.map(c=>h('option',{value:c.id},`${c.name}  (${fretStr(c.frets)})`)))));
