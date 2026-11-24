@@ -807,6 +807,23 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .supd-prev .toolbar{margin-top:6px}
 @media (max-height:500px){.player>.ytwin.focus{top:40%;width:min(92vw,calc(54vh*16/9))}.ytwin.focus .ytui{gap:4px 10px;font-size:.85rem}.ytwin.focus .ytui b{flex-basis:auto;font-size:1rem}}
 
+/* afinación y cejilla en la ficha */
+.pchord .snd{display:block;font-size:.58rem;font-weight:500;opacity:.75;letter-spacing:0;text-align:center}
+.stune .tnow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px 0 10px}
+.stune .tnow b{font-family:var(--display)} .stune .tnow .mono{font-family:var(--mono,monospace);font-size:.85rem;color:var(--muted)}
+.stune .trow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:8px}
+.stune .trow select{width:auto;max-width:100%}
+.stune .capo{display:inline-flex;align-items:center;gap:6px}
+.stune .capo output{min-width:2ch;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.stune .tcustom{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px} .stune .tcustom input{flex:1 1 160px;min-width:0}
+.stune .tchanged{color:var(--accent)}
+.tbtunings{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:4px 0 8px}
+.tbs.alt{border-style:dashed;border-color:var(--accent)} .tbs .arr{font-size:.7rem;color:var(--accent)}
+#tbTuneHint{text-align:center;margin:0 0 10px;min-height:1.2em}
+.pcapo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:10px}
+.pcapo output{min-width:2ch;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.ccapo{margin:-2px 0 4px;font-size:.8rem;color:var(--accent);text-align:center;letter-spacing:.04em}
+
 /* ---------- diagnóstico: panel en vivo, botones de reporte, Ajustes → Diagnóstico y laboratorio ---------- */
 .btn.sm{padding:6px 10px;font-size:13px;min-height:0}
 .pdiag{position:absolute;left:8px;top:64px;width:min(320px,64%);height:214px;z-index:6;border-radius:10px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.35)}
@@ -1019,6 +1036,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
               </div>
             </div>
             <label class="check check-top" style="margin-top:10px"><input type="checkbox" id="skip6Chk"><span>Cuerdas libres: no exige la 6.ª (Mi grave) ni las cuerdas al aire entre dos dedos (como la 2.ª al aire entre la 3.ª y la 1.ª pisadas), que se apagan sin querer. Si las tocas, vale igual. Sin la 6.ª, 20% menos puntos.</span></label>
+            <div class="pcapo"><span>Cejilla</span><button type="button" class="btn sm ghost" id="pcapoDn" aria-label="Cejilla un traste abajo">−</button><output id="pcapoN">0</output><button type="button" class="btn sm ghost" id="pcapoUp" aria-label="Cejilla un traste arriba">+</button><span class="hint" id="pcapoH" style="margin:0">Sin cejilla</span></div>
             <div class="micTest" id="fMicTest">
               <div class="row"><span id="tStatus" class="hint" style="margin:0">Prueba el micrófono antes de empezar. Trae un afinador.</span><button id="tBtn" class="btn">Probar micrófono</button></div>
               <div id="tLive" class="tLive" hidden>
@@ -1084,7 +1102,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
           <div id="cCount" class="count" hidden></div>
           <div class="card-meta"><span id="cDeck"></span><span id="cIdx"></span></div>
           <div id="cCombo" class="combo" hidden><b id="cComboN">0</b><span id="cComboX">combo</span></div>
-          <h2 id="cName" aria-live="polite"></h2>
+          <h2 id="cName" aria-live="polite"></h2><p id="cCapo" class="ccapo" hidden></p>
           <div id="cNotes" class="notes"></div>
           <div id="cDiag" class="diag"></div>
           <button id="cReveal" class="btn ghost" hidden>Ver diagrama</button>
@@ -1266,6 +1284,8 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
     <div class="panel tunerbig" style="margin-top:18px">
       <div class="dial" id="tbDial" aria-hidden="true"><svg viewBox="0 0 200 110"><path d="M15 100 A85 85 0 0 1 185 100" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/><path d="M93 15 A85 85 0 0 1 107 15" fill="none" stroke="var(--accent)" stroke-width="12"/><line id="tbNeedle" x1="100" y1="100" x2="100" y2="22" stroke="var(--fg)" stroke-width="3" stroke-linecap="round"/><circle cx="100" cy="100" r="6" fill="var(--fg)"/></svg></div>
       <div class="tbread" aria-live="polite"><b id="tbNote">–</b><span id="tbCents">Toca una cuerda</span></div>
+      <div class="seg tbtunings" id="tbTunings" role="radiogroup" aria-label="Afinación"></div>
+      <p class="hint" id="tbTuneHint" style="text-align:center;margin:4px 0 0"></p>
       <div class="tbstrings" id="tbStrings"></div>
       <div class="row" style="justify-content:center"><button class="btn primary big" id="tbBtn">Encender micrófono</button></div>
       <p class="hint" id="tbStatus" style="text-align:center"></p>
@@ -1402,6 +1422,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
           </div>
           <p class="hint" id="sMediaNote"></p>
         </fieldset>
+        <fieldset class="stune" id="sTuneBox"><legend>Afinación y cejilla</legend></fieldset>
         <details><summary>Ajustes de la tablatura</summary>
           <div class="speedrow" style="margin-top:10px"><label for="sCpb">Cada columna vale</label>
             <select id="sCpb" style="width:auto"><option value="2">1/2 de tiempo</option><option value="4">1/4 de tiempo</option><option value="8">1/8 de tiempo</option></select></div>
@@ -1586,7 +1607,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-24 04:19 · dede21e";
+const BUILD="2026-11-24 14:01 · 6da91c3";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -1697,6 +1718,8 @@ function buildLib(){
   BASE.forEach(([id,name,fr,group,note])=>{LIB[id]={id,name,frets:parseFrets(fr),group,note:note||''}});
   custom.forEach(c=>{const f=Array.isArray(c.frets)?c.frets:parseFrets(c.frets);if(f)LIB[c.id]={id:c.id,name:c.name,frets:f,group:'Propios',note:'',custom:true}});
 }
+// cejilla al practicar acordes (prefs.capo): los diagramas siguen siendo la forma; lo que suena sube N semitonos
+const sCapo=()=>Math.max(0,Math.min(12,(prefs&&prefs.capo)|0));
 const notesOf=c=>c.frets.map((f,i)=>f<0?null:OPEN[i]+f).filter(v=>v!=null);
 const pcsOf=c=>[...new Set(notesOf(c).map(m=>m%12))];
 const fretStr=f=>f.map(v=>v<0?'x':v).join(' ');
@@ -1751,7 +1774,7 @@ function showView(v){
   document.querySelectorAll('.dockbtn').forEach(t=>{ if(t.dataset.view===dv) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current') });
   document.body.classList.toggle('athome',v==='inicio');
   if(v!=='practicar'&&v!=='tocar') document.body.classList.remove('playing');
-  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTunerStrings(-1); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail(); if(v==='laboratorio') labEnter(); if(v==='envios') envEnter();
+  if(v==='inicio') renderHub(); if(v==='mazos') renderDecks(); if(v==='acordes') renderLib(); if(v==='progreso') renderProgress(); if(v==='practicar'&&!Sess.running) renderSetup(); if(v==='ajustes') renderSettings(); if(v==='afinador') renderTuner(); if(v==='canciones') renderSongs(); if(v==='cancion') renderSongDetail(); if(v==='laboratorio') labEnter(); if(v==='envios') envEnter();
   window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){location.hash=g.dataset.goto}});
@@ -1796,6 +1819,10 @@ $('#startBtn').addEventListener('click',()=>startSession());
 
 /* 6.ª cuerda libre: interruptor en la configuración y en la sesión */
 function setSkip6(v){ prefs.skip6=v; savePrefs(); $('#skip6Chk').checked=v; const sl=$('#sLoose'); if(sl) sl.checked=v; $('#bSkip6').setAttribute('aria-pressed',String(v)); if(Sess.running&&Sess.adv==='mic') micTarget(); }
+function setCapo(v){ prefs.capo=Math.max(0,Math.min(12,v|0)); savePrefs(); capoUI() }
+function capoUI(){ const k=sCapo(), n=$('#pcapoN'); if(!n) return; n.textContent=k; $('#pcapoDn').disabled=k<=0; $('#pcapoUp').disabled=k>=12;
+  $('#pcapoH').textContent=k?`Los diagramas son la forma; la app espera oírla ${k} traste${k>1?'s':''} más aguda (un D con cejilla ${k} suena ${guessName([-1,-1,0,2,3,2],OPEN.map(m=>m+k))||'más agudo'}).`:'Sin cejilla' }
+$('#pcapoDn').addEventListener('click',()=>setCapo(sCapo()-1)); $('#pcapoUp').addEventListener('click',()=>setCapo(sCapo()+1)); setTimeout(capoUI,0);
 $('#skip6Chk').addEventListener('change',e=>setSkip6(e.target.checked));
 $('#bSkip6').addEventListener('click',()=>{ setSkip6(!prefs.skip6); toast(prefs.skip6?'Cuerdas libres: no exijo la 6.ª ni las cuerdas al aire entre dedos':'Exijo todas las cuerdas otra vez') });
 
@@ -1870,11 +1897,49 @@ function ksBuffer(freq){
   for(let i=0;i<n;i++){const cur=ring[idx],nx=ring[(idx+1)%N];ring[idx]=decay*.5*(cur+nx);d[i]=cur;idx=(idx+1)%N}
   ksCache.set(key,buf); return buf;
 }
-function strum(c){ const a=ctx(); if(!a||!c) return; const g=a.createGain(); g.gain.value=.2; g.connect(a.destination); const t0=a.currentTime+.03;
-  notesOf(c).forEach((m,i)=>{const s=a.createBufferSource();s.buffer=ksBuffer(midiHz(m));s.connect(g);s.start(t0+i*.03)}); }
+function strum(c,k=0){ const a=ctx(); if(!a||!c) return; const g=a.createGain(); g.gain.value=.2; g.connect(a.destination); const t0=a.currentTime+.03;
+  notesOf(c).forEach((m,i)=>{const s=a.createBufferSource();s.buffer=ksBuffer(midiHz(m+k));s.connect(g);s.start(t0+i*.03)}); }
 function click(time,accent){ const a=ctx(); const o=a.createOscillator(),g=a.createGain(); o.frequency.value=accent?1650:1100; o.type='sine';
   g.gain.setValueAtTime(.0001,time); g.gain.exponentialRampToValueAtTime(accent?.5:.3,time+.002); g.gain.exponentialRampToValueAtTime(.0001,time+.05);
   o.connect(g); g.connect(a.destination); o.start(time); o.stop(time+.06); }
+
+/* ---------- afinaciones y cejilla ----------
+   Una canción guarda song.tune = MIDI de cada cuerda al aire (E grave → e aguda) CON la cejilla sumada, y song.capo.
+   Los trastes de la tablatura son relativos a la cejilla (0 = cuerda al aire sobre la cejilla), como en una tablatura.
+   Afinación «base» = la de las clavijas, sin cejilla (tune − capo). Es la que se afina con el afinador.
+   El usuario puede cambiarlas en la ficha: song.tuneSet = {base:[6 MIDI], capo} (en la canción si es importada, en
+   songmeta si es incluida o de Fretline); applyTuneSet lo aplica al cargar y guarda la original en tune0/capo0. */
+const TUNINGS=[
+  {k:'std',   n:'Estándar',           en:'Standard',            m:[40,45,50,55,59,64]},
+  {k:'dropD', n:'Drop D',             en:'Drop D',              m:[38,45,50,55,59,64]},
+  {k:'eb',    n:'Medio tono abajo',   en:'Half step down (E♭)', m:[39,44,49,54,58,63]},
+  {k:'d',     n:'Un tono abajo',      en:'Whole step down (D)', m:[38,43,48,53,57,62]},
+  {k:'dropC', n:'Drop C',             en:'Drop C',              m:[36,43,48,53,57,62]},
+  {k:'openG', n:'Open G',             en:'Open G',              m:[38,43,50,55,59,62]},
+  {k:'openD', n:'Open D',             en:'Open D',              m:[38,45,50,54,57,62]},
+  {k:'openE', n:'Open E',             en:'Open E',              m:[40,47,52,56,59,64]},
+  {k:'dadgad',n:'DADGAD',             en:'DADGAD',              m:[38,45,50,55,57,62]}];
+const isStdTune=b=>!b||b.every((m,i)=>m===OPEN[i]);
+const tuningOf=b=>TUNINGS.find(t=>t.m.every((m,i)=>m===b[i]))||null;
+const tuneNotes=b=>b.map(m=>nn(m)).join(' ');
+const tuneLabelOf=b=>{ const t=tuningOf(b); return t?t.n:tuneNotes(b) };
+// «D A D G B E», «Eb Ab Db Gb Bb Eb», «E♭ A♭ …»: cada nota a la octava más cercana a la de la afinación estándar
+function parseTuningNotes(str){ if(!str) return null; const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11}, out=[]; const re=/([A-Ga-g])\s*([#♯b♭]?)/g; let mm;
+  while((mm=re.exec(str))&&out.length<6){ let pc=PC[mm[1].toUpperCase()]+(mm[2]==='#'||mm[2]==='♯'?1:mm[2]==='b'||mm[2]==='♭'?-1:0); pc=(pc+12)%12;
+    const ref=OPEN[out.length]; let best=null; for(let m=ref-8;m<=ref+6;m++) if(((m%12)+12)%12===pc&&(best==null||Math.abs(m-ref)<Math.abs(best-ref))) best=m; out.push(best) }
+  return out.length===6?out:null }
+// afinación de las clavijas (sin cejilla) y cejilla de una canción
+const songCapo=s=>(s&&s.capo)|0;
+const songBase=s=>s&&s.tune?s.tune.map(m=>m-songCapo(s)):OPEN.slice();
+// «Drop D · cejilla 2» (vacío si es estándar sin cejilla)
+function songTuneLabel(s){ const b=songBase(s), c=songCapo(s); return [isStdTune(b)?'':tuneLabelOf(b),c?'cejilla '+c:''].filter(Boolean).join(' · ') }
+// 6.ª más grave que la 5.ª por más de una cuarta (Drop D, Drop C…): ahí la 6.ª suele ser la nota base del acorde
+const dropSix=b=>b&&b[1]-b[0]>5;
+function setTune(s,base,capo){ capo=Math.max(0,Math.min(12,capo|0)); if(isStdTune(base)&&!capo){ delete s.tune; delete s.capo; return s }
+  s.tune=base.map(m=>m+capo); if(capo) s.capo=capo; else delete s.capo; return s }
+function applyTuneSet(s){ if(!s||!s.tuneSet) return s; if(!('tune0' in s)){ s.tune0=s.tune||null; s.capo0=s.capo||0 }
+  return setTune(s,s.tuneSet.base||OPEN,s.tuneSet.capo) }
+function clearTuneSet(s){ delete s.tuneSet; if('tune0' in s){ if(s.tune0) s.tune=s.tune0; else delete s.tune; if(s.capo0) s.capo=s.capo0; else delete s.capo; delete s.tune0; delete s.capo0 } return s }
 
 /* ---------- micrófono ---------- */
 const Mic={pctShow:0,on:false,stream:null,an:null,td:null,ear:null,judge:null,disp:new Array(12).fill(0),rms:0};
@@ -1914,8 +1979,8 @@ async function micStart(){
 function micStop(){ recStop(true); tapStop(); if(Mic.stream) Mic.stream.getTracks().forEach(t=>t.stop()); try{Mic.src&&Mic.src.disconnect(); Mic.split&&Mic.split.disconnect()}catch(e){} Mic.on=false; Mic.stream=null }
 const ROOTS={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const candOf=id=>{ const c=LIB[id], m=notesOf(c), mt=/^([A-G])([#b])?/.exec(c.name); let root=null;
-  if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+12)%12 }
-  let notes=c.frets.map((f,s)=>f<0?null:{s,f,m:OPEN[s]+f}).filter(Boolean);
+  if(mt){ root=ROOTS[mt[1]]+(mt[2]==='#'?1:mt[2]==='b'?-1:0); root=(root+sCapo()+12)%12 }
+  let notes=c.frets.map((f,s)=>f<0?null:{s,f,m:OPEN[s]+f+sCapo()}).filter(Boolean);
   const mk=ns=>{ const ms=ns.map(n=>n.m); return {key:id,notes:ns,pcs:[...new Set(ms.map(x=>x%12))],bass:ms[0]%12,root} };
   // cuerdas libres: el objetivo es el acorde sin ellas, pero el completo (y sin solo las «sándwich») también vale
   const v=looseVariants(notes); if(v){ const t=mk(v[0]); t.alt=v.length>2?v.slice(1).map(mk):mk(v[1]); return t }
@@ -1948,7 +2013,7 @@ function micFrameRest(fc,o,now){
   drawChroma();
   if(testOn&&fc%3===0) drawTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
   if(testOn&&fc%15===0) micLevels(o);
-  if(tunerOn&&fc%2===0) drawBigTuner(o.live?detectPitch(Mic.td,actx.sampleRate):null);
+  if(tunerOn&&fc%2===0) drawBigTuner(o.live?detectPitch(Mic.td,actx.sampleRate,55):null);
   if(LT.on&&o.onset) latOnset(now);
   if(PL.running){ playerAudio(o,now); return }
   if(!Sess.running||Sess.paused||Sess.counting||Sess.adv!=='mic'||!Sess.cur) return;
@@ -1979,8 +2044,9 @@ function buildChroma(){ ['#chroma','#tChroma'].forEach(sel=>{ const box=$(sel); 
 function drawChroma(){ ['#chroma','#tChroma'].forEach(sel=>{ const box=$(sel); if(box.offsetParent===null) return; box.querySelectorAll('.cb i').forEach((b,i)=>b.style.height=Math.round(Mic.disp[i]*100)+'%') }) }
 /* afinador: autocorrelación normalizada (McLeod) */
 let cumSq=null;
-function detectPitch(buf,sr){
-  const W=2048, minL=Math.floor(sr/1000), maxL=Math.min(Math.floor(sr/70),buf.length-W-2);
+// fmin: frecuencia más grave que busca (70 Hz alcanza Drop D; el afinador y las canciones en Drop C bajan a ~55–60)
+function detectPitch(buf,sr,fmin=70){
+  const W=2048, minL=Math.floor(sr/1000), maxL=Math.min(Math.floor(sr/fmin),buf.length-W-2);
   if(!cumSq||cumSq.length!==buf.length+1) cumSq=new Float32Array(buf.length+1);
   for(let i=0;i<buf.length;i++) cumSq[i+1]=cumSq[i]+buf[i]*buf[i];
   // umbral relativo al ruido de fondo (antes era fijo: un micrófono más bajo, como el de algunos iPad, perdía las notas al apagarse)
@@ -2009,7 +2075,7 @@ async function testToggle(){
   renderSetup();
 }
 $('#tBtn').addEventListener('click',testToggle);
-function markChroma(c){ const ex=new Set(pcsOf(c)); document.querySelectorAll('#chroma .cb').forEach((el,i)=>el.classList.toggle('exp',ex.has(i))) }
+function markChroma(c){ const ex=new Set(pcsOf(c).map(pc=>(pc+sCapo())%12)); document.querySelectorAll('#chroma .cb').forEach((el,i)=>el.classList.toggle('exp',ex.has(i))) }
 
 /* ---------- diagnóstico del micrófono: qué entrega este equipo y una grabación para revisarla ---------- */
 const yesNo=v=>v===false?'no':v===true?'sí':'?';
@@ -2106,9 +2172,10 @@ function showCard(id){
   const c=LIB[id]; Sess.cur=id; Sess.shownAt=performance.now(); Sess.hinted=false; Sess.num++;
   Mic.pctShow=0; $('#cMatch').style.width='0'; $('#cPct').hidden=true; $('#cPct').dataset.stay=''; micTarget();
   const n=$('#cName'); n.textContent=c.name; n.className=c.name.length<=3?'s1':c.name.length<=6?'s2':'s3';
+  { const k=sCapo(), g=k?guessName(c.frets,OPEN.map(m=>m+k)):null; const cs=$('#cCapo'); if(cs){ cs.hidden=!k; cs.textContent=k?`Cejilla ${k}`+(g&&g!==c.name?` · suena ${g}`:''):'' } }
   const card=$('#card'); card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter');
   $('#cIdx').textContent=Sess.end==='count'?`${Sess.done+1} de ${st.n}`:`#${Sess.num}`;
-  const notes=$('#cNotes'); notes.innerHTML=''; const pcs=pcsOf(c); pcs.forEach((pc,i)=>notes.append(h('span',{class:i===0?'root':'','data-pc':String(pc),text:nn(pc)})));
+  const notes=$('#cNotes'); notes.innerHTML=''; const pcs=pcsOf(c).map(pc=>(pc+sCapo())%12); pcs.forEach((pc,i)=>notes.append(h('span',{class:i===0?'root':'','data-pc':String(pc),text:nn(pc)})));
   $('#cDiag').innerHTML=diagram(c.frets,{labels:true});
   clearTimeout(hintT);
   const showD=v=>{$('#cDiag').hidden=!v; $('#cReveal').hidden=v; notes.hidden=!v};
@@ -2205,7 +2272,7 @@ function renderResults(rec,per){
 $('#card').addEventListener('click',e=>{ if(Sess.running&&!Sess.paused&&Sess.adv==='tap'&&!e.target.closest('button')) advance('ok') });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&Sess.running&&!Sess.paused) togglePause() });
 try{ if(inFrame&&navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'microphone'}).then(r=>{ if(r.state==='denied'&&!micBlocked){ micBlocked='frame'; if(!$('#setup').hidden) renderSetup() } }).catch(()=>{}) }catch(e){}
-$('#bListen').addEventListener('click',()=>strum(LIB[Sess.cur]));
+$('#bListen').addEventListener('click',()=>strum(LIB[Sess.cur],sCapo()));
 $('#bSkip').addEventListener('click',()=>advance('skip'));
 $('#bDone').addEventListener('click',()=>advance('ok'));
 $('#bPause').addEventListener('click',togglePause);
@@ -2216,7 +2283,7 @@ document.addEventListener('keydown',e=>{
     if(e.code==='Space'){ e.preventDefault(); if(Sess.adv!=='pulse') advance('ok') }
     else if(e.key==='s'||e.key==='S') advance('skip');
     else if(e.key==='p'||e.key==='P') togglePause();
-    else if(e.key==='l'||e.key==='L') strum(LIB[Sess.cur]);
+    else if(e.key==='l'||e.key==='L') strum(LIB[Sess.cur],sCapo());
     else if(e.key==='Escape') finish();
   } else if(e.key==='Enter'&&!$('#v-practicar').hidden&&!$('#setup').hidden){ startSession() }
 });
@@ -2696,20 +2763,36 @@ document.addEventListener('keydown',e=>{
   items[j].focus(); e.preventDefault();
 });
 
-/* afinador de pantalla completa */
-const GUITAR=[{n:'E',m:40,s:'6.ª'},{n:'A',m:45,s:'5.ª'},{n:'D',m:50,s:'4.ª'},{n:'G',m:55,s:'3.ª'},{n:'B',m:59,s:'2.ª'},{n:'E',m:64,s:'1.ª'}];
+/* afinador de pantalla completa, con afinación a elegir (Drop D, medio tono abajo…) o la de una canción.
+   Guía hacia la nota de cada cuerda aunque esté varios semitonos lejos (para pasar de Mi a Re en Drop D). */
+const TUNER={sel:(prefs.tuner&&prefs.tuner!=='song'?prefs.tuner:'std'),song:null};
+function tunerBase(){ if(TUNER.sel==='song'&&TUNER.song) return TUNER.song.base; return (TUNINGS.find(t=>t.k===TUNER.sel)||TUNINGS[0]).m }
+// desde la ficha: «Afinar para esta canción»
+function tuneForSong(s){ TUNER.song={title:s.title,base:songBase(s),capo:songCapo(s)}; TUNER.sel='song'; location.hash='afinador' }
 let tunerOn=false, tbMiss=0;
-function renderTunerStrings(active){ const box=$('#tbStrings'); box.innerHTML='';
-  GUITAR.forEach((g,i)=>box.append(h('span',{class:'tbs'+(active===i?' on':'')},h('b',{text:nn(g.m)}),h('small',{text:g.s})))) }
+function renderTuner(){ const box=$('#tbTunings'); if(!box) return; box.innerHTML='';
+  const opt=(k,label)=>{ const i=h('input',{type:'radio',name:'tbTune',value:k}); i.checked=TUNER.sel===k; i.addEventListener('change',()=>{ TUNER.sel=k; if(k!=='song'){ prefs.tuner=k; savePrefs() } renderTuner() }); return h('label',{},i,h('span',{},label)) };
+  if(TUNER.song) box.append(opt('song',`«${TUNER.song.title.length>28?TUNER.song.title.slice(0,26)+'…':TUNER.song.title}»`));
+  TUNINGS.forEach(t=>box.append(opt(t.k,t.n)));
+  const b=tunerBase(), c=TUNER.sel==='song'&&TUNER.song?TUNER.song.capo:0;
+  $('#tbTuneHint').textContent=`${tuneNotes(b)}${c?` · después pon la cejilla en el traste ${c}`:''}`+(isStdTune(b)?'':' · las cuerdas que cambian están marcadas');
+  renderTunerStrings(-1) }
+function renderTunerStrings(active,tgt){ const box=$('#tbStrings'); box.innerHTML=''; const b=tunerBase();
+  b.forEach((m,i)=>box.append(h('span',{class:'tbs'+(active===i?' on':'')+(m!==OPEN[i]?' alt':'')},h('b',{text:nn(m)+(m!==OPEN[i]?(m<OPEN[i]?' ↓':' ↑'):'')}),h('small',{text:(6-i)+'.ª'})))) }
 function drawBigTuner(f){
   if(!f){ if(++tbMiss>10){ $('#tbNote').textContent='–'; $('#tbCents').textContent='Toca una cuerda'; $('#tbNeedle').setAttribute('transform','rotate(0 100 100)'); renderTunerStrings(-1) } return }
-  tbMiss=0; const m=69+12*Math.log2(f/440), n=Math.round(m), c=Math.round((m-n)*100);
-  let near=0;GUITAR.forEach((g,i)=>{ if(Math.abs(g.m-m)<Math.abs(GUITAR[near].m-m)) near=i });
-  $('#tbNote').textContent=nn(n)+(Math.floor(n/12)-1);
-  $('#tbCents').textContent=Math.abs(c)<=5?'Afinada':c<0?`${c} ¢ · aprieta la clavija`:`+${c} ¢ · suéltala un poco`;
-  $('#tbNote').className=Math.abs(c)<=5?'ok':'';
-  $('#tbNeedle').setAttribute('transform',`rotate(${Math.max(-60,Math.min(60,c*1.2))} 100 100)`);
-  renderTunerStrings(Math.abs(GUITAR[near].m-m)<1.5?near:-1);
+  tbMiss=0; const m=69+12*Math.log2(f/440), b=tunerBase();
+  let near=0; b.forEach((t,i)=>{ if(Math.abs(t-m)<Math.abs(b[near]-m)) near=i });
+  const d=m-b[near];
+  if(Math.abs(d)<4.6){ // cerca de una cuerda de esta afinación: se mide contra ella (aunque falten varios semitonos)
+    const c=Math.round(d*100), on=Math.abs(c)<=5;
+    $('#tbNote').textContent=nn(b[near])+(Math.floor(b[near]/12)-1); $('#tbNote').className=on?'ok':'';
+    $('#tbCents').textContent=on?`${6-near}.ª afinada`:Math.abs(d)>=.75?`${6-near}.ª: estás en ${nn(Math.round(m))}${Math.floor(Math.round(m)/12)-1} · ${d>0?'suelta la clavija (bajar)':'aprieta la clavija (subir)'} ${Math.abs(d).toFixed(1).replace('.',',')} semitonos`:c<0?`${c} ¢ · aprieta la clavija`:`+${c} ¢ · suéltala un poco`;
+    $('#tbNeedle').setAttribute('transform',`rotate(${Math.max(-60,Math.min(60,c*1.2))} 100 100)`); renderTunerStrings(near) }
+  else { const n=Math.round(m), c=Math.round((m-n)*100);
+    $('#tbNote').textContent=nn(n)+(Math.floor(n/12)-1); $('#tbNote').className=Math.abs(c)<=5?'ok':'';
+    $('#tbCents').textContent=Math.abs(c)<=5?'Afinada (no es una cuerda al aire de esta afinación)':c<0?`${c} ¢`:`+${c} ¢`;
+    $('#tbNeedle').setAttribute('transform',`rotate(${Math.max(-60,Math.min(60,c*1.2))} 100 100)`); renderTunerStrings(-1) }
 }
 async function tunerToggle(){
   if(tunerOn){ tunerOn=false; if(!Sess.running) micStop(); $('#tbBtn').textContent='Encender micrófono'; $('#tbStatus').textContent=''; return }
@@ -2728,9 +2811,11 @@ function leaveTuner(){ if(tunerOn){ tunerOn=false; if(!Sess.running&&!testOn) mi
    bloque (como los nombres de acordes) o justo debajo; cada palabra o sílaba empieza en la columna donde se canta.
    Si se canta rápido y las palabras no caben, se reparten en varias líneas L| (se juntan todas). */
 function parseFretline(txt){
-  const STR={e:5,B:4,G:3,D:2,A:1,E:0}, isTab=l=>/^\s*[eBGDAE]\s*\|/.test(l);
+  // una línea de tablatura empieza con el nombre de su cuerda: en estándar e B G D A E, pero en otras afinaciones
+  // cualquier nota (Drop D: D|; Drop C: C|; medio tono abajo: Eb|). Un bloque de 6 líneas se lee por posición.
+  const STR={e:5,B:4,G:3,D:2,A:1,E:0}, TABRE=/^(\s*)([A-Ga-g][#b♭]?)\s*\|/, isTab=l=>TABRE.test(l);
   const lines=String(txt||'').replace(/\r/g,'').replace(/\t/g,'    ').split('\n');
-  const out={title:'',bpm:null,len:null,tuning:'E A D G B E',sections:[],warnings:[]};
+  const out={title:'',bpm:null,len:null,tuning:'E A D G B E',capo:0,sections:[],warnings:[]};
   let cur=null,names=null,arrows=null,lyr=null,prevTab=false,below=null;
   for(let i=0;i<lines.length;i++){
     const raw=lines[i],l=raw.trimEnd();
@@ -2746,7 +2831,7 @@ function parseFretline(txt){
       if(!cur){cur={name:'Parte 1',blocks:[]};out.sections.push(cur)}
       cur.blocks.push({lines:blk,names,arrows,lyrics:lyr});names=arrows=lyr=null;prevTab=true;continue}
     const meta=/(\d+(?:[.,]\d+)?)\s*BPM/i.exec(l);
-    if(meta){out.bpm=parseFloat(meta[1].replace(',','.'));const lm=/length\s*(\d+):(\d{1,2})/i.exec(l);if(lm)out.len=+lm[1]*60+ +lm[2];const tu=/\(([A-Ga-g#b ]{5,})\)/.exec(l);if(tu)out.tuning=tu[1].trim();continue}
+    if(meta){out.bpm=parseFloat(meta[1].replace(',','.'));const lm=/length\s*(\d+):(\d{1,2})/i.exec(l);if(lm)out.len=+lm[1]*60+ +lm[2];const tu=/\(([A-Ga-g#b♭♯ ]{5,})\)/.exec(l);if(tu)out.tuning=tu[1].trim();const cp=/(?:capo|cejilla)\s*(?:en\s*(?:el\s*)?(?:traste\s*)?)?(\d{1,2})/i.exec(l);if(cp)out.capo=Math.min(12,+cp[1]);continue}
     if(/[↓↑]/.test(l)){arrows=raw;continue}
     if(!out.title&&!out.sections.length){out.title=l.trim();continue}
     if(/^\s*[A-G]/.test(l)){names=raw;continue}
@@ -2755,8 +2840,10 @@ function parseFretline(txt){
     s.events=[];let off=0;
     for(const b of s.blocks){
       const per={};let width=0;const seen=new Set();
-      for(const line of b.lines){
-        const m=/^(\s*)([eBGDAE])\s*\|/.exec(line);const str=STR[m[2]];
+      const six=b.lines.length===6;
+      for(const [li,line] of b.lines.entries()){
+        const m=TABRE.exec(line);const str=six?5-li:STR[m[2]];
+        if(str==null){out.warnings.push(`${s.name}: no sé qué cuerda es «${m[2]}|» (un bloque debe tener 6 líneas)`);continue}
         if(seen.has(str)) out.warnings.push(`${s.name}: cuerda ${m[2]} repetida en un bloque`);seen.add(str);
         const start=m[0].length;let body=line.slice(start).replace(/\|\s*$/,'');width=Math.max(width,body.length);
         for(let k=0;k<body.length;k++){const c=body[k];
@@ -2765,8 +2852,9 @@ function parseFretline(txt){
             (per[col]=per[col]||[]).push({s:str,f:+d,tech})}
           else if(c==='x'||c==='X'){(per[k]=per[k]||[]).push({s:str,mute:true})}}
       }
-      const absChar=(line,c)=>line?line[c+2]:undefined; // las líneas de nombres y flechas usan el mismo prefijo "e|"
-      const nameTokens=[];if(b.names){const re=/\S+(?: \S+)*/g;let mm;while((mm=re.exec(b.names))){nameTokens.push({col:mm.index-2,name:mm[0]})}}
+      // las líneas de nombres, flechas y letra se alinean con la tablatura: su columna 0 está donde termina «e|» (o «Eb|»)
+      const pre=TABRE.exec(b.lines[0])[0].length, absChar=(line,c)=>line?line[c+pre]:undefined;
+      const nameTokens=[];if(b.names){const re=/\S+(?: \S+)*/g;let mm;while((mm=re.exec(b.names))){nameTokens.push({col:mm.index-pre,name:mm[0]})}}
       Object.keys(per).map(Number).sort((a,b)=>a-b).forEach(col=>{
         const items=per[col],notes=items.filter(x=>!x.mute),mutes=items.filter(x=>x.mute);
         const ev={col:off+col};
@@ -2777,7 +2865,7 @@ function parseFretline(txt){
         if(b.arrows){for(const d of [0,-1,1]){const ch=absChar(b.arrows,col+d);if(ch==='↓'){ev.dir='d';break}if(ch==='↑'){ev.dir='u';break}}}
         if(nameTokens.length&&ev.type==='chord'){let lab=null;for(const t of nameTokens) if(t.col<=col+1) lab=t.name;ev.label=lab}
         s.events.push(ev)});
-      if(b.lyrics){let over=false;for(const ln of b.lyrics){const m=/^\s*L\s*\|/.exec(ln),body=ln.slice(m[0].length).replace(/\|\s*$/,''),re=/\S+/g;let mm;while((mm=re.exec(body))){let c=mm.index;if(c>=width){over=true;c=Math.max(0,width-1)}(s.lyrics=s.lyrics||[]).push({col:off+c,w:mm[0]})}}
+      if(b.lyrics){let over=false;for(const ln of b.lyrics){const m=/^\s*L\s*\|/.exec(ln),body=ln.slice(m[0].length).replace(/\|\s*$/,''),re=/\S+/g;let mm;while((mm=re.exec(body))){let c=Math.max(0,m[0].length+mm.index-pre);if(c>=width){over=true;c=Math.max(0,width-1)}(s.lyrics=s.lyrics||[]).push({col:off+c,w:mm[0]})}}
         if(s.lyrics)s.lyrics.sort((a,b)=>a.col-b.col);if(over)out.warnings.push(`${s.name}: la letra pasa del largo de la tablatura (lo que sobra quedó al final del bloque)`)}
       off+=width;
     }
@@ -2796,9 +2884,11 @@ function guessCpb(raw){
   return 4;
 }
 const fkey=fr=>fr.map(f=>f<0?'x':f).join('.');
-function chordForFrets(fr,label,tune){
+function chordForFrets(fr,label,tune,capo){
   const k=fkey(fr), std=!tune||tune.every((m,i)=>m===OPEN[i]);
   if(std) for(const c of Object.values(LIB)) if(fkey(c.frets)===k) return {id:c.id,name:c.name,frets:c.frets};
+  // con cejilla sobre afinación estándar: el nombre es el de la forma (como se lee en una tablatura con cejilla) y aparte cómo suena
+  if(capo&&tune.every((m,i)=>m-capo===OPEN[i])) for(const c of Object.values(LIB)) if(fkey(c.frets)===k){ const g=guessName(fr,tune); return {id:'c'+capo+':'+c.id,name:c.name,frets:c.frets,shape:true,sounds:g&&g!==c.name?g:null} }
   const g=guessName(fr,tune);return {id:'f:'+k+(std?'':'@'+tune.join('.')),name:(label&&label.replace(/\s+/g,' '))||g||fretStr(fr),frets:fr.slice(),guess:g};
 }
 /* convierte el resultado del parser en una canción con tiempos en segundos (a velocidad 1) */
@@ -2814,7 +2904,7 @@ function buildSong(song){
       if(e.type==='note') notes.push({t:et,s:e.s,f:e.f,m:TU[e.s]+e.f,tech:e.tech||'',sec:si,col:e.col});
       else if(e.type==='chuck') chucks.push({t:et,sec:si,col:e.col,strings:e.strings});
       else if((song.raw.dyadNotes||song.src==='gp5')&&!e.dir&&!e.strum&&e.frets.filter(f=>f>=0).length===2) e.frets.forEach((f,s)=>{ if(f>=0) notes.push({t:et,s,f,m:TU[s]+f,tech:'',sec:si,col:e.col,dyad:true}) });
-      else {const c=chordForFrets(e.frets,e.label,song.tune);strums.push({t:et,dir:e.dir||'',chord:c,sec:si,col:e.col,frets:e.frets});
+      else {const c=chordForFrets(e.frets,e.label,song.tune,song.capo);strums.push({t:et,dir:e.dir||'',chord:c,sec:si,col:e.col,frets:e.frets});
         const last=segs[segs.length-1];if(last&&last.chord.id===c.id&&et-last.t1<=6*sp) last.t1=et+sp*2;else segs.push({t0:et,t1:et+sp*2,chord:c,sec:si})}});
     // bloques de evaluación: cambios muy rápidos (D↔D6) se agrupan hasta ~0,8 s y aceptan cualquiera de sus acordes
     let cur=null;
@@ -2911,17 +3001,20 @@ E|-x---x---x---x---1---1---1---1---x---x---x---x---3---3---3---3---|`}
 {"id": "ej-saltos", "cat": "ejercicio", "cpb": 8, "dyad": true, "text": "Punteo 2: saltar de cuerda\n64 BPM · Standard tuning (E A D G B E)\n\n[SALTOS]\ne|---------------------0-------------------------------0------------|\nB|-------------1---------------1---------------0---------------0----|\nG|-----0-------------------------------0----------------------------|\nD|-----------------2-------------------------------2----------------|\nA|---------3---------------3---------------2---------------2--------|\nE|-3-------------------------------0--------------------------------|"},
 {"id": "ej-melodia", "cat": "ejercicio", "cpb": 8, "dyad": true, "text": "Pellizcos y punteo: melodía con bajo\n58 BPM · Standard tuning (E A D G B E)\n\n[MELODÍA]\ne|-0-----------0---1---0---------------------------3---1---0--------|\nB|-----1---3---------------3---1---3---0-------0---------------3----|\nG|-----------------------------------------0------------------------|\nD|-----------------2-------------------------------0----------------|\nA|-3----------------------------------------------------------------|\nE|---------------------------------3--------------------------------|\n\n[RESPUESTA]\ne|-0-----------0---1---0-----------0-------0---------------0--------|\nB|-----1---3---------------1---0-------3-------1---1----------------|\nG|------------------------------------------------------------------|\nD|-----------------2-------------------------------2----------------|\nA|-0-------------------------------3-----------------------3--------|\nE|------------------------------------------------------------------|"}
 ];
+// afinación y cejilla escritas en la línea 2 del texto («Drop D tuning (D A D G B E) · capo 2»)
+function tuneFromRaw(s){ const b=parseTuningNotes(s.raw&&s.raw.tuning)||OPEN, c=(s.raw&&s.raw.capo)|0; delete s.tune; delete s.capo; if(!isStdTune(b)||c) setTune(s,b,c); return s }
 function songFromText(text,extra={}){
   const raw=parseFretline(text);
   const s=Object.assign({id:'s'+uid(),title:raw.title||'Sin título',bpm:raw.bpm||90,raw,cat:'cancion',media:{},created:Date.now()},extra);
   s.cpb=extra.cpb||guessCpb(raw);
+  tuneFromRaw(s);
   return s;
 }
 // dyad: los tiempos con dos cuerdas sin flecha son pellizcos (dos notas), no un acorde rasgueado
-function allSongs(){ return DEMOS.map(d=>{ const s=Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true,cpb:d.cpb}),S.get('songmeta',{})[d.id]||{}); if(d.dyad&&s.raw) s.raw.dyadNotes=true; return s }).concat(songs,(()=>{ try{ return flSongs() }catch(e){ return [] } })()) }
+function allSongs(){ return DEMOS.map(d=>{ const s=Object.assign(songFromText(d.text,{id:d.id,cat:d.cat,demo:true,cpb:d.cpb}),S.get('songmeta',{})[d.id]||{}); if(d.dyad&&s.raw) s.raw.dyadNotes=true; return applyTuneSet(s) }).concat(songs.map(applyTuneSet),(()=>{ try{ return flSongs() }catch(e){ return [] } })()) }
 function getSong(id){ return allSongs().find(s=>s.id===id) }
 function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importadas, todo
-  if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder}; if(song.edited) Object.assign(m[song.id],{raw:song.raw,raw0:song.raw0,edited:true}); S.set('songmeta',m) }
+  if(song.demo){ const m=S.get('songmeta',{}); m[song.id]={media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder}; if(song.tuneSet) m[song.id].tuneSet=song.tuneSet; if(song.edited) Object.assign(m[song.id],{raw:song.raw,raw0:song.raw0,edited:true}); S.set('songmeta',m) }
   else if(song.flLive){ if(song.edited) flEdited(song); else flSaveMeta(song) }
   else { const i=songs.findIndex(x=>x.id===song.id); if(i>=0) songs[i]=song; else songs.push(song); saveSongs() }
 }
@@ -2929,8 +3022,10 @@ function saveSongMeta(song){ // las demos guardan solo sus ajustes; las importad
 /* de vuelta a texto de Fretline (para copiar las correcciones a Fretline o a otro equipo) */
 function rawToText(song){
   const raw=song.raw, spc=60/((song.bpm||90)*(song.cpb||4)), cols=raw.sections.reduce((a,x)=>a+x.cols,0), secs=Math.round(cols*spc);
-  const out=[song.title,`${song.bpm} BPM · ${song.tune?'Tuning':'Standard tuning'} (${raw.tuning||'E A D G B E'}) · length ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`,''];
-  const SN=['E','A','D','G','B','e'];
+  const base=songBase(song), capo=songCapo(song), tn=tuningOf(base), NAMES=base.map(m=>NOTE[((m%12)+12)%12]);
+  const out=[song.title,`${song.bpm} BPM · ${tn?tn.en:'Custom'} tuning (${NAMES.join(' ')})${capo?' · capo '+capo:''} · length ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`,''];
+  // nombre de cada línea: la nota de esa cuerda (la 1.ª en minúscula si es Mi, como e|); la app las lee por posición
+  const SN=NAMES.map((n,i)=>i===5&&n==='E'?'e':n[0]);
   for(const sec of raw.sections){
     const evs=sec.events.slice().sort((a,b)=>a.col-b.col);
     let W=sec.cols; for(const e of evs) W=Math.max(W,e.col+4);
@@ -3063,21 +3158,23 @@ function updFromText(s,box,tl){
   let nr=null;
   const look=()=>{ prev.innerHTML=''; nr=null; const t=ta.value.trim(); if(!t) return; const r=parseFretline(t);
     if(!r.sections.length){ prev.append(h('p',{class:'hint',text:r.warnings[0]||'No encontré tablatura.'})); return }
-    nr=r; const ns=Object.assign({},s,{raw:r,bpm:r.bpm||s.bpm,cpb:guessCpb(r)}), t2=buildSong(ns);
+    nr=r; const ns=Object.assign({},s,{raw:r,bpm:r.bpm||s.bpm,cpb:guessCpb(r)}); if(!s.tuneSet) tuneFromRaw(ns); const t2=buildSong(ns), tl0=songTuneLabel(s)||'estándar', tl1=songTuneLabel(ns)||'estándar';
     const d=(a,b,n)=>a===b?`${b} ${n}`:`${n} ${a} → ${b}`;
-    prev.append(...[h('p',{class:'hint',text:[`«${r.title||s.title}»`,d(s.bpm,ns.bpm,'BPM'),d(tl.sections.length,t2.sections.length,'secciones'),d(tl.notes.length,t2.notes.length,'notas'),d(tl.strums.length,t2.strums.length,'rasgueos'),t2.lyrics.length||tl.lyrics.length?d(tl.lyrics.length,t2.lyrics.length,'palabras de letra'):''].filter(Boolean).join(' · ')}),
+    prev.append(...[h('p',{class:'hint',text:[`«${r.title||s.title}»`,d(s.bpm,ns.bpm,'BPM'),d(tl.sections.length,t2.sections.length,'secciones'),d(tl.notes.length,t2.notes.length,'notas'),d(tl.strums.length,t2.strums.length,'rasgueos'),t2.lyrics.length||tl.lyrics.length?d(tl.lyrics.length,t2.lyrics.length,'palabras de letra'):'',tl0===tl1?(tl1==='estándar'?'':tl1):`afinación ${tl0} → ${tl1}`].filter(Boolean).join(' · ')}),
       ...r.warnings.map(w=>h('p',{class:'hint',text:'⚠ '+w})),
       s.edited?h('p',{class:'hint',text:'Las correcciones que hiciste en el editor se reemplazan (quedan en la versión anterior).'}):null,
       t2.sections.length!==tl.sections.length?h('p',{class:'hint',text:'Cambió la cantidad de secciones: se vuelven a elegir todas y se borra el tramo guardado.'}):null,
-      h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ const old={raw:s.raw,bpm:s.bpm,cpb:s.cpb,edited:!!s.edited,raw0:s.raw0||null,at:Date.now()};
+      h('div',{class:'toolbar'},h('button',{class:'btn primary',onclick:()=>{ const old={raw:s.raw,bpm:s.bpm,cpb:s.cpb,edited:!!s.edited,raw0:s.raw0||null,tune:s.tune||null,capo:s.capo||0,at:Date.now()};
         s.rawPrev=old; s.raw=nr; s.bpm=nr.bpm||s.bpm; s.cpb=guessCpb(nr); delete s.raw0; s.edited=false; s.updated=Date.now();
+        // la afinación y la cejilla vienen del texto nuevo (si la cambiaste en la ficha, tu cambio se mantiene)
+        if(s.tuneSet){ const t=tuneFromRaw({raw:nr}); s.tune0=t.tune||null; s.capo0=t.capo||0; applyTuneSet(s) } else tuneFromRaw(s);
         if(t2.sections.length!==tl.sections.length&&s.play){ s.play.sel=null; s.play.loopA=s.play.loopB=null }
         saveSongMeta(s); toast('Canción actualizada'); renderSongDetail() }},'Reemplazar con este texto'))].filter(Boolean)) };
   ta.addEventListener('input',()=>{ clearTimeout(ta._t); ta._t=setTimeout(look,250) });
   box.append(h('details',{class:'supd'},h('summary',{},'Actualizar con texto nuevo'),
     h('p',{class:'hint',text:'Si corregiste la tablatura (o le agregaste letra), pega el texto nuevo: se reemplaza esta misma canción y se conservan su carpeta, ajustes, video y récords.'}),ta,prev));
   if(s.rawPrev) box.append(h('div',{class:'toolbar'},h('span',{class:'hint',style:'margin:0',text:`Actualizada el ${new Date(s.updated||s.rawPrev.at).toLocaleDateString()}.`}),
-    h('button',{class:'btn sm ghost',onclick:()=>{ const p=s.rawPrev; delete s.rawPrev; Object.assign(s,{raw:p.raw,bpm:p.bpm,cpb:p.cpb,edited:p.edited}); if(p.raw0) s.raw0=p.raw0; saveSongMeta(s); toast('Volviste a la versión anterior'); renderSongDetail() }},'Volver a la versión anterior')));
+    h('button',{class:'btn sm ghost',onclick:()=>{ const p=s.rawPrev; delete s.rawPrev; Object.assign(s,{raw:p.raw,bpm:p.bpm,cpb:p.cpb,edited:p.edited}); if(p.raw0) s.raw0=p.raw0; if('tune' in p){ if(p.tune) s.tune=p.tune; else delete s.tune; if(p.capo) s.capo=p.capo; else delete s.capo } saveSongMeta(s); toast('Volviste a la versión anterior'); renderSongDetail() }},'Volver a la versión anterior')));
 }
 function showDraft(s,extra){
   const box=$('#importPreview'); box.innerHTML=''; if(extra) box.append(extra);
@@ -3098,14 +3195,32 @@ function showDraft(s,extra){
 
 /* ficha */
 function margHint(cfg){ const m=MARG[cfg.margin]||MARG.normal; $('#sMargHint').textContent=`Perfecto hasta ±${m.p} ms, Bien hasta ±${m.g} ms. Hasta ${m.e} ms antes o ${m.l} ms tarde cuenta como "un poco antes / tarde" con menos puntos; más allá te dice "¡Aún no!" o "¡Tarde!".` }
+/* afinación y cejilla de la canción (etapa 2): cambia lo que la app espera oír; la tablatura sigue en los mismos trastes */
+function renderTuneBox(s){ const box=$('#sTuneBox'); if(!box) return; [...box.children].forEach(x=>{ if(x.tagName!=='LEGEND') x.remove() });
+  const b=songBase(s), c=songCapo(s), set=!!s.tuneSet, ob=set?(s.tune0?s.tune0.map(m=>m-(s.capo0||0)):OPEN):b, oc=set?(s.capo0||0):c;
+  const apply=(base,capo)=>{ capo=Math.max(0,Math.min(12,capo|0)); clearTuneSet(s); if(!(base.every((m,i)=>m===ob[i])&&capo===oc)){ s.tuneSet={base:base.slice(),capo}; applyTuneSet(s) }
+    saveSongMeta(s); toast(songTuneLabel(s)||'Afinación estándar, sin cejilla'); renderSongDetail() };
+  box.append(h('div',{class:'tnow'},h('b',{text:songTuneLabel(s)||'Estándar, sin cejilla'}),h('span',{class:'mono',text:tuneNotes(b)}),
+    h('button',{class:'btn sm',type:'button',onclick:()=>tuneForSong(s)},'Afinar para esta canción')));
+  const sel=h('select',{'aria-label':'Afinación de las clavijas'}); TUNINGS.forEach(t=>sel.append(h('option',{value:t.k},`${t.n} · ${tuneNotes(t.m)}`))); sel.append(h('option',{value:'custom'},'Otra (escribir las notas)…'));
+  const tn=tuningOf(b); sel.value=tn?tn.k:'custom';
+  const inp=h('input',{type:'text',value:b.map(m=>NOTE[((m%12)+12)%12]).join(' '),placeholder:'D A D G B E','aria-label':'Notas de la 6.ª a la 1.ª'});
+  const custom=h('div',{class:'tcustom'},inp,h('button',{class:'btn sm',type:'button',onclick:()=>{ const v=parseTuningNotes(inp.value); if(!v){ toast('Escribe 6 notas, de la 6.ª (grave) a la 1.ª'); return } apply(v,c) }},'Usar')); custom.hidden=!!tn;
+  sel.onchange=()=>{ if(sel.value==='custom'){ custom.hidden=false; inp.focus(); return } apply(TUNINGS.find(t=>t.k===sel.value).m,c) };
+  const out=h('output',{text:String(c)});
+  box.append(h('div',{class:'trow'},sel,h('span',{class:'capo'},h('span',{text:'Cejilla'}),h('button',{class:'btn sm ghost',type:'button','aria-label':'Cejilla un traste abajo',disabled:c<=0,onclick:()=>apply(b,c-1)},'−'),out,h('button',{class:'btn sm ghost',type:'button','aria-label':'Cejilla un traste arriba',disabled:c>=12,onclick:()=>apply(b,c+1)},'+'))),custom);
+  box.append(h('p',{class:'hint',text:'La tablatura no cambia: cambia lo que la app espera oír. Con cejilla, los trastes se cuentan desde la cejilla (0 = la cuerda sobre la cejilla), como en cualquier tablatura con cejilla.'}));
+  if(set) box.append(h('p',{class:'hint tchanged'},`Cambiada a mano (la original: ${[isStdTune(ob)?'estándar':tuneLabelOf(ob),oc?'cejilla '+oc:''].filter(Boolean).join(' · ')}). `,h('button',{class:'btn sm ghost',type:'button',onclick:()=>apply(ob,oc)},'Volver a la original')));
+}
 function renderSongDetail(){
   const s=getSong(curSongId); if(!s){ location.hash='canciones'; return }
   const tl=buildSong(s), cfg=playCfg(s); if(!cfg.sel||cfg.sel.some(i=>i>=tl.sections.length)) cfg.sel=tl.sections.map((x,i)=>i);
   const hd=$('#songHead'); hd.innerHTML='';
   const recs=S.get('songrec',{}), rk=recs[s.id+'|'+cfg.sel.join(',')];
   hd.append(h('p',{class:'eyebrow',text:CAT_N[s.cat]||'Canción'}),h('h1',{class:'h1',text:s.title}),
-    h('p',{class:'sub',text:`${s.bpm} BPM · ${fmtClock(tl.len*1000)} · ${tl.notes.length} notas y ${tl.blocks.length} cambios de acorde`+(s.tune?` · afinación ${s.raw.tuning}`:'')+(s.capo?` · cejilla ${s.capo}`:'')+(rk?` · récord ${fmtN(rk.score)} (${rk.acc}%)`:'')}));
+    h('p',{class:'sub',text:`${s.bpm} BPM · ${fmtClock(tl.len*1000)} · ${tl.notes.length} notas y ${tl.blocks.length} cambios de acorde`+(songTuneLabel(s)?' · '+songTuneLabel(s):'')+(rk?` · récord ${fmtN(rk.score)} (${rk.acc}%)`:'')}));
   const save=()=>{ s.play=cfg; saveSongMeta(s) };
+  renderTuneBox(s);
   hd.append(h('div',{class:'row',style:'margin-top:8px'},h('span',{class:'lab',style:'margin:0',text:'Carpeta'}),folderSelect(folderOf(s),v=>{ s.folder=v; saveSongMeta(s); toast('Movida a '+v) })));
   document.querySelectorAll('input[name=sMode]').forEach(r=>{ r.checked=r.value===cfg.mode; r.onchange=()=>{ cfg.mode=r.value; save(); renderSongDetail() } });
   $('#sModeHint').textContent=cfg.mode==='test'?'Prueba: velocidad original y sin pausas. Cuenta para tu récord y tu XP.':'Práctica: elige secciones, baja la velocidad y repite en bucle. Suma XP, pero no récord.';
@@ -3188,9 +3303,9 @@ function plColors(){
 }
 /* carga la línea de tiempo en el motor (también lo usa el editor tras cada cambio) */
 function plLoad(tl){
-  PL.tl=tl; PL.tune=tl.tune||OPEN;
+  PL.tl=tl; PL.tune=tl.tune||OPEN; PL.fmin=Math.min(70,440*2**((Math.min(...PL.tune)-69)/12)*.9); PL.drop6=dropSix(PL.tune);   // la cejilla no cambia los intervalos
   PL.notes=tl.notes.map(n=>Object.assign({},n,{st:0}));
-  PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.flatMap(c=>{ const lo=prefs.skip6?looseOf(c.frets):[], sand=lo.filter(s=>s!==0); return lo.length?[candFrets(c,lo),candFrets(c)].concat(lo.includes(0)&&sand.length?[candFrets(c,sand)]:[]):[candFrets(c)] })}));
+  PL.blocks=tl.blocks.map(b=>Object.assign({},b,{st:0,ok:0,best:0,cands:b.chords.flatMap(c=>{ const lo=prefs.skip6?looseOf(c.frets).filter(x=>x!==0||!PL.drop6):[]   /* en Drop D/C la 6.ª suele ser la base: se exige */, sand=lo.filter(s=>s!==0); return lo.length?[candFrets(c,lo),candFrets(c)].concat(lo.includes(0)&&sand.length?[candFrets(c,sand)]:[]):[candFrets(c)] })}));
   PL.strums=tl.strums; PL.chucks=tl.chucks;
   // tramos de acorde con color fijo por acorde y referencia al bloque que los puntúa
   const pal=CHCOL[prefs.style]||CHCOL.estudio, cmap={}; let ci=0;
@@ -3210,7 +3325,7 @@ function startPlayer(s,opts={}){
   location.hash='tocar';
   document.body.classList.add('playing');
   const v=$('#v-tocar'); v.classList.remove('done','editing'); v.classList.toggle('practice',mode==='practice');
-  $('#pResults').hidden=true; $('#pTitle').textContent=s.title; $('#pMode').textContent=mode==='test'?'Prueba':(cfg.wait?'Nota por nota':'Práctica');
+  $('#pResults').hidden=true; $('#pTitle').textContent=s.title; PL.tuneLab=songTuneLabel(s); if(PL.tuneLab&&!opts.from) toast('Afinación: '+PL.tuneLab); $('#pMode').textContent=mode==='test'?'Prueba':(cfg.wait?'Nota por nota':'Práctica');
   $('#pSpeedBox').hidden=mode!=='practice'; $('#pSpeed').value=Math.round(speed*100); $('#pSpeedV').textContent=Math.round(speed*100)+'%';
   $('#pReset').hidden=mode!=='practice'; waitBtn(); listenBtn(); rescueBtn();
   $('#pPause').textContent='Pausa'; $('#pMsg').textContent=''; $('#pWait').hidden=true;
@@ -3421,7 +3536,7 @@ function playerAudio(o,now){
       if(now-q.rt<T.cevT2) return true;
       if(tonal) q.cand.forEach(x=>{ if(o.ch[x.pc]>=T.cevMin){ (PL.cev=PL.cev||[]).push({t:q.t,pc:x.pc,rt:now,used:false}); if(D) DBG.ev('cev',{pc:x.pc,t:rnd2(q.t)}) } }); return false }) }
   if(PL.cev) PL.cev=PL.cev.filter(c=>now-c.rt<T.cevKeep);
-  if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
+  if(o.live){ const f=detectPitch(Mic.td,actx.sampleRate,PL.fmin||70); if(f){ const m=69+12*Math.log2(f/440); PL.ear=m;
       // también si hubo un ataque reciente que todavía no generó nota: al repetir la misma nota el detector a veces no da tono
       // justo en el cuadro del ataque, y como la altura no cambia, ese ataque se perdía (pellizcos repetidos, notas repetidas)
       const pendOn=PL.lastOn&&!PL.lastOn.used&&t-PL.lastOn.t<T.pitchOnWin*PL.speed;
@@ -3530,7 +3645,7 @@ function chordCard(t){
   if(!g){ box.hidden=true; PL.ccKey=null; return }
   const c=g.chord, key=(c.id||c.name)+'|'+(g===cur?'a':'s');
   box.hidden=false; box.classList.toggle('next',g!==cur);
-  if(PL.ccKey!==key){ PL.ccKey=key; $('#pChordK').textContent=g===cur?'Ahora':'Sigue'; $('#pChordN').textContent=c.name; $('#pChordD').innerHTML=diagram(c.frets) }
+  if(PL.ccKey!==key){ PL.ccKey=key; $('#pChordK').textContent=g===cur?'Ahora':'Sigue'; $('#pChordN').textContent=c.name; $('#pChordN').title=c.sounds?'suena '+c.sounds:''; if(c.sounds) $('#pChordN').append(h('small',{class:'snd',text:'suena '+c.sounds})); $('#pChordD').innerHTML=diagram(c.frets) }
   const hx=PL.lay&&PL.lay.hx||90; box.style.width=Math.max(70,Math.min(150,hx-12))+'px' }
 /* ambiente por sección: cada parte tiene su fondo (según su tipo y el estilo) y al entrar aparece su nombre, grande y tenue */
 const AMB_KINDS=[['intro',/intro|entrada/i],['pre',/pre|subida|build|levant/i],['chorus',/coro|chorus|estribillo|refr/i],['verse',/verso|verse|estrofa/i],['bridge',/puente|bridge/i],['solo',/solo|lead/i],['break',/bajada|break|interl|calma/i],['outro',/outro|final|fin\b|coda|cierre/i],['riff',/riff|lick/i]];
@@ -3557,7 +3672,7 @@ function playerHud(t){
   $('#pAcc').textContent=done?Math.round(hits/done*100)+'%':'–';
   const secs=PL.tl.sections, sec=secs.find(x=>t>=x.start&&t<x.end)||(t<secs[0].start?secs[0]:secs[secs.length-1]);
   ambience(secs.indexOf(sec),sec);
-  $('#pSec').textContent=sec.name+(PL.mode==='practice'?` · ${Math.round(PL.speed*100)}%`+(PL.passes?` · vuelta ${PL.passes+1}`:''):'');
+  $('#pSec').textContent=sec.name+(PL.tuneLab?' · '+PL.tuneLab:'')+(PL.mode==='practice'?` · ${Math.round(PL.speed*100)}%`+(PL.passes?` · vuelta ${PL.passes+1}`:''):'');
   const cur=PL.blocks.find(b=>t>=b.t0-.05&&t<b.t1), nxt=PL.blocks.find(b=>b.t0>t+.05&&act(b)), nn2=PL.notes.filter(n=>n.t>t-.05&&act(n)).slice(0,4);
   $('#pNow').textContent=cur?cur.chords.map(c=>c.name).join(' / '):(nn2.length&&nn2[0].t-t<1.2?'Riff':'–');
   $('#pNext').textContent=nxt&&(!nn2.length||nxt.t0<nn2[0].t)?nxt.chords.map(c=>c.name).join(' / '):nn2.map(n=>`${'EADGBe'[n.s]}${n.f}${n.tech}`).join(' ')||'–';
@@ -4818,11 +4933,11 @@ const flCopy=sid=>songs.find(x=>x.id===flId(sid));
 /* las que se muestran sincronizadas: lo que vino de Fretline + tus ajustes (carpeta, modo, video…) */
 function flSongs(){ const p=flPaused(), meta=S.get('songmeta',{});
   return Object.values(flData.songs).filter(s=>!p[s.fl.id]&&!flCopy(s.fl.id)).map(s=>{ const c=JSON.parse(JSON.stringify(s)), m=meta[s.id]||{};
-    ['cpb','bpm','play','folder','cat','title'].forEach(k=>{ if(m[k]!=null) c[k]=m[k] }); if(m.media&&m.media.src) c.media=m.media;
+    ['cpb','bpm','play','folder','cat','title','tuneSet'].forEach(k=>{ if(m[k]!=null) c[k]=m[k] }); if(m.media&&m.media.src) c.media=m.media;
     // en los dos sentidos: mientras Fretline no aplique tu corrección, se ve la versión corregida
     if(m.two){ c.flTwo=true; if(m.pend&&!(s.fl.patches||[]).includes(m.pend.pid)){ c.raw=JSON.parse(JSON.stringify(m.pend.raw)); c.flPend=m.pend.at } }
-    c.flLive=true; return c }) }
-function flSaveMeta(song){ const m=S.get('songmeta',{}); m[song.id]=Object.assign({},m[song.id]||{},{media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder,cat:song.cat}); S.set('songmeta',m) }
+    if(c.tuneSet) applyTuneSet(c); c.flLive=true; return c }) }
+function flSaveMeta(song){ const m=S.get('songmeta',{}); m[song.id]=Object.assign({},m[song.id]||{},{media:song.media,cpb:song.cpb,bpm:song.bpm,play:song.play,folder:song.folder,cat:song.cat,tuneSet:song.tuneSet||null}); if(!song.tuneSet) delete m[song.id].tuneSet; S.set('songmeta',m) }
 const flMeta=id=>(S.get('songmeta',{})[id])||{};
 function flSetMeta(id,fn){ const m=S.get('songmeta',{}); m[id]=m[id]||{}; fn(m[id]); S.set('songmeta',m) }
 /* corregiste una sincronizada en el editor: en los dos sentidos se manda a Fretline; si no, se congela para no perderla */
