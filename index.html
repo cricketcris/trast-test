@@ -545,9 +545,27 @@ html[data-style] .continue .k{color:inherit;opacity:.8}
 .ytwin{display:none;width:100%;max-width:480px;margin:0 auto;aspect-ratio:16/9;border-radius:12px;overflow:hidden;min-height:200px}
 .ytwin.on{display:block}
 .ytwin iframe,.ytwin>div{width:100%;height:100%;border:0}
-.ytbg{display:none}
-.ytbg.on{display:block;position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.ytbg.on iframe,.ytbg.on>div{position:absolute;left:50%;top:50%;width:177.8vh;min-width:100%;height:56.25vw;min-height:100%;transform:translate(-50%,-50%) scale(1.15);filter:blur(14px) brightness(.45) saturate(1.2);border:0}
+/* video de fondo: ocupa la pantalla detrás de todo; desenfoque y oscuridad configurables (--ytblur, --ytdim).
+   La oscuridad es una capa encima (no un filtro): si el iPad no aplica el filtro al video, igual se oscurece */
+.player>.ytwin.bg{display:block;position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;width:auto;height:auto;max-width:none;min-height:0;aspect-ratio:auto;margin:0;border-radius:0}
+.ytwin.bg iframe{position:absolute;left:50%;top:50%;width:177.8vh;min-width:100%;height:56.25vw;min-height:100%;transform:translate(-50%,-50%) scale(1.15);filter:blur(var(--ytblur,14px)) saturate(1.15);border:0}
+.ytwin.bg::after{content:"";position:absolute;inset:0;background:#000;opacity:var(--ytdim,.55)}
+.player.ytbg-on .hwrap{background:color-mix(in oklab,var(--surface) 22%,transparent)}
+.player.ytbg-on .pamb{opacity:.45}
+/* al frente (anuncio, o hay que tocar ▶): grande, centrado y tocable, con la pantalla oscurecida alrededor */
+.player>.ytwin.focus{display:block;position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);z-index:40;width:min(92vw,calc(62vh*16/9),960px);height:auto;max-width:none;min-height:0;aspect-ratio:16/9;margin:0;border-radius:14px;overflow:visible;box-shadow:0 0 0 100vmax rgba(0,0,0,.72),0 10px 40px rgba(0,0,0,.6)}
+.ytwin.focus{background:#000}
+.ytwin.focus iframe{border-radius:14px}
+.ytwin .ytui{display:none}
+.ytwin>.ytui{width:auto;height:auto}   /* la regla de arriba da 100% de alto a los div del contenedor */
+.ytwin.focus .ytui{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;position:absolute;left:0;right:0;top:calc(100% + 12px);color:#fff;font-size:.95rem}
+.ytwin.focus .ytui b{font-size:1.1rem;flex-basis:100%}
+.ytwin.focus .ytui span{opacity:.8}
+.ytwin.focus .ytui .btn{color:#fff;border-color:rgba(255,255,255,.5)}
+.rangerow{display:flex;align-items:center;gap:10px}
+.rangerow label{min-width:6.5em}
+.rangerow input{flex:1;accent-color:var(--accent)}
+.rangerow b{min-width:3.6em;text-align:right}
 .player>*:not(.ytbg){position:relative;z-index:1}
 .gradeL{font-family:var(--display);font-weight:700;font-size:4.2rem;line-height:1;color:var(--accent);text-shadow:0 0 30px color-mix(in oklab,var(--accent) 60%,transparent)}
 @media (max-width:480px){.pnow{grid-template-columns:1fr 1fr}.pnow>div:last-child{grid-column:1/-1;flex-direction:row;align-items:baseline;gap:10px}}
@@ -787,6 +805,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .supd summary{cursor:pointer;font-weight:700}
 .supd[open]{display:flex;flex-direction:column;gap:8px}
 .supd-prev .toolbar{margin-top:6px}
+@media (max-height:500px){.player>.ytwin.focus{top:40%;width:min(92vw,calc(54vh*16/9))}.ytwin.focus .ytui{gap:4px 10px;font-size:.85rem}.ytwin.focus .ytui b{flex-basis:auto;font-size:1rem}}
 
 /* ---------- diagnóstico: panel en vivo, botones de reporte, Ajustes → Diagnóstico y laboratorio ---------- */
 .btn.sm{padding:6px 10px;font-size:13px;min-height:0}
@@ -1358,7 +1377,11 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
               <button class="btn" id="sYtCal" style="align-self:flex-end">Calibrar con un toque</button></div>
             <div class="seg">
               <label><input type="radio" name="sYtView" value="window"><span>Video en ventana</span></label>
-              <label><input type="radio" name="sYtView" value="bg"><span>Video de fondo borroso</span></label>
+              <label><input type="radio" name="sYtView" value="bg"><span>Video de fondo</span></label>
+            </div>
+            <div id="sYtBgOpts" class="stack" style="gap:6px" hidden>
+              <div class="rangerow"><label for="sYtBlur">Desenfoque</label><input type="range" id="sYtBlur" min="0" max="24" step="1"><b id="sYtBlurV" class="mono"></b></div>
+              <div class="rangerow"><label for="sYtDim">Oscuridad</label><input type="range" id="sYtDim" min="0" max="85" step="5"><b id="sYtDimV" class="mono"></b></div>
             </div>
             <div id="sYtCalBox" class="ytcal" hidden></div>
           </div>
@@ -1395,7 +1418,6 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 
   <!-- REPRODUCTOR -->
   <section id="v-tocar" class="view player" hidden>
-    <div id="ytBg" class="ytbg" aria-hidden="true"></div>
     <div class="ptop">
       <button class="iconbtn" id="pExit" aria-label="Salir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="ptitle"><b id="pTitle"></b><span id="pSec"></span></div>
@@ -1564,7 +1586,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-24 03:43 · 28b7ac9";
+const BUILD="2026-11-24 04:19 · dede21e";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -3132,6 +3154,7 @@ function renderSongDetail(){
   $('#sListen').onclick=()=>startPlayer(s,{listen:true});
   $('#sEdit').onclick=()=>startEditor(s,0);
   dz.prepend(h('button',{class:'btn ghost',onclick:()=>copyText(rawToText(s),'Texto copiado: pégalo en Fretline')},'Copiar texto para Fretline'));
+  ytWarm(s);
   const ub=$('#sUpdBox'); ub.innerHTML=''; ub.hidden=!(!s.demo&&!s.fl&&!s.flLive&&s.src!=='gp5'&&s.raw); if(!ub.hidden) updFromText(s,ub,tl);
   if(s.raw0) dz.prepend(h('button',{class:'btn ghost',onclick:()=>{ s.raw=s.raw0; delete s.raw0; s.edited=s.demo?false:true; if(s.demo){ const m=S.get('songmeta',{}); if(m[s.id]){ delete m[s.id].raw; delete m[s.id].raw0; delete m[s.id].edited; S.set('songmeta',m) } } else saveSongMeta(s); toast('Volviste a la versión importada'); renderSongDetail() }},'Deshacer todas las ediciones'));
   $('#sPlayHint').textContent=cfg.mode==='test'?`Prueba de ${cfg.sel.length===tl.sections.length?'la canción completa':cfg.sel.map(i=>tl.sections[i].name).join(' + ')}`:`Práctica al ${cfg.speed}%${cfg.loop?' en bucle':''}`;
@@ -3194,6 +3217,7 @@ function startPlayer(s,opts={}){
   ctx();
   // escuchando no se abre el micrófono: en iPhone/iPad, con el micrófono abierto el parlante suena más bajo
   if(listen) PL.mic=false; else plMicStart();
+  showView('tocar');   // ya, no al llegar el hashchange: el video tiene que estar visible al darle play en este mismo toque (iOS)
   PL.media=mediaFor(s,speed,cfg);   // arranca dentro de este toque (iOS lo exige)
   const from=opts.from!=null&&inSegs(opts.from)?opts.from:PL.segs[0].a;
   seek(from,4,cfg.delay||0);
@@ -3834,31 +3858,53 @@ const inArtifact=(()=>{ try{ return window.self!==window.top }catch(e){ return t
 let ytApi=null;
 function loadYT(){ if(ytApi) return ytApi; ytApi=new Promise((res,rej)=>{ if(window.YT&&YT.Player) return res(); const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=()=>{ prev&&prev(); res() };
   const s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api'; s.onerror=()=>{ ytApi=null; rej(new Error('yt')) }; document.head.append(s); setTimeout(()=>rej(new Error('timeout')),12000) }); return ytApi }
-function ytMedia(id,start,view){
-  const holder=view==='bg'?$('#ytBg'):$('#ytWin'); $('#ytBg').innerHTML=''; $('#ytWin').innerHTML='';
-  $('#ytBg').classList.toggle('on',view==='bg'); $('#ytWin').classList.toggle('on',view!=='bg');
-  const host=h('div',{id:'ytHost'}); holder.append(host);
-  const M={kind:'yt',ready:false,p:null,rates:null,pending:null,timer:null,
+/* Un solo reproductor de YouTube que vive en #ytWin y cambia de modo con clases (moverlo en el DOM lo recargaría):
+   ''          oculto (precargado desde la ficha: así «Tocar» lo puede iniciar en el mismo toque, que es lo que exige iOS)
+   'window'    ventana (abajo, o flotando abajo a la derecha en horizontal)
+   'bg'        de fondo, con desenfoque y oscuridad configurables (la autopista se vuelve translúcida para que se vea)
+   'focus'     al frente, grande y tocable: si no arrancó o se detuvo (anuncio), para tocar ▶ u «Omitir»; vuelve solo */
+const YTP={id:null,p:null,ready:false,wait:[],onErr:null};
+function ytEnsure(id){ if(YTP.id===id&&YTP.p) return; ytKill(); YTP.id=id; const box=$('#ytWin'); box.innerHTML='';
+  box.append(h('div',{id:'ytHost'}),h('div',{class:'ytui',id:'ytUi'}));
+  loadYT().then(()=>{ if(YTP.id!==id) return; YTP.p=new YT.Player('ytHost',{videoId:id,width:'100%',height:'100%',playerVars:{playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3},
+      events:{onReady:()=>{ if(YTP.id!==id) return; YTP.ready=true; const q=YTP.wait; YTP.wait=[]; q.forEach(f=>{ try{ f() }catch(e){} }) },
+              onError:e=>{ if(YTP.onErr) YTP.onErr(e) }}}) })
+    .catch(()=>{ YTP.fail=true; if(YTP.onErr) YTP.onErr({load:true}) }) }
+function ytKill(){ try{ YTP.p&&YTP.p.destroy() }catch(e){} Object.assign(YTP,{id:null,p:null,ready:false,wait:[],onErr:null,fail:false}); const b=$('#ytWin'); if(b) b.innerHTML=''; ytMode('') }
+function ytMode(mode){ const b=$('#ytWin'); if(!b) return; ['on','bg','focus'].forEach(c=>b.classList.remove(c)); if(mode) b.classList.add(mode==='window'?'on':mode); $('#v-tocar').classList.toggle('ytbg-on',mode==='bg') }
+// la ficha precarga el video de la canción (o suelta el de otra)
+function ytWarm(s){ if(inArtifact||PL.running) return; const m=s&&s.media||{}, id=m.src==='yt'&&ytId(m.url); if(id) ytEnsure(id); else if(YTP.id) ytKill() }
+function ytLook(m){ const b=$('#ytWin'); b.style.setProperty('--ytblur',(m.blur!=null?m.blur:14)+'px'); b.style.setProperty('--ytdim',String((m.dim!=null?m.dim:55)/100)) }
+function ytMedia(id,start,view,med){
+  ytEnsure(id); ytLook(med||{}); const mode=view==='bg'?'bg':'window'; ytMode(mode);
+  const M={kind:'yt',view:mode,rates:null,pending:null,timer:null,focus:false,
+    get ready(){ return YTP.ready&&YTP.id===id }, get p(){ return YTP.p },
     playing(){ return this.ready&&this.p.getPlayerState&&this.p.getPlayerState()===1 },
     time(){ if(!this.ready) return null; const v=this.p.getCurrentTime(); return v-start },
     expect:false,expectAt:0,first:true,lastMt:null,lastMove:0,
     code(){ try{ return this.ready?this.p.getPlayerState():-9 }catch(e){ return -9 } },
     seekOnly(songT){ if(this.ready){ this.p.seekTo(Math.max(0,start+songT),true); this.p.playVideo() } },
     play(songT,rate){ const now=performance.now(), t0=start+songT; this.expect=true; this.expectAt=now+(t0<0?-t0/rate*1000:0)+(this.first?2500:700); this.first=false; this.lastMt=null; this.lastMove=now;
-      const go=()=>{ clearTimeout(this.timer); const target=start+songT;
+      const go=()=>{ clearTimeout(this.timer); const target=start+songT; if(!this.tried) this.tried=performance.now();
         try{ this.p.setPlaybackRate(rate) }catch(e){}
         if(target<0){ this.p.seekTo(0,true); this.p.playVideo(); this.p.pauseVideo(); this.timer=setTimeout(()=>{ this.p.seekTo(0,true); this.p.playVideo() },-target/rate*1000) }
         else { this.p.seekTo(target,true); this.p.playVideo() } };
-      if(this.ready) go(); else this.pending=go },
+      if(this.ready) go(); else { this.pending=go; YTP.wait.push(()=>{ if(this.pending===go&&PL.media===this){ this.pending=null; go() } }) } },
     pause(){ this.expect=false; this.pausedAt=performance.now(); clearTimeout(this.timer); if(this.ready) this.p.pauseVideo(); else this.pending=null },
     setRate(r){ if(this.ready) try{ this.p.setPlaybackRate(r) }catch(e){} },
-    destroy(){ clearTimeout(this.timer); try{ this.p&&this.p.destroy() }catch(e){} $('#ytBg').innerHTML=''; $('#ytWin').innerHTML=''; $('#ytBg').classList.remove('on'); $('#ytWin').classList.remove('on') }};
-  loadYT().then(()=>{ M.p=new YT.Player('ytHost',{videoId:id,width:'100%',height:'100%',playerVars:{playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3},
-    events:{onReady:()=>{ M.ready=true; try{ M.rates=M.p.getAvailablePlaybackRates() }catch(e){} if(M.pending){ M.pending(); M.pending=null } },
-            onError:e=>{ $('#pMsg').textContent='YouTube no pudo reproducir este video (puede estar bloqueado para insertar en otras páginas). Sigue sin pista.'; M.destroy(); if(PL.media===M) PL.media=null }}}) })
-  .catch(()=>{ $('#pMsg').textContent=inArtifact?'YouTube no funciona dentro de claude.ai. Usa la app instalada.':'No pude cargar YouTube. Revisa tu conexión.'; if(PL.media===M) PL.media=null });
+    // al frente para ver/omitir el anuncio o tocar ▶; why: 'tap' | 'ad' | 'load'
+    setFocus(on,why){ if(on===this.focus&&(!on||why===this.why)) return; this.focus=on; this.why=why; ytMode(on?'focus':this.view);
+      const ui=$('#ytUi'); if(!ui) return; ui.innerHTML=''; if(!on) return;
+      ui.append(h('b',{text:why==='tap'?'Toca ▶ en el video para empezar':why==='load'?'Cargando el video…':'¿Anuncio? Puedes mirarlo o tocar «Omitir» en el video'}),
+        h('span',{text:'La canción sigue sola cuando vuelva el video.'}),
+        h('button',{class:'btn sm ghost',onclick:()=>{ ytNoVideo() }},'Seguir sin video')) },
+    destroy(){ clearTimeout(this.timer); this.expect=false; try{ this.ready&&this.p.pauseVideo() }catch(e){} YTP.onErr=null; ytMode('') }};
+  YTP.onErr=e=>{ $('#pMsg').textContent=e&&e.load?(inArtifact?'YouTube no funciona dentro de claude.ai. Usa la app instalada.':'No pude cargar YouTube. Revisa tu conexión.'):'YouTube no pudo reproducir este video (puede estar bloqueado para insertar en otras páginas). Sigue sin pista.'; if(PL.media===M){ M.destroy(); PL.media=null; PL.stall=null; $('#pStall').hidden=true } };
+  if(YTP.fail) setTimeout(()=>YTP.onErr&&YTP.onErr({load:true}),0);
   return M;
 }
+// «Seguir sin video»: la canción sigue con el reloj propio desde donde quedó
+function ytNoVideo(){ const M=PL.media; if(!M) return; M.destroy(); PL.media=null; if(PL.stall){ PL.base=PL.stall.t; PL.t0=performance.now(); PL.stall=null } $('#pStall').hidden=true; feed('Sigo sin video','good') }
 
 /* Spotify: Web Playback SDK con tu propia app (PKCE). Requiere Premium. */
 const SPC={get(){ return S.get('spotify',{}) },set(v){ S.set('spotify',v) }};
@@ -3918,7 +3964,7 @@ function spMedia(track,start){
 }
 function mediaFor(s,speed,cfg){
   const m=s.media||{};
-  if(m.src==='yt'){ const id=ytId(m.url); if(!id) return null; return ytMedia(id,parseTime(m.start),m.view||'window') }
+  if(m.src==='yt'){ const id=ytId(m.url); if(!id) return null; return ytMedia(id,parseTime(m.start),m.view||'window',m) }
   if(m.src==='sp'){ const tr=spTrack(m.url); if(!tr) return null; if(Math.abs(speed-1)>.01){ $('#pMsg').textContent='Spotify no permite cambiar la velocidad: a este ritmo se toca sin pista.'; return null } return spMedia(tr,parseTime(m.start)) }
   return null;
 }
@@ -3931,7 +3977,12 @@ function renderMediaCfg(s,save){
   $('#sYtUrl').value=m.src==='yt'?(m.url||''):''; $('#sYtStart').value=m.start?showTime(parseTime(m.start)):'';
   $('#sYtUrl').onchange=e=>{ m.url=e.target.value.trim(); save(); renderSongDetail() };
   $('#sYtStart').onchange=e=>{ m.start=showTime(parseTime(e.target.value)); save() };
-  document.querySelectorAll('input[name=sYtView]').forEach(r=>{ r.checked=r.value===(m.view||'window'); r.onchange=()=>{ m.view=r.value; save() } });
+  document.querySelectorAll('input[name=sYtView]').forEach(r=>{ r.checked=r.value===(m.view||'window'); r.onchange=()=>{ m.view=r.value; save(); $('#sYtBgOpts').hidden=m.view!=='bg' } });
+  // fondo: desenfoque (hasta 0) y oscuridad
+  $('#sYtBgOpts').hidden=(m.view||'window')!=='bg';
+  const bl=$('#sYtBlur'), dm=$('#sYtDim'), shw=()=>{ $('#sYtBlurV').textContent=bl.value==='0'?'nada':bl.value+' px'; $('#sYtDimV').textContent=dm.value+'%' };
+  bl.value=m.blur!=null?m.blur:14; dm.value=m.dim!=null?m.dim:55; shw();
+  bl.oninput=dm.oninput=()=>{ m.blur=+bl.value; m.dim=+dm.value; shw(); ytLook(m) }; bl.onchange=dm.onchange=()=>save();
   $('#sSpUrl').value=m.src==='sp'?(m.url||''):''; $('#sSpStart').value=m.start?showTime(parseTime(m.start)):'';
   $('#sSpUrl').onchange=e=>{ m.url=e.target.value.trim(); save(); renderSongDetail() };
   $('#sSpStart').onchange=e=>{ m.start=showTime(parseTime(e.target.value)); save() };
@@ -3971,6 +4022,10 @@ function mediaWatch(now){
   if(code===0){ M.ended=true; M.expect=false; PL.stall=null; $('#pStall').hidden=true; feed('El video terminó; sigo sin pista','good'); PL.base=PL.t; PL.t0=now; return }
   // reanudaste el video desde el propio video mientras la app estaba en pausa
   if(!M.expect){ if(code===1&&PL.paused&&!PL.rsWaiting&&!PL.edit&&now-(M.pausedAt||0)>900&&now-M.lastMove<300&&mt!=null){ PL.paused=false; M.expect=true; M.expectAt=now; PL.base=mt; PL.t0=now; $('#pPause').textContent='Pausa'; feed('Seguimos con el video','good') } return }
+  // iOS bloqueó el autoplay: a ~1 s de darle play sigue sin iniciar → al frente para tocar ▶ (también durante el conteo)
+  if(code===1||code===3) M.everPlayed=true;
+  if(M.setFocus&&!PL.stall){ if(!M.focus&&M.tried&&!M.everPlayed&&now-M.tried>900&&(code===-1||code===5)) M.setFocus(true,'tap');
+    else if(M.focus&&M.why==='tap'&&M.everPlayed) M.setFocus(false) }
   if(PL.paused||PL.hold||now<M.expectAt) return;
   const moving=code===1&&now-M.lastMove<650;
   if(!PL.stall){
@@ -3981,8 +4036,10 @@ function mediaWatch(now){
   const box=$('#pStall');
   if(moving){
     if(Math.abs(mt-PL.stall.t)>1.5&&!PL.stall.reseek){ PL.stall.reseek=true; M.seekOnly(PL.stall.t); M.lastMove=now-700; return }   // tras un anuncio el video puede volver a otra parte
-    PL.base=mt; PL.t0=now; PL.stall=null; box.hidden=true; feed('Seguimos','good'); return }
-  if(now-PL.stall.since>400){ box.hidden=false; box.textContent=code===3||code===-9?'Cargando el video…':code===-1||code===5?'Esperando el video (¿anuncio?)…':'El video se detuvo (¿anuncio?)…' }
+    PL.base=mt; PL.t0=now; PL.stall=null; box.hidden=true; if(M.setFocus) M.setFocus(false); feed('Seguimos','good'); return }
+  if(now-PL.stall.since>400){ box.hidden=false; box.textContent=code===3||code===-9?'Cargando el video…':code===-1||code===5?'Esperando el video (¿anuncio?)…':'El video se detuvo (¿anuncio?)…';
+    // el video pasa al frente: sin arrancar → tocar ▶; quieto «sonando» (así se ve un anuncio) → mirarlo u omitirlo; la carga larga también
+    if(M.setFocus){ const why=code===-1||code===5||code===2?'tap':code===1?'ad':'load'; if(why!=='load'||now-PL.stall.since>3000) M.setFocus(true,why) } }
   if((code===-1||code===5||code===2)&&now-(PL.stall.nudge||PL.stall.since)>2500){ PL.stall.nudge=now; try{ M.p&&M.p.playVideo() }catch(e){} }
 }
 
