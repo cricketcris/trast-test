@@ -396,7 +396,7 @@ html[data-style="country"] .flash b{font-family:var(--display)}
 .iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--fg);border:1px solid var(--line);background:var(--surface)}
 .iconbtn svg{width:22px;height:22px}
 body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-.dock{position:fixed;left:0;right:0;bottom:0;z-index:8;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:8;transform:translateZ(0);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
   padding:6px max(10px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-right,0px));
   background:color-mix(in oklab,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 .dockbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:12px;color:var(--muted);text-decoration:none;font-size:.7rem;font-weight:600;letter-spacing:.02em}
@@ -770,6 +770,19 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
 .ptl-loop{border:2px solid var(--accent);border-radius:10px;box-sizing:border-box}
 .player.practice:not(.editing) .hw{cursor:grab} .player.practice:not(.editing) .hw.grabbing{cursor:grabbing}
 #pWaitT[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:color-mix(in oklab,var(--accent) 14%,transparent)}
+/* interruptor con ícono (anti-colapso): chico; apagado = tachado y apagado */
+.controls .btn.icon{min-width:44px;padding-inline:10px;font-size:1.15rem;line-height:1}
+.controls #pRescue[aria-pressed="false"]{opacity:.55;text-decoration:line-through;filter:grayscale(1)}
+/* botones con ícono + texto: en el teléfono se ve el texto; en horizontal (iPad, notebook) solo el ícono, salvo al confirmar */
+.controls .btn .ico{display:none}
+@media (orientation:landscape) and (max-height:620px), (orientation:landscape) and (min-width:1000px) and (min-height:480px){
+  .controls #pReset .ico,.controls #pListen .ico{display:inline}
+  .controls #pReset:not([data-sure]) .lbl,.controls #pListen .lbl{display:none}
+  .controls #pReset,.controls #pListen{min-width:44px;padding-inline:10px}
+  .controls #pReset[data-sure]{background:var(--warn,#c80);color:#fff}
+  .controls #pReset[data-sure] .ico{display:none}
+}
+.sloop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0}
 
 /* ---------- diagnóstico: panel en vivo, botones de reporte, Ajustes → Diagnóstico y laboratorio ---------- */
 .btn.sm{padding:6px 10px;font-size:13px;min-height:0}
@@ -1277,6 +1290,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
         <fieldset><legend class="lab">Secciones</legend>
           <div class="secchips" id="sSecs"></div>
           <div class="toolbar" style="margin-top:8px"><button class="btn ghost" id="sSecAll">Todas</button></div>
+          <p class="hint sloop" id="sLoopInfo" hidden></p>
         </fieldset>
         <fieldset id="sPracOpts"><legend class="lab">Práctica</legend>
           <div class="speedrow"><label for="sSpeed">Velocidad</label><input type="range" id="sSpeed" min="40" max="125" step="5"><b id="sSpeedV" class="mono">100%</b></div>
@@ -1370,7 +1384,7 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
         <div class="toolbar" id="sDangerZone"></div>
       </div>
     </div>
-    <div class="startrow"><button class="btn primary big" id="sPlay">Tocar</button><button class="btn big" id="sEdit">Editar</button><span class="hint" id="sPlayHint" style="margin:0"></span></div>
+    <div class="startrow"><button class="btn primary big" id="sPlay">Tocar</button><button class="btn big" id="sListen" title="La app toca la canción para que oigas cómo suena">▶ Escuchar</button><button class="btn big" id="sEdit">Editar</button><span class="hint" id="sPlayHint" style="margin:0"></span></div>
   </section>
 
   <!-- REPRODUCTOR -->
@@ -1399,9 +1413,11 @@ html[data-style=country] .pamb b{font-family:var(--display);color:hsl(var(--h) 8
     <p class="hint" id="pMsg" style="text-align:center"></p>
     <div class="controls">
       <button class="btn" id="pRestart">Reiniciar</button>
-      <button class="btn ghost" id="pReset">Resetear</button>
+      <button class="btn ghost" id="pReset" title="Restablecer: borra el tramo guardado y vuelve a la canción completa al 100%"><span class="ico" aria-hidden="true">↔</span><span class="lbl">Restablecer</span></button>
       <button class="btn primary" id="pPause">Pausa</button>
       <button class="btn toggle" id="pWaitT" aria-pressed="false" hidden title="Nota por nota (N): la canción se detiene hasta que toques lo que viene">Nota a nota</button>
+      <button class="btn toggle" id="pListen" aria-pressed="false" hidden title="Escuchar (L): la app toca la canción y no te juzga"><span class="ico" aria-hidden="true">🎧</span><span class="lbl">Escuchar</span></button>
+      <button class="btn toggle icon" id="pRescue" aria-pressed="true" hidden title="Anti-colapso: si te pierdes, vuelve un poco y espera">🛟</button>
       <button class="btn" id="pSkipNote" hidden title="Saltar lo que está esperando">Saltar</button>
       <button class="btn" id="pEdit">Editar</button>
       <button class="btn ghost" id="pStop">Terminar</button>
@@ -1542,7 +1558,7 @@ const Ear=(()=>{
 /* EAR-END */
 </script>
 <script>
-const BUILD="2026-11-24 02:11 · 1dca23e";
+const BUILD="2026-11-24 03:27 · e1cfdf5";
 (()=>{
 'use strict';
 const NOTE=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
@@ -1712,6 +1728,15 @@ function showView(v){
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){location.hash=g.dataset.goto}});
 window.addEventListener('hashchange',()=>showView(location.hash.slice(1)));
+/* iOS (app instalada en iPad/iPhone): al cerrarse el teclado, al rotar o al volver a la app, Safari a veces deja los
+   elementos fijos (barra inferior, fondo) ubicados según el alto viejo de la pantalla: la barra queda flotando a media
+   página. Un desplazamiento mínimo lo obliga a recalcularlos. */
+(()=>{ let t=0; const fix=()=>{ clearTimeout(t); t=setTimeout(()=>{ const x=scrollX, y=scrollY; scrollTo(x,y+1); scrollTo(x,y);
+    document.documentElement.style.setProperty('--app-h',innerHeight+'px') },150) };
+  addEventListener('orientationchange',fix); addEventListener('resize',fix); addEventListener('pageshow',fix); addEventListener('hashchange',fix);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) fix() });
+  document.addEventListener('focusout',e=>{ if(e.target&&e.target.matches&&e.target.matches('input,textarea,select')) fix() });
+  if(window.visualViewport) visualViewport.addEventListener('resize',fix); fix() })();
 
 /* ---------- configuración ---------- */
 const ORDER_HINT={random:'Al azar y sin fin, sin repetir el mismo acorde dos veces seguidas.',rotation:'Baraja el mazo y pasa por todas las cartas antes de volver a barajar.',sequence:'Sigue el orden del mazo y vuelve a empezar. Sirve para ensayar la progresión de una canción.'};
@@ -3026,6 +3051,12 @@ function renderSongDetail(){
   tl.sections.forEach((x,i)=>{ const on=cfg.sel.includes(i); sc.append(h('button',{class:'secchip','aria-pressed':String(on),onclick:()=>{ if(on){ if(cfg.sel.length>1) cfg.sel=cfg.sel.filter(k=>k!==i) } else cfg.sel=[...cfg.sel,i].sort((a,b)=>a-b); cfg.loopA=cfg.loopB=null; save(); renderSongDetail() }},
     h('b',{text:x.name}),h('span',{text:fmtClock((x.end-x.start)*1000)}))) });
   $('#sSecAll').onclick=()=>{ cfg.sel=tl.sections.map((x,i)=>i); cfg.loopA=cfg.loopB=null; save(); renderSongDetail() };
+  // tramo guardado en Práctica (lo que cortaste con los corchetes la última vez): se ve aquí y se restablece aquí
+  const li=$('#sLoopInfo'), hasLoop=cfg.mode==='practice'&&(cfg.loopA!=null||cfg.loopB!=null); li.hidden=!hasLoop; li.innerHTML='';
+  if(hasLoop){ const a=cfg.loopA!=null?cfg.loopA:0, b=cfg.loopB!=null?cfg.loopB:tl.len, secAt=t=>(tl.sections.find(x=>t>=x.start-1e-3&&t<x.end-1e-3)||tl.sections[tl.sections.length-1]||{}).name||'';
+    const sa=secAt(a), sb=secAt(Math.max(a,b-1e-3));
+    li.append(h('span',{},'Tramo guardado: ',h('b',{class:'mono',text:`${fmtClock(a*1000)} – ${fmtClock(b*1000)}`}),sa?` (${sa===sb?sa:sa+' → '+sb})`:''),
+      h('button',{class:'btn sm ghost',onclick:()=>{ cfg.loopA=cfg.loopB=null; save(); toast('Tramo restablecido: la canción completa'); renderSongDetail() }},'Restablecer')) }
   $('#sSpeed').value=cfg.speed; $('#sSpeedV').textContent=cfg.speed+'%';
   $('#sSpeed').oninput=e=>{ cfg.speed=+e.target.value; $('#sSpeedV').textContent=cfg.speed+'%' }; $('#sSpeed').onchange=save;
   const q=$('#sSpeedQuick'); q.innerHTML=''; [50,75,90,100].forEach(v=>q.append(h('label',{},h('input',{type:'radio',name:'sSpQ',checked:cfg.speed===v?true:null,onchange:()=>{cfg.speed=v;save();renderSongDetail()}}),h('span',{text:v+'%'}))));
@@ -3056,6 +3087,7 @@ function renderSongDetail(){
   if(!s.demo&&!s.flLive){ const del=h('span',{}); const ask=()=>{ del.innerHTML=''; del.append(h('span',{class:'confirm'},s.fl?'¿Borrar esta copia? (en Fretline no se borra)':'¿Borrar esta canción?',h('button',{class:'btn danger',onclick:()=>{ songs=songs.filter(x=>x.id!==s.id); saveSongs(); if(s.fl){ const q=flPaused(); q[s.fl.id]={at:Date.now(),title:s.title,hidden:true}; setFlPaused(q) } location.hash='canciones' }},'Borrar'),h('button',{class:'btn ghost',onclick:renderSongDetail},'No'))) };
     del.append(h('button',{class:'btn ghost danger',onclick:ask},'Borrar canción')); dz.append(del) }
   $('#sPlay').onclick=()=>startPlayer(s);
+  $('#sListen').onclick=()=>startPlayer(s,{listen:true});
   $('#sEdit').onclick=()=>startEditor(s,0);
   dz.prepend(h('button',{class:'btn ghost',onclick:()=>copyText(rawToText(s),'Texto copiado: pégalo en Fretline')},'Copiar texto para Fretline'));
   if(s.raw0) dz.prepend(h('button',{class:'btn ghost',onclick:()=>{ s.raw=s.raw0; delete s.raw0; s.edited=s.demo?false:true; if(s.demo){ const m=S.get('songmeta',{}); if(m[s.id]){ delete m[s.id].raw; delete m[s.id].raw0; delete m[s.id].edited; S.set('songmeta',m) } } else saveSongMeta(s); toast('Volviste a la versión importada'); renderSongDetail() }},'Deshacer todas las ediciones'));
@@ -3102,10 +3134,11 @@ function plLoad(tl){
 }
 function startPlayer(s,opts={}){
   const tl=buildSong(s), cfg=playCfg(s); if(!cfg.sel||!cfg.sel.length||cfg.sel.some(i=>i>=tl.sections.length)) cfg.sel=tl.sections.map((x,i)=>i);
-  const mode=cfg.mode, speed=mode==='test'?1:cfg.speed/100;
+  // «Escuchar» desde la ficha: la app la toca en modo Práctica (con su velocidad y bucle), sin micrófono ni puntaje
+  const listen=!!opts.listen, mode=listen?'practice':cfg.mode, speed=mode==='test'?1:cfg.speed/100;
   Object.assign(PL,{running:true,paused:false,hold:false,song:s,tl,cfg,mode,speed,k:0,
     score:0,shown:0,combo:0,maxCombo:0,passes:0,started:performance.now(),sm:new Float32Array(12),bv:new Float32Array(12),pct:null,media:null,pitches:[],dts:[],
-    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0,progUps:0,speed0:speed,ambSec:null,ambSeen:{}});
+    fx:[],rings:[],shake:0,lane:new Float32Array(6),hitGlow:0,missGlow:0,lastMult:1,ear:null,ticks:[],cats:{},edit:false,recent:[],rescues:0,progUps:0,speed0:speed,ambSec:null,ambSeen:{},listen,listenOnly:listen,lastL:null,voices:[]});
   plColors(); plLoad(tl);
   PL.segs=buildSegs();
   location.hash='tocar';
@@ -3113,10 +3146,11 @@ function startPlayer(s,opts={}){
   const v=$('#v-tocar'); v.classList.remove('done','editing'); v.classList.toggle('practice',mode==='practice');
   $('#pResults').hidden=true; $('#pTitle').textContent=s.title; $('#pMode').textContent=mode==='test'?'Prueba':(cfg.wait?'Nota por nota':'Práctica');
   $('#pSpeedBox').hidden=mode!=='practice'; $('#pSpeed').value=Math.round(speed*100); $('#pSpeedV').textContent=Math.round(speed*100)+'%';
-  $('#pReset').hidden=mode!=='practice'; waitBtn();
+  $('#pReset').hidden=mode!=='practice'; waitBtn(); listenBtn(); rescueBtn();
   $('#pPause').textContent='Pausa'; $('#pMsg').textContent=''; $('#pWait').hidden=true;
   ctx();
-  micStart().then(()=>{ PL.mic=true; startLoop() }).catch(e=>{ PL.mic=false; micBlocked=micReason(e); $('#pMsg').textContent='Sin micrófono: la canción avanza igual, pero no puedo puntuar. '+(micBlocked==='frame'?'Ábrela desde la app instalada.':'') });
+  // escuchando no se abre el micrófono: en iPhone/iPad, con el micrófono abierto el parlante suena más bajo
+  if(listen) PL.mic=false; else plMicStart();
   PL.media=mediaFor(s,speed,cfg);   // arranca dentro de este toque (iOS lo exige)
   const from=opts.from!=null&&inSegs(opts.from)?opts.from:PL.segs[0].a;
   seek(from,4,cfg.delay||0);
@@ -3125,6 +3159,7 @@ function startPlayer(s,opts={}){
   try{ navigator.wakeLock?.request('screen').then(w=>PL.wake=w).catch(()=>{}) }catch(e){}
 }
 /* reloj y saltos: el video manda si está sonando; si no, el reloj del navegador */
+function plMicStart(){ micStart().then(()=>{ PL.mic=true; startLoop() }).catch(e=>{ PL.mic=false; micBlocked=micReason(e); $('#pMsg').textContent='Sin micrófono: la canción avanza igual, pero no puedo puntuar. '+(micBlocked==='frame'?'Ábrela desde la app instalada.':'') }) }
 function songTime(){
   if(PL.paused) return PL.pausedAt;
   if(PL.hold) return PL.holdT;
@@ -3139,7 +3174,7 @@ function seek(t,preBeats,delay=0){
   if(PL.confirm){ PL.confirm=null; $('#pCnt').classList.remove('confirm') }
   PL.stall=null; $('#pStall').hidden=true;
   PL.jumped=true; clearTimeout(PL.rsT); if(PL.rsWaiting){ PL.rsWaiting=false; PL.paused=false; $('#pPause').textContent='Pausa' }
-  PL.countEnd=t; PL.base=t-preBeats*beatSec()-delay*PL.speed; PL.t0=performance.now(); PL.hold=false; $('#pWait').hidden=true;
+  PL.lastL=null; PL.countEnd=t; PL.base=t-preBeats*beatSec()-delay*PL.speed; PL.t0=performance.now(); PL.hold=false; $('#pWait').hidden=true;
   PL.k=Math.max(0,PL.segs.findIndex(g=>t<g.b));
   if(PL.media) PL.media.play(PL.base,PL.speed);
   if(preBeats) scheduleCount(preBeats,delay);
@@ -3164,7 +3199,7 @@ function playerLoop(){
   if(PL.media) mediaWatch(performance.now());
   let t=songTime();
   // nota por nota: la canción se detiene en lo próximo que falta tocar
-  if(PL.mode==='practice'&&PL.cfg.wait&&!PL.paused&&!PL.hold&&t>=PL.countEnd){
+  if(PL.mode==='practice'&&PL.cfg.wait&&!PL.listen&&!PL.paused&&!PL.hold&&t>=PL.countEnd){
     const ev=nextPending(t-.02); if(ev&&ev.time<=t){ PL.hold=true; ev.obj.late=1; PL.notes.forEach(x=>{ if(x.st===0&&Math.abs(x.t-ev.time)<.02) x.late=1 }); PL.holdT=ev.time; PL.holdEv=ev.obj; PL.holdSince=performance.now(); if(PL.media) PL.media.pause(); $('#pWait').hidden=false; t=PL.holdT }
   }
   PL.t=t;
@@ -3177,9 +3212,10 @@ function playerLoop(){
   // tras un salto (vuelta, sección), el resto de este cuadro usaría el tiempo viejo: se juzgaría todo como fallo
   if(PL.jumped){ const nt=songTime(); drawHighway(nt); playerHud(nt); updateTimeline(nt); return }
   if(PL.cfg.click&&!PL.paused&&!PL.hold&&t>=PL.countEnd){ const bi=Math.floor((t+1e-6)/beatSec()); if(bi!==PL.lastBeat){ PL.lastBeat=bi; PL.beatPulse=1; const a=ctx(); if(a) click(a.currentTime+.01,bi%4===0) } }
+  if(PL.listen) listenFrame(t);
   // fallos (en nota por nota no hay: la canción espera)
   // ni en pausa (mientras arrastras la autopista el tiempo se mueve, pero no estás tocando) ni esperando al anti-colapso
-  if(!(PL.mode==='practice'&&PL.cfg.wait)&&!PL.paused&&!PL.rsWaiting){
+  if(!(PL.mode==='practice'&&PL.cfg.wait)&&!PL.listen&&!PL.paused&&!PL.rsWaiting){
     const lateN=lagT()+winL()+.04;
     for(const n of PL.notes){ if(PL.jumped) break; if(n.st===0&&inSegs(n.t)&&t>n.t+lateN){ n.st=-1; if(DBG.on) DBG.ev('miss',{m:n.m,t:rnd2(n.t)}); miss(n.s); track(n.t,false) } }
     for(const b of PL.blocks){ if(PL.jumped) break; if(b.st===0&&inSegs(b.t0)&&t>b.t1+.2){ b.st=-1; if(DBG.on) DBG.ev('miss',{chord:b.chords.map(c=>c.name).join('/'),best:Math.round(b.best),t:rnd2(b.t0)}); miss(-1); track(b.t0,false) } }
@@ -3261,6 +3297,7 @@ function feed(txt,cls){ const f=$('#pFeed'); const el=h('span',{class:'fd '+cls,
 function banner(txt){ const b=$('#pBanner'); b.textContent=txt; b.hidden=false; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); clearTimeout(banner.t); banner.t=setTimeout(()=>b.hidden=true,1100) }
 /* audio: notas sueltas por tono, acordes por croma */
 function playerAudio(o,now){
+  if(PL.listen) return;   // escuchando: lo que oye el micrófono es la propia app
   if(PL.confirm&&PL.mic){ const ev=PL.confirm.ev;
     for(let i=0;i<12;i++){ PL.sm[i]=o.live?PL.sm[i]*.55+o.ch[i]*.45:PL.sm[i]*.85; PL.bv[i]=o.live?PL.bv[i]*.6+(o.bass===i?.4:0):PL.bv[i]*.85 }
     if(ev.chords){ const thr=(Ear.SENS[st.sens]||Ear.SENS.normal).thr-4; let best=0; for(const c of ev.cands){ const sc=Ear.score(PL.sm,c,PL.bv); if(sc.missing.length===0||(sc.n>=5&&sc.missing.length<=1)) best=Math.max(best,sc.pct) }
@@ -3458,7 +3495,7 @@ function playerHud(t){
   $('#pNow').textContent=cur?cur.chords.map(c=>c.name).join(' / '):(nn2.length&&nn2[0].t-t<1.2?'Riff':'–');
   $('#pNext').textContent=nxt&&(!nn2.length||nxt.t0<nn2[0].t)?nxt.chords.map(c=>c.name).join(' / '):nn2.map(n=>`${'EADGBe'[n.s]}${n.f}${n.tech}`).join(' ')||'–';
   chordCard(t);
-  $('#pEar').textContent=PL.ear!=null?midiName(PL.ear):(PL.mic?'…':'sin mic');
+  $('#pEar').textContent=PL.ear!=null?midiName(PL.ear):(PL.listen?'la app toca':PL.mic?'…':'sin mic');
   $('#pPct').textContent=PL.pct!=null?PL.pct+'%':'';
   document.getElementById('hwrap').classList.toggle('fire',PL.combo>=20);
 }
@@ -3606,9 +3643,15 @@ $('#pRestart').addEventListener('click',()=>{ if(!PL.running){ if(PL.song) start
   if(PL.mode==='practice'){ resetMarks(); PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,PL.cfg.wait?1:4,PL.cfg.delay||0); banner('Desde el inicio del loop · vuelta '+(PL.passes+1)) }
   else { const s=PL.song; stopPlayer(); startPlayer(getSong(s.id)) } });
 $('#pReset').addEventListener('click',()=>{ if(!PL.running||PL.mode!=='practice') return;
+  // se confirma con un segundo toque: está al lado de Reiniciar y borraba sin querer el tramo guardado
+  const btn=$('#pReset'), lbl=btn.querySelector('.lbl'); if(!btn.dataset.sure){ btn.dataset.sure='1'; lbl.textContent='¿Restablecer? Toca otra vez'; clearTimeout(btn._t); btn._t=setTimeout(()=>{ delete btn.dataset.sure; lbl.textContent='Restablecer' },3000); return }
+  delete btn.dataset.sure; clearTimeout(btn._t); lbl.textContent='Restablecer';
   const cfg=PL.cfg; cfg.loopA=null; cfg.loopB=null; cfg.sel=PL.tl.sections.map((x,i)=>i); cfg.speed=100; PL.song.play=cfg; saveSongMeta(PL.song);
   PL.speed=1; if(PL.media) PL.media.setRate(1); $('#pSpeed').value=100; $('#pSpeedV').textContent='100%';
   PL.segs=buildSegs(); resetMarks(); PL.passes=0; PL.paused=false; $('#pPause').textContent='Pausa'; seek(PL.segs[0].a,4); banner('Canción completa al 100%') });
+/* anti-colapso: interruptor chico en el reproductor (Práctica); se guarda en la canción como la casilla de la ficha */
+function rescueBtn(){ const b=$('#pRescue'); if(!b) return; b.hidden=PL.mode!=='practice'; const on=!!PL.cfg.rescue; b.setAttribute('aria-pressed',String(on)); b.title=on?'Anti-colapso activado: si te pierdes, vuelve un poco y espera (toca para apagarlo)':'Anti-colapso apagado (toca para activarlo)' }
+$('#pRescue').addEventListener('click',()=>{ if(!PL.running||PL.mode!=='practice') return; PL.cfg.rescue=!PL.cfg.rescue; PL.song.play=PL.cfg; saveSongMeta(PL.song); PL.recent=[]; rescueBtn(); feed(PL.cfg.rescue?'Anti-colapso activado':'Anti-colapso apagado','good') });
 function skipHold(){ if(!PL.hold) return; const e=PL.holdEv; if(e) e.st=-1; PL.notes.forEach(x=>{ if(Math.abs(x.t-PL.holdT)<.02&&(x.st===0||x.tent)){ x.st=-1; x.tent=false } }); PL.combo=0; if(DBG.on) DBG.ev('skip',{t:rnd2(PL.holdT)}); release() }
 $('#pSkipNote').addEventListener('click',skipHold);
 // activar o apagar Nota por nota sin salir de la canción (solo en Práctica)
@@ -3617,13 +3660,31 @@ function toggleWait(){ if(PL.mode!=='practice'||PL.edit) return; const on=!PL.cf
   if(!on){ PL.notes.forEach(x=>{ if(x.tent){ x.tent=false; x.st=0 } }); if(PL.hold) release() }
   PL.recent=[]; waitBtn(); feed(on?'Nota por nota: la canción te espera':'Nota por nota apagado','good') }
 $('#pWaitT').addEventListener('click',toggleWait);
+/* «Escuchar»: la app toca la canción (guitarra sintetizada, Karplus-Strong) al pasar por la línea de golpe, a la velocidad
+   elegida y respetando el bucle. No juzga: lo que pasa escuchando queda como fantasma (no cuenta) y no hay fallos.
+   Cada cuerda tiene una sola voz: al volver a tocarla se apaga lo que sonaba en ella, como en una guitarra. */
+function listenPluck(s,m,at){ const a=ctx(); if(!a) return; const V=PL.voices||(PL.voices=[]), old=V[s];
+  if(old){ try{ old.g.gain.setTargetAtTime(0,at,.015); old.src.stop(at+.12) }catch(e){} }
+  const g=a.createGain(); g.gain.value=.3; g.connect(a.destination); const src=a.createBufferSource(); src.buffer=ksBuffer(midiHz(m)); src.connect(g); src.start(at); V[s]={g,src} }
+function listenFrame(t){ if(PL.paused||PL.hold||PL.stall||t<PL.countEnd-1e-3){ PL.lastL=t; return }
+  const t0=PL.lastL; PL.lastL=t; if(t0==null||t<=t0||t-t0>.5) return; const a=ctx(); if(!a) return; const now=a.currentTime+.01, TU=PL.tune||OPEN;
+  for(const n of PL.notes) if(n.t>t0&&n.t<=t&&inSegs(n.t)){ listenPluck(n.s,n.m,now); if(n.st===0) n.st=2; PL.lane[n.s]=1; PL.hitGlow=Math.max(PL.hitGlow,.6) }
+  for(const r of PL.strums) if(r.t>t0&&r.t<=t&&inSegs(r.t)){ const ss=[0,1,2,3,4,5].filter(s=>r.frets[s]>=0); if(r.dir==='u') ss.reverse();
+    ss.forEach((s,i)=>{ listenPluck(s,TU[s]+r.frets[s],now+i*.018); PL.lane[s]=Math.max(PL.lane[s],.7) }) }
+  for(const b of PL.blocks) if(b.st===0&&b.t0<=t&&inSegs(b.t0)) b.st=2 }
+function listenBtn(){ const b=$('#pListen'); if(!b) return; b.hidden=PL.mode!=='practice'; b.setAttribute('aria-pressed',String(!!PL.listen)); b.querySelector('.lbl').textContent=PL.listen?'Escuchando ✓':'Escuchar' }
+function toggleListen(){ if(PL.mode!=='practice'||PL.edit) return; PL.listen=!PL.listen; PL.lastL=null;
+  if(PL.listen){ if(PL.hold) release(); PL.notes.forEach(x=>{ if(x.tent){ x.tent=false; x.st=0 } }) }
+  else { PL.listenOnly=false; (PL.voices||[]).forEach(v=>{ try{ v&&v.g.gain.setTargetAtTime(0,ctx().currentTime,.03) }catch(e){} }); if(!PL.mic) plMicStart() }
+  PL.recent=[]; listenBtn(); feed(PL.listen?'Escuchando: la app la toca por ti':'Ahora tú: vuelvo a escucharte','good') }
+$('#pListen').addEventListener('click',toggleListen);
 $('#pStop').addEventListener('click',()=>{ if(PL.running) finishPlayer() });
 $('#pExit').addEventListener('click',()=>{ stopPlayer(); openSong(PL.song?PL.song.id:curSongId) });
 $('#pSpeed').addEventListener('input',e=>{ if(!PL.running||PL.mode!=='practice') return; const v=+e.target.value/100, t=songTime();
   let sp=v; if(PL.media&&PL.media.rates){ sp=PL.media.rates.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a,1) }
   PL.speed=sp; PL.cfg.speed=Math.round(sp*100); PL.base=t; PL.t0=performance.now(); if(PL.media) PL.media.setRate(sp); $('#pSpeedV').textContent=Math.round(sp*100)+'%' });
 $('#pSpeed').addEventListener('change',()=>{ if(PL.running){ PL.song.play=PL.cfg; saveSongMeta(PL.song) } });
-function stopPlayer(){ PL.running=false; PL.confirm=null; PL.stall=null; $('#pStall').hidden=true; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
+function stopPlayer(){ (PL.voices||[]).forEach(v=>{ try{ v&&v.g.gain.setTargetAtTime(0,ctx().currentTime,.03) }catch(e){} }); PL.voices=[]; PL.running=false; PL.confirm=null; PL.stall=null; $('#pStall').hidden=true; clearTimeout(PL.rsT); PL.rsWaiting=false; if(PL.edit){ PL.edit=false; ED.playing=false; $('#v-tocar').classList.remove('editing'); $('#edPanel').hidden=true } cancelAnimationFrame(PL.raf); clearTimeout(scheduleCount.t); if(PL.media) PL.media.destroy(); PL.media=null; if(!Sess.running&&!testOn&&!tunerOn) micStop(); try{PL.wake&&PL.wake.release()}catch(e){} document.body.classList.remove('playing'); $('#pCnt').hidden=true; $('#pWait').hidden=true }
 function timingSummary(){
   const C=PL.cats||{}, parts=[['perfect','Perfecto'],['great','Bien'],['early','Un poco antes'],['late','Un poco tarde'],['tooEarly','Aún no'],['tooLate','Tarde']].filter(([k])=>C[k]).map(([k,n])=>h('span',{class:'tm '+k},h('b',{text:String(C[k])}),' '+n));
   if(!parts.length) return null;
@@ -3631,6 +3692,7 @@ function timingSummary(){
   const txt=med==null?'':Math.abs(med)<25?'Vas a tiempo: tus notas caen justo en la línea.':`Tiendes a tocar ${Math.abs(med)} ms ${med>0?'tarde':'antes'}.`+(Math.abs(med)>70?' Si sientes que tocas a tiempo, mide tu latencia en la ficha.':'');
   return h('div',{class:'timing'},h('span',{class:'k',text:'Tiempo · margen '+mg().n}),h('div',{class:'tmrow'},parts),txt?h('p',{class:'hint',text:txt}):null) }
 function finishPlayer(){
+  if(PL.listenOnly){ const id=PL.song&&PL.song.id; stopPlayer(); openSong(id); return }   // solo se escuchó: no hay resultados
   const s=PL.song, act=e=>inSegs(e.t!=null?e.t:e.t0)&&e.st!==2, ns=PL.notes.filter(act), bs=PL.blocks.filter(act);
   const hN=ns.filter(n=>n.st===1).length, hC=bs.filter(b=>b.st===1).length, tot=ns.length+bs.length, hits=hN+hC;
   const acc=tot?Math.round(hits/tot*100):0, dur=performance.now()-PL.started, mic=PL.mic, mode=PL.mode, cfg=PL.cfg;
@@ -3669,6 +3731,7 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Space'){ e.preventDefault(); $('#pPause').click() }
   else if(k==='r'||k==='R') $('#pRestart').click();
   else if(k==='n'||k==='N') toggleWait();
+  else if(k==='l'||k==='L') toggleListen();
   else if(k==='Escape') $('#pExit').click();
   else if(k==='e'||k==='E') $('#pEdit').click();
   else if(PL.mode==='practice'&&(k==='ArrowUp'||k==='ArrowDown')){ e.preventDefault(); const sp=$('#pSpeed'); sp.value=+sp.value+(k==='ArrowUp'?5:-5); sp.dispatchEvent(new Event('input')); sp.dispatchEvent(new Event('change')) }
